@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Seed script configuration
+// Run with: npm run db:seed
+
+model User {
+  id                 String     @id @default(cuid())
+  name               String?
+  email              String     @unique
+  phone              String?
+  slug               String?    @unique // Unique URL-friendly identifier for public profile
+  role               Role       @default(CLIENT)
+  bio                String?
+  avatarUrl          String?
+  hashedPassword     String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  rating             Float      @default(0)
+  ratingCount        Int        @default(0)
+  stripeAccountId    String?
+  locationLat        Float?
+  locationLng        Float?
+  serviceRadiusMiles Int?       // for in-person workers
+  availability       Json?      // weekly schedule/time slots
+  verificationStatus VerificationStatus @default(PENDING)
+  idDocumentUrl      String?    // URL to uploaded ID document (passport/driver's license)
+  idDocumentType     String?    // e.g., "passport", "drivers_license", "national_id"
+  idDocumentUploadedAt DateTime? // When ID was uploaded
+  skills             UserSkill[]
+  reviewsReceived    Review[]   @relation("reviewsReceived")
+  reviewsGiven       Review[]   @relation("reviewsGiven")
+  tasksPosted        Task[]     @relation("clientTasks")
+  tasksAssigned      Task[]     @relation("workerTasks")
+  offers             Offer[]
+  messages           Message[]
+  payouts            Payout[]
+}
+
+model UserSkill {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill   String
+  level   String // e.g., junior/mid/senior
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id                 String     @id @default(cuid())
+  title              String
+  description        String
+  clientId           String
+  client             User       @relation("clientTasks", fields: [clientId], references: [id])
+  workerId           String? 
+  worker             User?      @relation("workerTasks", fields: [workerId], references: [id])
+  category           String
+  subcategory        String?
+  type               ServiceType @default(VIRTUAL) // VIRTUAL or IN_PERSON
+  status             TaskStatus @default(OPEN)
+  price              Float?     // If client sets budget or developer fixed quote
+  estimatedDurationMins Int?
+  minBillableMins    Int?       // from worker profile when assigned
+  scheduledAt        DateTime?
+  address            String?    // for in-person
+  addressLat         Float?
+  addressLng         Float?
+  travelFee          Float?
+  offers             Offer[]
+  messages           Message[]
+  attachments        Attachment[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  completedAt        DateTime?
+  disputeId          String?
+  paymentIntentId    String?    // Stripe PaymentIntent ID
+  stripeChargeId     String?    // Stripe Charge ID
+  refundRequestedAt  DateTime?
+  refundAmount       Float?
+  refundStatus       RefundStatus?
+  refundReason       String?
+  refundId           String?    // Stripe Refund ID
+}
+
+model Offer {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workerId   String
+  worker     User     @relation(fields: [workerId], references: [id])
+  price      Float
+  hourly     Boolean  @default(false)
+  message    String?
+  estimatedDurationMins Int?
+  createdAt  DateTime @default(now())
+  status     OfferStatus @default(PENDING) // PENDING, ACCEPTED, DECLINED, WITHDRAWN
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  content    String
+  attachments Attachment[]
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
+}
+
+model Attachment {
+  id        String @id @default(cuid())
+  url       String
+  filename  String
+  mimeType  String
+  uploadedBy String
+  createdAt DateTime @default(now())
+  taskId    String? 
+  task      Task?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String  @id @default(cuid())
+  reviewerId   String
+  reviewer     User    @relation("reviewsGiven", fields: [reviewerId], references: [id])
+  targetUserId String
+  targetUser   User    @relation("reviewsReceived", fields: [targetUserId], references: [id])
+  rating       Int
+  comment      String?
+  taskId       String?
+  createdAt    DateTime @default(now())
+}
+
+model Payout {
+  id            String  @id @default(cuid())
+  workerId      String
+  worker        User    @relation(fields: [workerId], references: [id])
+  amount        Float
+  fee           Float
+  stripePayoutId String?
+  createdAt     DateTime @default(now())
+  taskId        String?
+}
+
+model WebhookEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  type          String
+  processed     Boolean  @default(false)
+  processedAt   DateTime?
+  error         String?
+  retryCount    Int      @default(0)
+  data          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([stripeEventId])
+  @@index([processed])
+  @@index([type])
+}
+
+enum Role {
+  CLIENT
+  WORKER
+  ADMIN
+}
+
+enum TaskStatus {
+  OPEN
+  OFFERED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum ServiceType {
+  VIRTUAL
+  IN_PERSON
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum RefundStatus {
+  NONE
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
