@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       })
       slug = generateUniqueSlug(
         baseSlug,
-        existingSlugs.map((u) => u.slug!).filter(Boolean)
+        existingSlugs.map((u: { slug: string | null }) => u.slug!).filter(Boolean)
       )
     }
 

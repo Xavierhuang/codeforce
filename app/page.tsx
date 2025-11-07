@@ -1,50 +1,109 @@
 'use client'
 
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Bug, Globe, Smartphone, Settings } from 'lucide-react'
 
 export default function Home() {
+  const { data: session } = useSession()
+  const router = useRouter()
+
+  const handleGetStarted = () => {
+    if (session) {
+      router.push('/dashboard')
+    } else {
+      router.push('/auth/signup')
+    }
+  }
+
+  const handleBecomeBuyer = () => {
+    router.push('/auth/signup?role=CLIENT')
+  }
+
+  const handleBecomeDeveloper = () => {
+    router.push('/auth/signup?role=WORKER')
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary">
-            CodeForce
+      {/* Navigation - Always show on home page */}
+      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top" suppressHydrationWarning>
+        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center" suppressHydrationWarning>
+          <Link href="/" className="flex items-center">
+            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
           </Link>
-          <div className="flex gap-4 items-center">
-            <Link href="/tasks" className="text-sm font-medium hover:text-primary">
+          <div className="hidden md:flex gap-6 items-center">
+            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
               Browse Tasks
             </Link>
-            <Link href="/developers" className="text-sm font-medium hover:text-primary">
+            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
               Find Developers
             </Link>
-            <Link href="/auth/signin">
-              <Button variant="ghost" size="sm">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm">Get Started</Button>
-            </Link>
+            {session ? (
+              <Button 
+                onClick={handleGetStarted}
+                size="sm" 
+                className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-4 py-2 transition-colors touch-manipulation"
+              >
+                Get Started
+              </Button>
+            ) : (
+              <>
+                <Link href="/auth/signin" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
+                  Sign In
+                </Link>
+                <Button 
+                  onClick={handleGetStarted}
+                  size="sm" 
+                  className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-4 py-2 transition-colors touch-manipulation"
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
+          </div>
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            {session ? (
+              <Button 
+                onClick={handleGetStarted}
+                size="sm" 
+                className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-3 py-1.5 text-xs touch-manipulation"
+              >
+                Get Started
+              </Button>
+            ) : (
+              <Link href="/auth/signin">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="rounded-md px-3 py-1.5 text-xs touch-manipulation"
+                >
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <main className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto py-20">
+        <div className="max-w-4xl mx-auto py-12 md:py-20">
           {/* Main Headline */}
-          <h1 className="text-6xl md:text-7xl font-bold text-center mb-6 leading-tight">
-            <span className="text-primary">Hire skilled developers</span>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-center mb-4 md:mb-6 leading-tight px-2">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Hire skilled developers</span>
             <br />
             <span className="text-foreground">for anything on your to-do list.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            From bug fixes to full-stack projects, book trusted developers who show up ready to help. 
-            Simply choose your task, pick a time, and get back to what matters.
+          <p className="text-base md:text-xl text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto px-4">
+            Search for skilled developers, browse their profiles, and book directly. 
+            No task posting needed—just find, book, and get your work done.
           </p>
 
           {/* Search Bar */}
@@ -53,15 +112,21 @@ export default function Home() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="text"
-                placeholder="What do you need help with?"
+                placeholder="Search for developers by skills or expertise..."
                 className="w-full pl-12 pr-4 py-6 text-lg rounded-full border-2 focus:border-primary"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const query = (e.target as HTMLInputElement).value
+                    window.location.href = `/developers?search=${encodeURIComponent(query)}`
+                  }
+                }}
               />
-              <Link href="/tasks/new">
+              <Link href="/developers">
                 <Button 
                   size="lg" 
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full px-8"
                 >
-                  Post Task
+                  Search
                 </Button>
               </Link>
             </div>
@@ -71,7 +136,7 @@ export default function Home() {
               {['Bug Fix', 'Web Development', 'Mobile App', 'API Integration', 'DevOps'].map((cat) => (
                 <Link 
                   key={cat} 
-                  href={`/tasks?category=${encodeURIComponent(cat)}`}
+                  href={`/developers?category=${encodeURIComponent(cat)}`}
                   className="px-4 py-2 text-sm bg-muted hover:bg-primary hover:text-primary-foreground rounded-full transition-colors"
                 >
                   {cat}
@@ -82,25 +147,25 @@ export default function Home() {
 
           {/* Category Navigation */}
           <div className="flex justify-center gap-8 mb-16">
-            <Link href="/tasks?category=Bug Fix" className="flex flex-col items-center group">
+            <Link href="/developers?category=Bug Fix" className="flex flex-col items-center group">
               <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
                 <Bug className="w-6 h-6" />
               </div>
               <span className="text-sm font-medium text-primary">Bug Fix</span>
             </Link>
-            <Link href="/tasks?category=Web Development" className="flex flex-col items-center group">
+            <Link href="/developers?category=Web Development" className="flex flex-col items-center group">
               <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
                 <Globe className="w-6 h-6" />
               </div>
               <span className="text-sm font-medium">Web Dev</span>
             </Link>
-            <Link href="/tasks?category=Mobile App" className="flex flex-col items-center group">
+            <Link href="/developers?category=Mobile App" className="flex flex-col items-center group">
               <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
                 <Smartphone className="w-6 h-6" />
               </div>
               <span className="text-sm font-medium">Mobile</span>
             </Link>
-            <Link href="/tasks?category=DevOps" className="flex flex-col items-center group">
+            <Link href="/developers?category=DevOps" className="flex flex-col items-center group">
               <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
                 <Settings className="w-6 h-6" />
               </div>
@@ -120,27 +185,27 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                   1
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Post your task</h3>
+                <h3 className="text-xl font-semibold mb-2">Search & Browse</h3>
                 <p className="text-muted-foreground">
-                  Describe what you need help with. Our AI assists you in creating a clear task description.
+                  Search for developers by skills, expertise, or category. Browse verified profiles with ratings and reviews.
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                   2
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Get matched</h3>
+                <h3 className="text-xl font-semibold mb-2">Book Directly</h3>
                 <p className="text-muted-foreground">
-                  Receive offers from vetted developers. Browse profiles and pick the perfect match.
+                  Select a developer and fill out a simple form describing your needs. Book instantly with secure payment.
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                   3
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Get it done</h3>
+                <h3 className="text-xl font-semibold mb-2">Get It Done</h3>
                 <p className="text-muted-foreground">
-                  Pay securely through escrow. Release payment only when you're completely satisfied.
+                  Communicate directly with your developer, track progress, and release payment only when satisfied.
                 </p>
               </div>
             </div>
@@ -151,19 +216,24 @@ export default function Home() {
         <section className="py-20 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of clients and developers building together
+            Join Skillyy as a buyer or developer
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/tasks/new">
-              <Button size="lg" className="px-8">
-                Post Your First Task
-              </Button>
-            </Link>
-            <Link href="/developers">
-              <Button size="lg" variant="outline" className="px-8">
-                Become a Developer
-              </Button>
-            </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={handleBecomeBuyer}
+              size="lg" 
+              className="px-8 touch-manipulation"
+            >
+              Become a Buyer
+            </Button>
+            <Button 
+              onClick={handleBecomeDeveloper}
+              size="lg" 
+              variant="outline" 
+              className="px-8 touch-manipulation"
+            >
+              Become a Developer
+            </Button>
           </div>
         </section>
       </main>
@@ -173,10 +243,10 @@ export default function Home() {
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-semibold mb-4">CodeForce</h3>
+              <h3 className="font-semibold mb-4">Skillyy</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/" className="hover:text-foreground">About Us</Link></li>
-                <li><Link href="/developers" className="hover:text-foreground">Become a Developer</Link></li>
+                <li><button onClick={handleBecomeDeveloper} className="hover:text-foreground text-left">Become a Developer</button></li>
                 <li><Link href="/tasks" className="hover:text-foreground">Browse Tasks</Link></li>
               </ul>
             </div>
@@ -205,7 +275,8 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} CodeForce, Inc. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Skillyy, Inc. All rights reserved.</p>
+            <p className="mt-2">Connecting clients with skilled technical professionals including developers, editors, designers, and social media managers.</p>
           </div>
         </div>
       </footer>

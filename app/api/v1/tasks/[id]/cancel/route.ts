@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
+import { createNotification, checkAndSendOfflineNotification } from '@/lib/notifications'
+import { triggerMessageEvent } from '@/lib/pusher'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-})
-
-export async function POST(
+/**
+ * PATCH /api/v1/tasks/:id/cancel
+ * Cancels a task and notifies both parties
+ */
+export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth()
-    const body = await req.json()
-    const { reason } = body
-
     const task = await prisma.task.findUnique({
       where: { id: params.id },
       include: {
@@ -28,88 +26,83 @@ export async function POST(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    // Only client or assigned worker can cancel
+    // Only client or worker can cancel
     if (task.clientId !== user.id && task.workerId !== user.id && user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'You do not have permission to cancel this task' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Can't cancel if already completed or cancelled
-    if (task.status === 'COMPLETED') {
-      return NextResponse.json(
-        { error: 'Cannot cancel a completed task' },
-        { status: 400 }
-      )
-    }
-
-    if (task.status === 'CANCELLED') {
-      return NextResponse.json(
-        { error: 'Task is already cancelled' },
-        { status: 400 }
-      )
-    }
-
-    // Handle refund if payment was made
-    let refundProcessed = false
-    if (task.paymentIntentId) {
-      try {
-        const paymentIntent = await stripe.paymentIntents.retrieve(task.paymentIntentId)
-
-        // If payment was captured, create a refund
-        if (paymentIntent.status === 'succeeded' && task.stripeChargeId) {
-          const refund = await stripe.refunds.create({
-            charge: task.stripeChargeId,
-            reason: 'requested_by_customer',
-            metadata: {
-              taskId: task.id,
-              cancelledBy: user.id,
-              reason: reason || 'No reason provided',
-            },
-          })
-
-          refundProcessed = true
-
-          // TODO: Send notification to client about refund
-        } else if (paymentIntent.status === 'requires_capture') {
-          // If payment is still on hold, just cancel the payment intent
-          await stripe.paymentIntents.cancel(task.paymentIntentId)
-          refundProcessed = true
-        }
-      } catch (stripeError: any) {
-        console.error('Stripe refund error:', stripeError)
-        // Continue with cancellation even if refund fails (admin can handle manually)
-      }
-    }
-
-    // Update task status to CANCELLED
-    await prisma.task.update({
+    // Update task status
+    const updatedTask = await prisma.task.update({
       where: { id: params.id },
-      data: {
-        status: 'CANCELLED',
-        workerId: null, // Unassign worker
+      data: { status: 'CANCELLED' },
+      include: {
+        client: true,
+        worker: true,
       },
     })
 
-    // Decline all pending offers
-    await prisma.offer.updateMany({
-      where: {
-        taskId: params.id,
-        status: 'PENDING',
-      },
-      data: {
-        status: 'DECLINED',
-      },
-    })
+    // Create notifications
+    const notifications = []
+    if (task.workerId) {
+      notifications.push(
+        createNotification(
+          task.workerId,
+          'task_cancelled',
+          `Task "${task.title}" has been cancelled`,
+          task.id
+        )
+      )
+    }
+    if (task.clientId !== user.id) {
+      notifications.push(
+        createNotification(
+          task.clientId,
+          'task_cancelled',
+          `Task "${task.title}" has been cancelled`,
+          task.id
+        )
+      )
+    }
+    await Promise.all(notifications)
 
-    // TODO: Send notifications to client and worker
+    // Send SMS to offline users
+    const smsPromises = []
+    if (task.workerId && task.worker?.phone && task.workerId !== user.id) {
+      smsPromises.push(
+        checkAndSendOfflineNotification(
+          task.workerId,
+          task.worker.name || 'Worker',
+          task.worker.phone,
+          `task "${task.title}" has been cancelled on Skilly.com`,
+          task.id
+        )
+      )
+    }
+    if (task.clientId !== user.id && task.client?.phone) {
+      smsPromises.push(
+        checkAndSendOfflineNotification(
+          task.clientId,
+          task.client.name || 'Client',
+          task.client.phone,
+          `task "${task.title}" has been cancelled on Skilly.com`,
+          task.id
+        )
+      )
+    }
+    await Promise.all(smsPromises)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Task cancelled successfully',
-      refundProcessed,
-    })
+    // Emit Pusher event
+    try {
+      await triggerMessageEvent(`task-${task.id}`, {
+        type: 'task_cancelled',
+        taskId: task.id,
+        message: 'Task has been cancelled',
+      })
+    } catch (error) {
+      console.error('Failed to trigger Pusher event:', error)
+    }
+
+    return NextResponse.json(updatedTask)
   } catch (error: any) {
     console.error('Error cancelling task:', error)
     if (error.message === 'Unauthorized') {
@@ -121,5 +114,3 @@ export async function POST(
     )
   }
 }
-
-

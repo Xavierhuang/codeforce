@@ -49,4 +49,16 @@ export async function sendTaskBookingNotification(
   return await sendSMS(developerPhone, message)
 }
 
+export async function sendOfflineNotification(
+  phone: string,
+  username: string,
+  message: string,
+  taskId: string
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com'
+  const notificationMessage = `Hey ${username}, ${message} Log in to respond: ${appUrl}/tasks/${taskId} - Skilly.com`
+
+  return await sendSMS(phone, notificationMessage)
+}
+
 

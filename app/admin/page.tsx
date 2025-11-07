@@ -2,54 +2,127 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import useSWR from 'swr'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, XCircle, Clock, Users, Task, DollarSign } from 'lucide-react'
+import { AdminPayoutRequests } from '@/components/admin/AdminPayoutRequests'
+import { CheckCircle, XCircle, Clock, Users, ClipboardList, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function AdminDashboardPage() {
+  // Get pathname first - this is safe to call
+  const pathname = usePathname()
+  
+  // IMMEDIATE check: if pathname is not '/admin', return null BEFORE any other hooks
+  // This prevents the component from executing at all on non-admin pages
+  if (pathname !== '/admin') {
+    // Double-check with window.location if available (client-side)
+    if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+      return null
+    }
+    // During SSR, if pathname is not '/admin', return null
+    if (pathname !== '/admin') {
+      return null
+    }
+  }
+  
+  // Only proceed if we're confirmed to be on '/admin'
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+    // Final check after mount
+    if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+      return
+    }
+  }, [])
+  
+  // Final safety check after mount
+  if (mounted && typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+    return null
+  }
+  
+  // If we get here, we're confirmed to be on '/admin' route
+  // Only now do we call hooks that might trigger API calls
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [selectedTab, setSelectedTab] = useState<'users' | 'tasks' | 'stats'>('stats')
+  const [selectedTab, setSelectedTab] = useState<'users' | 'tasks' | 'stats' | 'payouts'>('stats')
 
-  const { data: user } = useSWR(
-    status === 'authenticated' ? '/api/v1/users/me' : null,
+  const isAdminRoute = true // We've already verified we're on /admin above
+
+  // Only fetch user data if authenticated AND on admin route
+  const shouldFetchUser = status === 'authenticated' && isAdminRoute
+  const { data: user, isLoading: isLoadingUser } = useSWR(
+    shouldFetchUser ? '/api/v1/users/me' : null,
     fetcher
+  )
+
+  // Only fetch admin data if ALL conditions are met:
+  // 1. On admin route
+  // 2. Authenticated
+  // 3. User data loaded
+  // 4. User is admin
+  const isAdmin = user?.role === 'ADMIN'
+  const shouldFetchAdminData = Boolean(
+    isAdminRoute &&
+    status === 'authenticated' &&
+    !isLoadingUser &&
+    user &&
+    isAdmin
   )
 
   const { data: pendingUsers } = useSWR(
-    selectedTab === 'users' ? '/api/v1/admin/users?status=PENDING' : null,
-    fetcher
+    shouldFetchAdminData && selectedTab === 'users' ? '/api/v1/admin/users?status=PENDING' : null,
+    fetcher,
+    { revalidateOnFocus: false }
   )
 
   const { data: allUsers } = useSWR(
-    selectedTab === 'users' ? '/api/v1/admin/users' : null,
-    fetcher
+    shouldFetchAdminData && selectedTab === 'users' ? '/api/v1/admin/users' : null,
+    fetcher,
+    { revalidateOnFocus: false }
   )
 
   const { data: allTasks } = useSWR(
-    selectedTab === 'tasks' ? '/api/v1/admin/tasks' : null,
-    fetcher
+    shouldFetchAdminData && selectedTab === 'tasks' ? '/api/v1/admin/tasks' : null,
+    fetcher,
+    { revalidateOnFocus: false }
   )
 
   const { data: stats } = useSWR(
-    selectedTab === 'stats' ? '/api/v1/admin/stats' : null,
-    fetcher
+    shouldFetchAdminData && selectedTab === 'stats' ? '/api/v1/admin/stats' : null,
+    fetcher,
+    { revalidateOnFocus: false }
   )
 
+  // Handle redirects in useEffect to avoid updating router during render
   useEffect(() => {
-    if (status === 'authenticated' && user?.role !== 'ADMIN') {
+    if (!isAdminRoute) {
+      return
+    }
+
+    if (status === 'unauthenticated' || !session) {
+      router.push('/auth/signin')
+      return
+    }
+
+    if (status === 'authenticated' && !isLoadingUser && user && user.role !== 'ADMIN') {
       router.push('/dashboard')
       toast.error('Access denied. Admin only.')
+      return
     }
-  }, [status, user, router])
+  }, [isAdminRoute, status, session, isLoadingUser, user, router])
 
-  if (status === 'loading' || !session) {
+  // Early return if not on admin route
+  if (!isAdminRoute) {
+    return null
+  }
+
+  if (status === 'loading' || (status === 'authenticated' && isLoadingUser)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">Loading...</div>
@@ -57,8 +130,20 @@ export default function AdminDashboardPage() {
     )
   }
 
-  if (user?.role !== 'ADMIN') {
-    return null
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Redirecting...</div>
+      </div>
+    )
+  }
+
+  if (!user || user?.role !== 'ADMIN') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Redirecting...</div>
+      </div>
+    )
   }
 
   const handleVerifyUser = async (userId: string, status: 'VERIFIED' | 'REJECTED') => {
@@ -82,7 +167,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">Manage users, tasks, and platform statistics</p>
@@ -123,6 +208,16 @@ export default function AdminDashboardPage() {
         >
           Tasks
         </button>
+        <button
+          onClick={() => setSelectedTab('payouts')}
+          className={`px-4 py-2 font-medium ${
+            selectedTab === 'payouts'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground'
+          }`}
+        >
+          Payout Requests
+        </button>
       </div>
 
       {/* Stats Tab */}
@@ -144,7 +239,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-              <Task className="h-4 w-4 text-muted-foreground" />
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalTasks || 0}</div>
@@ -342,6 +437,11 @@ export default function AdminDashboardPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Payouts Tab */}
+      {selectedTab === 'payouts' && (
+        <AdminPayoutRequests />
       )}
     </div>
   )

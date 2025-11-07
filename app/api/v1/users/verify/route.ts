@@ -41,6 +41,30 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Require hourly rate
+    if (!user.hourlyRate || user.hourlyRate <= 0) {
+      return NextResponse.json(
+        { error: 'Please set your hourly rate before submitting for verification' },
+        { status: 400 }
+      )
+    }
+
+    // Require service type
+    if (!user.serviceType) {
+      return NextResponse.json(
+        { error: 'Please select your service type before submitting for verification' },
+        { status: 400 }
+      )
+    }
+
+    // If service type is IN_PERSON or BOTH, require location
+    if ((user.serviceType === 'IN_PERSON' || user.serviceType === 'BOTH') && (!user.locationLat || !user.locationLng)) {
+      return NextResponse.json(
+        { error: 'Please provide your location for on-site services' },
+        { status: 400 }
+      )
+    }
+
     // AUTO-VERIFY: Automatically verify if basic requirements are met
     // This allows instant verification without admin bottleneck
     // Admins can still manually reject if needed via admin panel

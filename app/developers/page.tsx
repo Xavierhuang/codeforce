@@ -8,13 +8,16 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
-import { Search, Star, MapPin } from 'lucide-react'
+import { Search, Star, MapPin, Wifi, Building2 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function DevelopersPage() {
+  const { data: session } = useSession()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const isBuyer = session?.user && (session.user as any).role === 'CLIENT'
 
   const queryParams = new URLSearchParams()
   if (selectedSkills.length > 0) {
@@ -40,7 +43,7 @@ export default function DevelopersPage() {
     new Set(
       developers?.flatMap((dev: any) => dev.skills?.map((s: any) => s.skill) || []) || []
     )
-  ).slice(0, 10)
+  ).slice(0, 10) as string[]
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -65,7 +68,7 @@ export default function DevelopersPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {allSkills.map((skill) => (
+          {allSkills.map((skill: string) => (
             <Button
               key={skill}
               variant={selectedSkills.includes(skill) ? 'default' : 'outline'}
@@ -146,6 +149,42 @@ export default function DevelopersPage() {
                   </div>
                 )}
 
+                {/* Service Type Badges */}
+                <div className="flex items-center gap-2 mb-4">
+                  {developer.serviceType === 'VIRTUAL' || developer.serviceType === null ? (
+                    <Badge variant="outline" className="text-xs">
+                      <Wifi className="w-3 h-3 mr-1" />
+                      Remote
+                    </Badge>
+                  ) : developer.serviceType === 'IN_PERSON' ? (
+                    <Badge variant="outline" className="text-xs">
+                      <Building2 className="w-3 h-3 mr-1" />
+                      On-site
+                    </Badge>
+                  ) : (
+                    <>
+                      <Badge variant="outline" className="text-xs">
+                        <Wifi className="w-3 h-3 mr-1" />
+                        Remote
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Building2 className="w-3 h-3 mr-1" />
+                        On-site
+                      </Badge>
+                    </>
+                  )}
+                </div>
+
+                {/* Hourly Rate */}
+                {developer.hourlyRate && (
+                  <div className="mb-4">
+                    <p className="text-xs text-muted-foreground">Hourly Rate</p>
+                    <p className="text-lg font-bold text-primary">
+                      {formatCurrency(developer.hourlyRate)}/hour
+                    </p>
+                  </div>
+                )}
+
                 {developer.locationLat && developer.locationLng && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
                     <MapPin className="w-4 h-4" />
@@ -161,9 +200,15 @@ export default function DevelopersPage() {
                     <p className="text-xs text-muted-foreground">Tasks completed</p>
                     <p className="font-semibold">{developer._count?.tasksAssigned || 0}</p>
                   </div>
-                  <Link href={`/developers/${developer.slug || developer.id}`}>
-                    <Button size="sm">View Profile</Button>
-                  </Link>
+                  {isBuyer && developer.hourlyRate ? (
+                    <Link href={`/book/${developer.slug || developer.id}`}>
+                      <Button size="sm">Book Now</Button>
+                    </Link>
+                  ) : (
+                    <Link href={`/developers/${developer.slug || developer.id}`}>
+                      <Button size="sm" variant="outline">View Profile</Button>
+                    </Link>
+                  )}
                 </div>
               </CardContent>
             </Card>

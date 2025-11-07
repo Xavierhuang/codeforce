@@ -25,6 +25,9 @@ model User {
   rating             Float      @default(0)
   ratingCount        Int        @default(0)
   stripeAccountId    String?
+  walletBalance      Float      @default(0) // Worker's earnings wallet balance
+  hourlyRate         Float?     // Worker's hourly rate for direct bookings
+  serviceType        ServiceType? // VIRTUAL, IN_PERSON, or BOTH (for workers)
   locationLat        Float?
   locationLng        Float?
   serviceRadiusMiles Int?       // for in-person workers
@@ -40,7 +43,10 @@ model User {
   tasksAssigned      Task[]     @relation("workerTasks")
   offers             Offer[]
   messages           Message[]
+  receivedMessages   Message[]  @relation("receivedMessages")
   payouts            Payout[]
+  payoutRequests     PayoutRequest[]
+  notifications      Notification[]
 }
 
 model UserSkill {
@@ -60,6 +66,8 @@ model Task {
   client             User       @relation("clientTasks", fields: [clientId], references: [id])
   workerId           String? 
   worker             User?      @relation("workerTasks", fields: [workerId], references: [id])
+  offerId            String?    @unique // Linked offer when task is auto-created from purchase
+  offer              Offer?      @relation("taskOffer", fields: [offerId], references: [id])
   category           String
   subcategory        String?
   type               ServiceType @default(VIRTUAL) // VIRTUAL or IN_PERSON
@@ -72,26 +80,23 @@ model Task {
   addressLat         Float?
   addressLng         Float?
   travelFee          Float?
-  offers             Offer[]
+  offers             Offer[]     @relation("taskOffers")
   messages           Message[]
   attachments        Attachment[]
+  notifications      Notification[]
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   completedAt        DateTime?
   disputeId          String?
   paymentIntentId    String?    // Stripe PaymentIntent ID
   stripeChargeId     String?    // Stripe Charge ID
-  refundRequestedAt  DateTime?
-  refundAmount       Float?
-  refundStatus       RefundStatus?
-  refundReason       String?
-  refundId           String?    // Stripe Refund ID
 }
 
 model Offer {
   id         String   @id @default(cuid())
   taskId     String
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task       Task     @relation("taskOffers", fields: [taskId], references: [id], onDelete: Cascade)
+  taskFromOffer Task? @relation("taskOffer") // Reverse relation for task created from offer
   workerId   String
   worker     User     @relation(fields: [workerId], references: [id])
   price      Float
@@ -103,15 +108,18 @@ model Offer {
 }
 
 model Message {
-  id         String   @id @default(cuid())
-  taskId     String
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  senderId   String
-  sender     User     @relation(fields: [senderId], references: [id])
-  content    String
-  attachments Attachment[]
-  createdAt  DateTime @default(now())
-  readAt     DateTime?
+  id             String   @id @default(cuid())
+  taskId         String
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id])
+  receiverId     String?  // Explicit receiver for chat messages
+  receiver       User?    @relation("receivedMessages", fields: [receiverId], references: [id])
+  content        String
+  attachmentUrl  String?  // File link if attached (legacy support)
+  attachments    Attachment[]
+  createdAt      DateTime @default(now())
+  readAt         DateTime?
 }
 
 model Attachment {
@@ -146,8 +154,29 @@ model Payout {
   amount        Float
   fee           Float
   stripePayoutId String?
+  payoutRequestId String? // Link to payout request if processed manually
+  payoutRequest PayoutRequest? @relation(fields: [payoutRequestId], references: [id])
   createdAt     DateTime @default(now())
   taskId        String?
+}
+
+model PayoutRequest {
+  id            String   @id @default(cuid())
+  workerId     String
+  worker       User     @relation(fields: [workerId], references: [id])
+  amount       Float
+  status       PayoutRequestStatus @default(PENDING)
+  notes        String?  // Optional notes from worker
+  adminNotes   String?  // Admin notes when approving/rejecting
+  processedAt  DateTime?
+  processedBy  String?   // Admin user ID who processed it
+  stripePayoutId String? // Stripe transfer ID if processed
+  payouts      Payout[] // Payouts created from this request
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([workerId])
+  @@index([status])
 }
 
 model WebhookEvent {
@@ -176,7 +205,7 @@ enum Role {
 enum TaskStatus {
   OPEN
   OFFERED
-  ASSIGNED
+  ASSIGNED      // Task is assigned to worker (maps to "active" in spec)
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -193,6 +222,7 @@ enum OfferStatus {
 enum ServiceType {
   VIRTUAL
   IN_PERSON
+  BOTH      // Worker offers both remote and on-site services
 }
 
 enum VerificationStatus {
@@ -201,11 +231,26 @@ enum VerificationStatus {
   REJECTED
 }
 
-enum RefundStatus {
-  NONE
-  REQUESTED
+enum PayoutRequestStatus {
+  PENDING
   APPROVED
   REJECTED
   PROCESSED
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  type        String   // task_created, message_sent, task_cancelled, offer_purchased
+  message     String
+  readStatus  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([readStatus])
+  @@index([createdAt])
 }
 

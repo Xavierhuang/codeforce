@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (targetUser) {
-      const totalRating = targetUser.reviewsReceived.reduce((sum, r) => sum + r.rating, 0)
+      const totalRating = targetUser.reviewsReceived.reduce((sum: number, r: any) => sum + r.rating, 0)
       const newRating = totalRating / targetUser.reviewsReceived.length
       const ratingCount = targetUser.reviewsReceived.length
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import toast from 'react-hot-toast'
 import useSWR from 'swr'
-import { CheckCircle, Clock, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, DollarSign, Wifi, Building2, MapPin } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -25,11 +25,33 @@ export default function VerifyPage() {
     skills: [] as { skill: string; level: string }[],
     idDocumentUrl: '',
     idDocumentType: '',
+    hourlyRate: '',
+    serviceType: 'VIRTUAL' as 'VIRTUAL' | 'IN_PERSON' | 'BOTH',
+    locationLat: '',
+    locationLng: '',
+    serviceRadiusMiles: '',
   })
   const [newSkill, setNewSkill] = useState({ skill: '', level: 'mid' })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [idFile, setIdFile] = useState<File | null>(null)
+
+  // Load existing user data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        bio: user.bio || '',
+        skills: user.skills?.map((s: any) => ({ skill: s.skill, level: s.level })) || [],
+        idDocumentUrl: user.idDocumentUrl || '',
+        idDocumentType: user.idDocumentType || '',
+        hourlyRate: user.hourlyRate?.toString() || '',
+        serviceType: user.serviceType || 'VIRTUAL',
+        locationLat: user.locationLat?.toString() || '',
+        locationLng: user.locationLng?.toString() || '',
+        serviceRadiusMiles: user.serviceRadiusMiles?.toString() || '',
+      })
+    }
+  }, [user])
 
   const handleAddSkill = () => {
     if (newSkill.skill.trim()) {
@@ -113,6 +135,11 @@ export default function VerifyPage() {
           skills: formData.skills,
           idDocumentUrl: formData.idDocumentUrl,
           idDocumentType: formData.idDocumentType,
+          hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
+          serviceType: formData.serviceType,
+          locationLat: formData.locationLat ? parseFloat(formData.locationLat) : undefined,
+          locationLng: formData.locationLng ? parseFloat(formData.locationLng) : undefined,
+          serviceRadiusMiles: formData.serviceRadiusMiles ? parseInt(formData.serviceRadiusMiles) : undefined,
         }),
       })
 
@@ -164,7 +191,7 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Developer Verification</h1>
         <p className="text-muted-foreground">
@@ -337,6 +364,128 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Pricing & Service Type</CardTitle>
+              <CardDescription>
+                Set your hourly rate and specify what types of services you offer
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
+                <div className="relative mt-1">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Input
+                    id="hourlyRate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.hourlyRate}
+                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                    placeholder="50.00"
+                    className="pl-10"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This is the rate clients will pay per hour for your services
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-base font-semibold mb-3 block">Service Type *</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    type="button"
+                    variant={formData.serviceType === 'VIRTUAL' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, serviceType: 'VIRTUAL' })}
+                    className="flex flex-col items-center gap-2 h-auto py-4"
+                  >
+                    <Wifi className="w-5 h-5" />
+                    <span>Remote Only</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.serviceType === 'IN_PERSON' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, serviceType: 'IN_PERSON' })}
+                    className="flex flex-col items-center gap-2 h-auto py-4"
+                  >
+                    <Building2 className="w-5 h-5" />
+                    <span>On-site Only</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.serviceType === 'BOTH' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, serviceType: 'BOTH' })}
+                    className="flex flex-col items-center gap-2 h-auto py-4"
+                  >
+                    <div className="flex gap-1">
+                      <Wifi className="w-4 h-4" />
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <span>Both</span>
+                  </Button>
+                </div>
+              </div>
+
+              {(formData.serviceType === 'IN_PERSON' || formData.serviceType === 'BOTH') && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Location & Service Radius
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="locationLat">Latitude</Label>
+                      <Input
+                        id="locationLat"
+                        type="number"
+                        step="any"
+                        value={formData.locationLat}
+                        onChange={(e) => setFormData({ ...formData, locationLat: e.target.value })}
+                        placeholder="40.7128"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="locationLng">Longitude</Label>
+                      <Input
+                        id="locationLng"
+                        type="number"
+                        step="any"
+                        value={formData.locationLng}
+                        onChange={(e) => setFormData({ ...formData, locationLng: e.target.value })}
+                        placeholder="-74.0060"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="serviceRadiusMiles">Service Radius (miles)</Label>
+                    <Input
+                      id="serviceRadiusMiles"
+                      type="number"
+                      min="0"
+                      value={formData.serviceRadiusMiles}
+                      onChange={(e) => setFormData({ ...formData, serviceRadiusMiles: e.target.value })}
+                      placeholder="25"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Maximum distance you're willing to travel for on-site tasks
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>Tip:</strong> You can find your coordinates using Google Maps. Right-click on your location and copy the coordinates.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="mb-6 border-yellow-200 bg-yellow-50">
             <CardHeader>
               <CardTitle>Verification Requirements</CardTitle>
@@ -366,7 +515,14 @@ export default function VerifyPage() {
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={isSubmitting || formData.skills.length === 0 || !formData.idDocumentUrl || !formData.idDocumentType}
+              disabled={
+                isSubmitting || 
+                formData.skills.length === 0 || 
+                !formData.idDocumentUrl || 
+                !formData.idDocumentType ||
+                !formData.hourlyRate ||
+                (formData.serviceType !== 'VIRTUAL' && (!formData.locationLat || !formData.locationLng))
+              }
               className="flex-1"
             >
               {isSubmitting ? 'Submitting...' : 'Submit for Verification'}

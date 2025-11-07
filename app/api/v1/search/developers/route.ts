@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -16,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     // Filter by skills
     if (skills) {
-      const skillList = skills.split(',').map((s) => s.trim())
+      const skillList = skills.split(',').map((s: string) => s.trim())
       where.skills = {
         some: {
           skill: {

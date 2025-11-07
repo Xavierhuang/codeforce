@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth()
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest) {
     })
 
     // Don't expose sensitive info
-    const safeUsers = users.map((u) => ({
+    const safeUsers = users.map((u: any) => ({
       ...u,
       hashedPassword: undefined,
       phone: u.phone ? '***' : null,

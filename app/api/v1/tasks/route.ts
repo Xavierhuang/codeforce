@@ -74,18 +74,29 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await requireAuth().catch(() => null) // Optional auth for public browsing
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
     const near = searchParams.get('near')
     const radius = searchParams.get('radius')
     const category = searchParams.get('category')
     const type = searchParams.get('type')
+    const myTasks = searchParams.get('myTasks') === 'true' // For user's own tasks
 
     const where: any = {}
 
-    if (status) {
+    // If user wants their own tasks, filter by their role
+    if (myTasks && user) {
+      if (user.role === 'WORKER') {
+        where.workerId = user.id
+      } else if (user.role === 'CLIENT') {
+        where.clientId = user.id
+      }
+      // Show all statuses for user's own tasks
+    } else if (status) {
       where.status = status
-    } else {
+    } else if (!myTasks) {
+      // Public browsing: only show open tasks
       where.status = { in: ['OPEN', 'OFFERED'] }
     }
 

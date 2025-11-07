@@ -9,6 +9,13 @@ export const pusherServer = new Pusher({
 })
 
 export function triggerMessageEvent(taskId: string, message: any) {
-  return pusherServer.trigger(`task-${taskId}`, 'new-message', message)
+  return pusherServer.trigger(`private-task-${taskId}`, 'new-message', message)
+}
+
+export function triggerTypingEvent(taskId: string, userId: string, isTyping: boolean) {
+  return pusherServer.trigger(`private-task-${taskId}`, 'typing', {
+    userId,
+    isTyping,
+  })
 }
 

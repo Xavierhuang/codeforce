@@ -63,46 +63,32 @@ export async function POST(
           await stripe.paymentIntents.capture(task.paymentIntentId)
 
           // Calculate payout amounts using centralized function
+          // Worker gets: baseAmount - platformFee (platform covers Stripe fees)
+          // Trust & Support fee is NOT deducted from worker (it's a buyer fee)
           const baseAmount = task.price || 0
           const fees = calculateFees(baseAmount)
 
-          // If worker has Stripe Connect account, transfer funds
-          if (worker.stripeAccountId) {
-            try {
-              const transfer = await stripe.transfers.create({
-                amount: calculateAmountInCents(fees.workerPayout),
-                currency: 'usd',
-                destination: worker.stripeAccountId,
-                metadata: {
-                  taskId: task.id,
+          // Add earnings to worker's wallet instead of automatic transfer
+          await prisma.$transaction([
+            // Update worker's wallet balance
+            prisma.user.update({
+              where: { id: worker.id },
+              data: {
+                walletBalance: {
+                  increment: fees.workerPayout,
                 },
-              })
-
-              // Record payout
-              await prisma.payout.create({
-                data: {
-                  workerId: worker.id,
-                  amount: fees.workerPayout,
-                  fee: fees.platformFee + fees.stripeFee,
-                  stripePayoutId: transfer.id,
-                  taskId: task.id,
-                },
-              })
-            } catch (transferError: any) {
-              console.error('Transfer error:', transferError)
-              // Task is still marked complete, but payout needs manual handling
-            }
-          } else {
-            // Record pending payout (worker needs to set up Stripe account)
-            await prisma.payout.create({
+              },
+            }),
+            // Record payout for tracking
+            prisma.payout.create({
               data: {
                 workerId: worker.id,
                 amount: fees.workerPayout,
-                fee: fees.platformFee + fees.stripeFee,
+                fee: fees.platformFee,
                 taskId: task.id,
               },
-            })
-          }
+            }),
+          ])
         }
       } catch (stripeError: any) {
         console.error('Stripe capture error:', stripeError)
@@ -127,4 +113,6 @@ export async function POST(
     )
   }
 }
+
+
 

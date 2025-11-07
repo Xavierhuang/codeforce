@@ -64,6 +64,8 @@ export async function PUT(req: NextRequest) {
       idDocumentUrl,
       idDocumentType,
       slug,
+      hourlyRate,
+      serviceType,
     } = body
 
     // Get current user to check existing slug
@@ -104,7 +106,7 @@ export async function PUT(req: NextRequest) {
         })
         updatedSlug = generateUniqueSlug(
           baseSlug,
-          existingSlugs.map((u) => u.slug!).filter(Boolean)
+          existingSlugs.map((u: { slug: string | null }) => u.slug!).filter(Boolean)
         )
       }
     }
@@ -122,6 +124,8 @@ export async function PUT(req: NextRequest) {
       idDocumentUrl: idDocumentUrl !== undefined ? idDocumentUrl : undefined,
       idDocumentType: idDocumentType !== undefined ? idDocumentType : undefined,
       idDocumentUploadedAt: idDocumentUrl && !user.idDocumentUrl ? new Date() : undefined,
+      hourlyRate: hourlyRate !== undefined ? hourlyRate : undefined,
+      serviceType: serviceType !== undefined ? serviceType : undefined,
     }
 
     // Add slug if it's a worker and slug was provided or needs to be generated
@@ -141,7 +145,7 @@ export async function PUT(req: NextRequest) {
       })
       updateData.slug = generateUniqueSlug(
         baseSlug,
-        existingSlugs.map((u) => u.slug!).filter(Boolean)
+        existingSlugs.map((u: { slug: string | null }) => u.slug!).filter(Boolean)
       )
     }
 

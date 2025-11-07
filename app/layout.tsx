@@ -7,8 +7,19 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CodeForce - On-Demand Developer Marketplace',
-  description: 'Post a dev task, receive offers from vetted devs, book virtual or on-site help',
+  title: 'Skillyy - On-Demand Developer Marketplace',
+  description: 'Hire skilled developers for anything on your to-do list. Post a task, get offers from vetted developers, and get it done.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: 'cover',
+  },
 }
 
 export default function RootLayout({
@@ -17,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
           <Providers>{children}</Providers>
         </ErrorBoundary>

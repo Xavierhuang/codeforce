@@ -75,6 +75,10 @@ export async function POST(
 
     const task = await prisma.task.findUnique({
       where: { id: params.id },
+      include: {
+        client: true,
+        worker: true,
+      },
     })
 
     if (!task) {
@@ -90,10 +94,14 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Determine receiver (the other participant)
+    const receiverId = user.id === task.clientId ? task.workerId : task.clientId
+
     const message = await prisma.message.create({
       data: {
         taskId: params.id,
         senderId: user.id,
+        receiverId: receiverId || undefined,
         content: content.trim(),
         attachments: attachmentIds
           ? {

@@ -6,13 +6,15 @@
 export interface FeeCalculation {
   baseAmount: number
   platformFee: number
+  trustAndSupportFee: number // 15% trust and support fee for buyers
   stripeFee: number
-  totalAmount: number
-  workerPayout: number
+  totalAmount: number // Total amount buyer pays
+  workerPayout: number // Amount worker receives (baseAmount - platformFee - Stripe fees)
 }
 
 export interface FeeConfig {
   platformFeeRate: number
+  trustAndSupportFeeRate: number // New: 15% trust and support fee
   stripeFeeRate: number
   stripeFeeFixed: number
 }
@@ -23,6 +25,7 @@ export interface FeeConfig {
  */
 const DEFAULT_FEE_CONFIG: FeeConfig = {
   platformFeeRate: parseFloat(process.env.STRIPE_PLATFORM_FEE_RATE || '0.15'),
+  trustAndSupportFeeRate: parseFloat(process.env.STRIPE_TRUST_SUPPORT_FEE_RATE || '0.15'), // 15% trust and support fee
   stripeFeeRate: parseFloat(process.env.STRIPE_FEE_RATE || '0.029'),
   stripeFeeFixed: parseFloat(process.env.STRIPE_FEE_FIXED || '0.30'),
 }
@@ -37,14 +40,22 @@ export function calculateFees(
   baseAmount: number,
   config: FeeConfig = DEFAULT_FEE_CONFIG
 ): FeeCalculation {
-  const platformFee = baseAmount * config.platformFeeRate
+  const platformFee = baseAmount * config.platformFeeRate // 15% deducted from worker (tasker side)
+  const trustAndSupportFee = baseAmount * config.trustAndSupportFeeRate // 15% added to buyer (buyer side)
   const stripeFee = baseAmount * config.stripeFeeRate + config.stripeFeeFixed
-  const totalAmount = baseAmount + platformFee + stripeFee
-  const workerPayout = baseAmount - platformFee - stripeFee
+  
+  // Total amount buyer pays: base + trust & support fee + Stripe fees
+  // Platform fee is NOT added to buyer - it's deducted from worker
+  // Stripe fee is estimated so the platform can account for it (covered by platform revenue)
+  const totalAmount = baseAmount + trustAndSupportFee + stripeFee
+  
+  // Worker payout: base amount minus platform fee only (platform covers Stripe fees)
+  const workerPayout = baseAmount - platformFee
 
   return {
     baseAmount,
     platformFee,
+    trustAndSupportFee,
     stripeFee,
     totalAmount,
     workerPayout,
@@ -76,8 +87,4 @@ export function calculateAmountFromCents(cents: number): number {
 export function getFeeConfig(): FeeConfig {
   return DEFAULT_FEE_CONFIG
 }
-
-
-
-
 

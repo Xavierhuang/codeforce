@@ -66,13 +66,16 @@ export async function POST(
     }
 
     // Calculate fees using centralized function
+    // Buyer pays: baseAmount + trustAndSupportFee (15%) + Stripe fees
+    // Worker receives: baseAmount - platformFee (15%) - Stripe fees
+    // Platform gets: platformFee (from worker) + trustAndSupportFee (from buyer)
     const fees = calculateFees(offer.price)
 
     // Create PaymentIntent to hold funds in escrow
     let paymentIntent
     try {
       paymentIntent = await stripe.paymentIntents.create({
-        amount: calculateAmountInCents(fees.totalAmount),
+        amount: calculateAmountInCents(fees.totalAmount), // Total amount buyer pays
         currency: 'usd',
         payment_method_types: ['card'],
         metadata: {
@@ -134,6 +137,13 @@ export async function POST(
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      fees: {
+        baseAmount: fees.baseAmount,
+        platformFee: fees.platformFee,
+        trustAndSupportFee: fees.trustAndSupportFee,
+        stripeFee: fees.stripeFee,
+        totalAmount: fees.totalAmount,
+      },
     })
   } catch (error: any) {
     console.error('Error accepting offer:', error)
