@@ -187,3 +187,4 @@ npx prisma db push
 - SMS is sent as fallback when users are offline (presence check can be enhanced)
 - Chat uses private channels per task for security
 
+

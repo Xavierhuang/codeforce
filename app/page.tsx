@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Bug, Globe, Smartphone, Settings } from 'lucide-react'
 
+// Force dynamic rendering to prevent static caching
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -20,11 +23,16 @@ export default function Home() {
   }
 
   const handleBecomeBuyer = () => {
-    router.push('/auth/signup?role=CLIENT')
+    window.location.href = '/auth/signup?role=CLIENT'
   }
 
-  const handleBecomeDeveloper = () => {
-    router.push('/auth/signup?role=WORKER')
+  const handleBecomeDeveloper = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    console.log('Become Developer clicked - navigating to signup')
+    window.location.href = '/auth/signup?role=WORKER'
   }
 
   return (
@@ -220,9 +228,13 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={handleBecomeBuyer}
+              onClick={(e) => {
+                e.preventDefault()
+                handleBecomeBuyer()
+              }}
               size="lg" 
               className="px-8 touch-manipulation"
+              type="button"
             >
               Become a Buyer
             </Button>
@@ -231,6 +243,7 @@ export default function Home() {
               size="lg" 
               variant="outline" 
               className="px-8 touch-manipulation"
+              type="button"
             >
               Become a Developer
             </Button>
@@ -246,7 +259,7 @@ export default function Home() {
               <h3 className="font-semibold mb-4">Skillyy</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/" className="hover:text-foreground">About Us</Link></li>
-                <li><button onClick={handleBecomeDeveloper} className="hover:text-foreground text-left">Become a Developer</button></li>
+                <li><button onClick={handleBecomeDeveloper} type="button" className="hover:text-foreground text-left w-full text-left">Become a Developer</button></li>
                 <li><Link href="/tasks" className="hover:text-foreground">Browse Tasks</Link></li>
               </ul>
             </div>

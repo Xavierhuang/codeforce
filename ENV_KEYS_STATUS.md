@@ -82,3 +82,4 @@ These are empty but **not required** for current functionality:
 
 The application is fully functional with the current configuration. All optional keys are for features that are either not implemented yet or have fallback implementations.
 
+

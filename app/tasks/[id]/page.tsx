@@ -16,7 +16,7 @@ export default function TaskPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="text-center">Loading...</div>
       </div>
     )
@@ -24,7 +24,7 @@ export default function TaskPage() {
 
   if (error || !data) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="text-center text-destructive">
           {error ? 'Error loading task' : 'Task not found'}
         </div>
@@ -33,7 +33,7 @@ export default function TaskPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8" suppressHydrationWarning>
+    <div className="container mx-auto px-4 py-4 md:py-8" suppressHydrationWarning>
       <TaskDetail task={data} />
     </div>
   )

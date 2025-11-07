@@ -35,3 +35,4 @@ plink -ssh root@143.198.24.72 -pw "$PASSWORD" -hostkey "$HOSTKEY" "cd $SERVER_PA
 echo "✅ Deployment complete!"
 echo "🌐 Site: https://skillyy.com"
 
+

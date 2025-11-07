@@ -1,44 +1,47 @@
+'use client'
+
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-
-export const metadata = {
-  title: 'CodeForce Terms of Service',
-  description: 'CodeForce Terms of Service',
-}
+import { Button } from '@/components/ui/button'
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary">
-            CodeForce
+      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center">
+            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
           </Link>
-          <div className="flex gap-4 items-center">
-            <Link href="/tasks" className="text-sm font-medium hover:text-primary">
+          <div className="hidden md:flex gap-6 items-center">
+            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
               Browse Tasks
             </Link>
-            <Link href="/developers" className="text-sm font-medium hover:text-primary">
+            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
               Find Developers
             </Link>
             <Link href="/auth/signin">
-              <span className="text-sm font-medium hover:text-primary">Sign In</span>
+              <Button size="sm" variant="outline">Sign In</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
+                Get Started
+              </Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
             ← Back to Home
           </Link>
         </div>
 
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <h1 className="text-3xl font-bold mb-2">CodeForce Terms of Service</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Skillyy Terms of Service</h1>
             <p className="text-muted-foreground mb-6">
               Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
@@ -48,7 +51,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
                 <p>
-                  By accessing or using CodeForce ("the Platform"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Platform.
+                  By accessing or using Skillyy ("the Platform"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Platform.
                 </p>
               </section>
 
@@ -56,7 +59,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
                 <p className="mb-4">
-                  CodeForce is an online marketplace that connects clients seeking development services with verified developers. We facilitate the connection but are not a party to any agreement between clients and developers.
+                  Skillyy is an online marketplace that connects clients seeking development services with verified developers. We facilitate the connection but are not a party to any agreement between clients and developers.
                 </p>
               </section>
 
@@ -79,7 +82,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">4. Developer Verification</h2>
                 <p>
-                  Developers must complete our verification process, including identity verification. CodeForce reserves the right to verify, reject, or revoke verification at any time. Verification does not guarantee quality or performance.
+                  Developers must complete our verification process, including identity verification. Skillyy reserves the right to verify, reject, or revoke verification at any time. Verification does not guarantee quality or performance.
                 </p>
               </section>
 
@@ -109,11 +112,11 @@ export default function TermsOfServicePage() {
                 <h2 className="text-2xl font-semibold mb-4">6. Payments and Fees</h2>
                 <div className="space-y-3">
                   <p>
-                    CodeForce uses Stripe Connect to process payments. By using the Platform, you agree to Stripe's terms of service.
+                    Skillyy uses Stripe Connect to process payments. By using the Platform, you agree to Stripe's terms of service.
                   </p>
                   <ul className="list-disc pl-6 space-y-1">
                     <li>Payments are held in escrow until task completion</li>
-                    <li>CodeForce charges a platform fee of 15% on all transactions</li>
+                    <li>Skillyy charges a platform fee of 15% on all transactions</li>
                     <li>Stripe processing fees apply (approximately 2.9% + $0.30)</li>
                     <li>Refunds are processed according to our cancellation policy</li>
                     <li>Developers must set up a Stripe Connect account to receive payments</li>
@@ -129,7 +132,7 @@ export default function TermsOfServicePage() {
                   <ul className="list-disc pl-6 space-y-1">
                     <li>Clients may cancel before work begins for a full refund</li>
                     <li>If work has started, refunds are at the discretion of both parties</li>
-                    <li>CodeForce may mediate disputes on a case-by-case basis</li>
+                    <li>Skillyy may mediate disputes on a case-by-case basis</li>
                     <li>Platform fees are non-refundable except in cases of fraud</li>
                   </ul>
                 </div>
@@ -162,7 +165,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">10. Dispute Resolution</h2>
                 <p>
-                  In case of disputes between clients and developers, CodeForce may provide mediation services. However, we are not obligated to resolve disputes. Users are encouraged to resolve issues directly. If mediation is needed, contact support.
+                  In case of disputes between clients and developers, Skillyy may provide mediation services. However, we are not obligated to resolve disputes. Users are encouraged to resolve issues directly. If mediation is needed, contact support.
                 </p>
               </section>
 
@@ -170,7 +173,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
                 <p>
-                  CodeForce acts as a marketplace platform and is not responsible for the quality, safety, or legality of services provided. We are not liable for any damages arising from use of the Platform or services obtained through it.
+                  Skillyy acts as a marketplace platform and is not responsible for the quality, safety, or legality of services provided. We are not liable for any damages arising from use of the Platform or services obtained through it.
                 </p>
               </section>
 
@@ -178,7 +181,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">12. Indemnification</h2>
                 <p>
-                  You agree to indemnify and hold CodeForce harmless from any claims, damages, or expenses arising from your use of the Platform or violation of these Terms.
+                  You agree to indemnify and hold Skillyy harmless from any claims, damages, or expenses arising from your use of the Platform or violation of these Terms.
                 </p>
               </section>
 
@@ -206,9 +209,9 @@ export default function TermsOfServicePage() {
                 </p>
                 <div className="bg-muted p-4 rounded-md">
                   <p className="font-semibold mb-1">Legal Department</p>
-                  <p>CodeForce, Inc.</p>
+                  <p>Skillyy, Inc.</p>
                   <p className="mt-2">
-                    Email: <a href="mailto:legal@codeforce.com" className="text-primary hover:underline">legal@codeforce.com</a>
+                    Email: <a href="mailto:legal@skillyy.com" className="text-primary hover:underline">legal@skillyy.com</a>
                   </p>
                 </div>
               </section>
@@ -216,7 +219,7 @@ export default function TermsOfServicePage() {
               {/* Footer */}
               <div className="border-t pt-6 mt-8">
                 <p className="text-sm text-muted-foreground">
-                  By using CodeForce, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                  By using Skillyy, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
                 </p>
               </div>
             </div>
@@ -224,8 +227,8 @@ export default function TermsOfServicePage() {
         </Card>
 
         {/* Related Links */}
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">Terms of Service</Link>
+        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground justify-center md:justify-start">
+          <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
           <span>•</span>
           <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
           <span>•</span>

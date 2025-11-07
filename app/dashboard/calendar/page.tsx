@@ -56,22 +56,22 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex justify-between items-center">
+    <div className="p-4 md:p-8">
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Calendar</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Calendar</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             View your scheduled tasks and manage your availability
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={goToToday}>
+          <Button variant="outline" onClick={goToToday} size="sm" className="text-xs md:text-sm">
             Today
           </Button>
-          <Button variant="outline" onClick={previousWeek}>
+          <Button variant="outline" onClick={previousWeek} size="sm">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button variant="outline" onClick={nextWeek}>
+          <Button variant="outline" onClick={nextWeek} size="sm">
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
@@ -85,20 +85,20 @@ export default function CalendarPage() {
 
       {/* Week View */}
       <Card>
-        <CardContent className="p-0">
-          <div className="grid grid-cols-7 gap-px border-b">
+        <CardContent className="p-0 overflow-x-auto">
+          <div className="grid grid-cols-7 gap-px border-b min-w-[600px]">
             {weekDays.map((day) => (
               <div
                 key={day.toISOString()}
-                className={`p-4 text-center border-r last:border-r-0 ${
+                className={`p-2 md:p-4 text-center border-r last:border-r-0 ${
                   isToday(day) ? 'bg-primary/5' : ''
                 }`}
               >
-                <div className="text-sm font-medium text-muted-foreground">
+                <div className="text-xs md:text-sm font-medium text-muted-foreground">
                   {format(day, 'EEE')}
                 </div>
                 <div
-                  className={`text-lg font-semibold mt-1 ${
+                  className={`text-base md:text-lg font-semibold mt-1 ${
                     isToday(day) ? 'text-primary' : ''
                   }`}
                 >
@@ -108,14 +108,14 @@ export default function CalendarPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-px min-h-[400px]">
+          <div className="grid grid-cols-7 gap-px min-h-[300px] md:min-h-[400px] min-w-[600px]">
             {weekDays.map((day) => {
               const dayTasks = getMyTasksForDay(day)
 
               return (
                 <div
                   key={day.toISOString()}
-                  className={`p-2 border-r last:border-r-0 min-h-[400px] ${
+                  className={`p-1 md:p-2 border-r last:border-r-0 min-h-[300px] md:min-h-[400px] ${
                     isToday(day) ? 'bg-primary/5' : ''
                   }`}
                 >

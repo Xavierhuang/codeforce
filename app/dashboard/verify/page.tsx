@@ -191,10 +191,10 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Developer Verification</h1>
-        <p className="text-muted-foreground">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Developer Verification</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Complete your profile to get verified and start receiving task invitations
         </p>
       </div>
@@ -239,21 +239,21 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <Card className="mb-6 border-red-200 bg-red-50">
+          <Card className="mb-4 md:mb-6 border-red-200 bg-red-50">
             <CardHeader>
-              <CardTitle>Identity Verification *</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Identity Verification *</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Upload a government-issued ID to verify your identity. This helps us ensure accountability and trust.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="idType">ID Document Type *</Label>
+                <Label htmlFor="idType" className="text-sm md:text-base">ID Document Type *</Label>
                 <select
                   id="idType"
                   value={formData.idDocumentType}
                   onChange={(e) => setFormData({ ...formData, idDocumentType: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border rounded-md"
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm md:text-base"
                   required
                 >
                   <option value="">Select ID type...</option>
@@ -265,27 +265,28 @@ export default function VerifyPage() {
               </div>
 
               <div>
-                <Label htmlFor="idFile">Upload ID Document *</Label>
+                <Label htmlFor="idFile" className="text-sm md:text-base">Upload ID Document *</Label>
                 <div className="mt-1 space-y-2">
                   <Input
                     id="idFile"
                     type="file"
                     accept="image/jpeg,image/png,image/jpg,application/pdf"
                     onChange={handleFileChange}
-                    className="cursor-pointer"
+                    className="cursor-pointer text-xs md:text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
                     Accepted formats: JPEG, PNG, PDF (max 5MB). Make sure the document is clear and all information is visible.
                   </p>
                   {idFile && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">{idFile.name}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="text-xs md:text-sm text-muted-foreground break-words">{idFile.name}</span>
                       {!formData.idDocumentUrl && (
                         <Button
                           type="button"
                           size="sm"
                           onClick={handleUploadId}
                           disabled={isUploading}
+                          className="w-full sm:w-auto text-xs md:text-sm"
                         >
                           {isUploading ? 'Uploading...' : 'Upload'}
                         </Button>
@@ -293,8 +294,8 @@ export default function VerifyPage() {
                     </div>
                   )}
                   {formData.idDocumentUrl && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <CheckCircle className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-green-600">
+                      <CheckCircle className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
                       <span>ID document uploaded successfully</span>
                     </div>
                   )}
@@ -310,15 +311,15 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
+          <Card className="mb-4 md:mb-6">
             <CardHeader>
-              <CardTitle>Skills</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Skills</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Add your technical skills and experience level
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   placeholder="e.g., React, Node.js, Python"
                   value={newSkill.skill}
@@ -334,13 +335,13 @@ export default function VerifyPage() {
                 <select
                   value={newSkill.level}
                   onChange={(e) => setNewSkill({ ...newSkill, level: e.target.value })}
-                  className="px-3 py-2 border rounded-md"
+                  className="px-3 py-2 border rounded-md text-sm"
                 >
                   <option value="junior">Junior</option>
                   <option value="mid">Mid</option>
                   <option value="senior">Senior</option>
                 </select>
-                <Button type="button" onClick={handleAddSkill}>
+                <Button type="button" onClick={handleAddSkill} className="whitespace-nowrap">
                   Add
                 </Button>
               </div>
@@ -364,18 +365,18 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
+          <Card className="mb-4 md:mb-6">
             <CardHeader>
-              <CardTitle>Pricing & Service Type</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Pricing & Service Type</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Set your hourly rate and specify what types of services you offer
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
+                <Label htmlFor="hourlyRate" className="text-sm md:text-base">Hourly Rate (USD) *</Label>
                 <div className="relative mt-1">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 md:w-5 md:h-5" />
                   <Input
                     id="hourlyRate"
                     type="number"
@@ -384,7 +385,7 @@ export default function VerifyPage() {
                     value={formData.hourlyRate}
                     onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                     placeholder="50.00"
-                    className="pl-10"
+                    className="pl-9 md:pl-10 text-sm md:text-base"
                     required
                   />
                 </div>
@@ -394,35 +395,35 @@ export default function VerifyPage() {
               </div>
 
               <div>
-                <Label className="text-base font-semibold mb-3 block">Service Type *</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <Label className="text-sm md:text-base font-semibold mb-3 block">Service Type *</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
                   <Button
                     type="button"
                     variant={formData.serviceType === 'VIRTUAL' ? 'default' : 'outline'}
                     onClick={() => setFormData({ ...formData, serviceType: 'VIRTUAL' })}
-                    className="flex flex-col items-center gap-2 h-auto py-4"
+                    className="flex flex-col items-center gap-2 h-auto py-3 md:py-4 text-sm md:text-base"
                   >
-                    <Wifi className="w-5 h-5" />
+                    <Wifi className="w-4 h-4 md:w-5 md:h-5" />
                     <span>Remote Only</span>
                   </Button>
                   <Button
                     type="button"
                     variant={formData.serviceType === 'IN_PERSON' ? 'default' : 'outline'}
                     onClick={() => setFormData({ ...formData, serviceType: 'IN_PERSON' })}
-                    className="flex flex-col items-center gap-2 h-auto py-4"
+                    className="flex flex-col items-center gap-2 h-auto py-3 md:py-4 text-sm md:text-base"
                   >
-                    <Building2 className="w-5 h-5" />
+                    <Building2 className="w-4 h-4 md:w-5 md:h-5" />
                     <span>On-site Only</span>
                   </Button>
                   <Button
                     type="button"
                     variant={formData.serviceType === 'BOTH' ? 'default' : 'outline'}
                     onClick={() => setFormData({ ...formData, serviceType: 'BOTH' })}
-                    className="flex flex-col items-center gap-2 h-auto py-4"
+                    className="flex flex-col items-center gap-2 h-auto py-3 md:py-4 text-sm md:text-base"
                   >
                     <div className="flex gap-1">
-                      <Wifi className="w-4 h-4" />
-                      <Building2 className="w-4 h-4" />
+                      <Wifi className="w-3 h-3 md:w-4 md:h-4" />
+                      <Building2 className="w-3 h-3 md:w-4 md:h-4" />
                     </div>
                     <span>Both</span>
                   </Button>
@@ -431,13 +432,13 @@ export default function VerifyPage() {
 
               {(formData.serviceType === 'IN_PERSON' || formData.serviceType === 'BOTH') && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                  <Label className="text-base font-semibold flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                  <Label className="text-sm md:text-base font-semibold flex items-center gap-2">
+                    <MapPin className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
                     Location & Service Radius
                   </Label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     <div>
-                      <Label htmlFor="locationLat">Latitude</Label>
+                      <Label htmlFor="locationLat" className="text-sm md:text-base">Latitude</Label>
                       <Input
                         id="locationLat"
                         type="number"
@@ -445,11 +446,11 @@ export default function VerifyPage() {
                         value={formData.locationLat}
                         onChange={(e) => setFormData({ ...formData, locationLat: e.target.value })}
                         placeholder="40.7128"
-                        className="mt-1"
+                        className="mt-1 text-sm md:text-base"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="locationLng">Longitude</Label>
+                      <Label htmlFor="locationLng" className="text-sm md:text-base">Longitude</Label>
                       <Input
                         id="locationLng"
                         type="number"
@@ -457,12 +458,12 @@ export default function VerifyPage() {
                         value={formData.locationLng}
                         onChange={(e) => setFormData({ ...formData, locationLng: e.target.value })}
                         placeholder="-74.0060"
-                        className="mt-1"
+                        className="mt-1 text-sm md:text-base"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="serviceRadiusMiles">Service Radius (miles)</Label>
+                    <Label htmlFor="serviceRadiusMiles" className="text-sm md:text-base">Service Radius (miles)</Label>
                     <Input
                       id="serviceRadiusMiles"
                       type="number"
@@ -470,7 +471,7 @@ export default function VerifyPage() {
                       value={formData.serviceRadiusMiles}
                       onChange={(e) => setFormData({ ...formData, serviceRadiusMiles: e.target.value })}
                       placeholder="25"
-                      className="mt-1"
+                      className="mt-1 text-sm md:text-base"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Maximum distance you're willing to travel for on-site tasks
@@ -486,12 +487,12 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <Card className="mb-6 border-yellow-200 bg-yellow-50">
+          <Card className="mb-4 md:mb-6 border-yellow-200 bg-yellow-50">
             <CardHeader>
-              <CardTitle>Verification Requirements</CardTitle>
+              <CardTitle className="text-base md:text-lg">Verification Requirements</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-xs md:text-sm">
                 <li className="flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span>Complete your profile with bio and skills</span>
@@ -512,7 +513,7 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Button
               type="submit"
               disabled={
@@ -531,6 +532,7 @@ export default function VerifyPage() {
               type="button"
               variant="outline"
               onClick={() => router.back()}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>

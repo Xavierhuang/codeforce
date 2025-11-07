@@ -46,24 +46,24 @@ export default function DevelopersPage() {
   ).slice(0, 10) as string[]
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Find Developers</h1>
-        <p className="text-muted-foreground">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-4xl font-bold mb-2">Find Developers</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Browse vetted developers ready to help with your projects
         </p>
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-8 space-y-4">
+      <div className="mb-6 md:mb-8 space-y-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 md:w-5 md:h-5" />
           <Input
             type="text"
             placeholder="Search developers by name, skills, or bio..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 md:pl-10 text-sm md:text-base"
           />
         </div>
 
@@ -80,6 +80,7 @@ export default function DevelopersPage() {
                     : [...prev, skill]
                 )
               }}
+              className="text-xs md:text-sm"
             >
               {skill}
             </Button>

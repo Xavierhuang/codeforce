@@ -299,22 +299,22 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
       {/* Pending Offers Alert - Very Prominent */}
       {hasPendingOffers && (
         <Alert className="border-primary bg-primary/5">
-          <AlertCircle className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-lg font-semibold">
+          <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+          <AlertTitle className="text-base md:text-lg font-semibold">
             {pendingOffers.length} {pendingOffers.length === 1 ? 'Offer' : 'Offers'} Waiting for Your Review
           </AlertTitle>
           <AlertDescription className="mt-2">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
+              <span className="text-sm md:text-base">
                 You have {pendingOffers.length} pending {pendingOffers.length === 1 ? 'offer' : 'offers'} for this task. 
                 Review them to select the best developer for your project.
               </span>
               <Button 
                 onClick={() => setActiveTab('offers')}
-                size="lg"
-                className="whitespace-nowrap"
+                size="sm"
+                className="md:size-lg whitespace-nowrap w-full sm:w-auto"
               >
-                <DollarSign className="w-4 h-4 mr-2" />
+                <DollarSign className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                 Review Offers Now
               </Button>
             </div>
@@ -326,20 +326,20 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3 flex-wrap">
-                <CardTitle className="text-3xl md:text-4xl">{task?.title}</CardTitle>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                <CardTitle className="text-xl md:text-3xl lg:text-4xl break-words">{task?.title}</CardTitle>
                 <StatusBadge status={task?.status} />
               </div>
-              <div className="text-base text-muted-foreground">
-                <div className="flex items-center gap-4 flex-wrap">
+              <div className="text-sm md:text-base text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                   <span className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    {task?.client?.name || 'Anonymous'}
+                    <User className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                    <span className="break-words">{task?.client?.name || 'Anonymous'}</span>
                   </span>
                   {task?.createdAt && (
                     <span className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
                       {format(new Date(task.createdAt), 'MMM d, yyyy')}
                     </span>
                   )}
@@ -360,27 +360,27 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
           )}
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted/30 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 p-3 md:p-4 bg-muted/30 rounded-lg">
             {task?.price && (
               <div>
-                <div className="text-sm text-muted-foreground mb-1">Budget</div>
-                <div className="text-2xl font-bold text-primary">{formatCurrency(task.price)}</div>
+                <div className="text-xs md:text-sm text-muted-foreground mb-1">Budget</div>
+                <div className="text-lg md:text-2xl font-bold text-primary">{formatCurrency(task.price)}</div>
               </div>
             )}
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Category</div>
-              <div className="font-semibold">{task?.category}</div>
+              <div className="text-xs md:text-sm text-muted-foreground mb-1">Category</div>
+              <div className="font-semibold text-sm md:text-base">{task?.category}</div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Type</div>
-              <div className="font-semibold flex items-center gap-1">
-                {task?.type === 'IN_PERSON' && <MapPin className="w-4 h-4" />}
+              <div className="text-xs md:text-sm text-muted-foreground mb-1">Type</div>
+              <div className="font-semibold flex items-center gap-1 text-sm md:text-base">
+                {task?.type === 'IN_PERSON' && <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
                 {task?.type === 'VIRTUAL' ? 'Virtual' : 'In-Person'}
               </div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Offers</div>
-              <div className="font-semibold">{task?._count?.offers || 0}</div>
+              <div className="text-xs md:text-sm text-muted-foreground mb-1">Offers</div>
+              <div className="font-semibold text-sm md:text-base">{task?._count?.offers || 0}</div>
             </div>
           </div>
 
@@ -412,36 +412,36 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             {/* Assigned Worker */}
             {task?.worker && (
               <Card className="bg-muted/50">
-                <CardContent className="pt-6">
+                <CardContent className="pt-4 md:pt-6">
                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assigned Developer</h4>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     {task.worker.avatarUrl ? (
                       <img
                         src={task.worker.avatarUrl}
                         alt={task.worker.name || 'Developer'}
-                        className="w-16 h-16 rounded-full border-2 border-background"
+                        className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-background flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border-2 border-background">
-                        <User className="w-8 h-8 text-muted-foreground" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-muted flex items-center justify-center border-2 border-background flex-shrink-0">
+                        <User className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <p className="font-semibold text-lg">{task.worker.name}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base md:text-lg break-words">{task.worker.name}</p>
                       {task.worker.rating && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs md:text-sm text-muted-foreground">
                           ⭐ {task.worker.rating.toFixed(1)} ({task.worker.ratingCount} reviews)
                         </p>
                       )}
                       {task.worker.verificationStatus === 'VERIFIED' && (
-                        <Badge className="mt-2 bg-green-100 text-green-800 border-green-200">
+                        <Badge className="mt-2 bg-green-100 text-green-800 border-green-200 text-xs">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Verified
                         </Badge>
                       )}
                     </div>
-                    <Link href={`/developers/${task.worker.slug || task.worker.id}`}>
-                      <Button variant="outline">View Profile</Button>
+                    <Link href={`/developers/${task.worker.slug || task.worker.id}`} className="w-full sm:w-auto">
+                      <Button variant="outline" className="w-full sm:w-auto text-sm">View Profile</Button>
                     </Link>
                   </div>
                 </CardContent>
@@ -453,27 +453,29 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-3 h-12">
-          <TabsTrigger value="details" className="text-base">
-            <FileText className="w-4 h-4 mr-2" />
-            Details
+        <TabsList className="grid w-full grid-cols-3 h-10 md:h-12">
+          <TabsTrigger value="details" className="text-xs md:text-base">
+            <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Details</span>
+            <span className="sm:hidden">Info</span>
           </TabsTrigger>
           {(isClient || isWorker) && (
             <>
-              <TabsTrigger value="offers" className="text-base relative">
-                <DollarSign className="w-4 h-4 mr-2" />
-                Offers
+              <TabsTrigger value="offers" className="text-xs md:text-base relative">
+                <DollarSign className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Offers</span>
                 {task?._count?.offers > 0 && (
-                  <Badge className="ml-2 bg-primary text-primary-foreground">
+                  <Badge className="ml-1 md:ml-2 bg-primary text-primary-foreground text-[10px] md:text-xs px-1 md:px-1.5">
                     {task._count.offers}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="messages" className="text-base relative">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Messages
+              <TabsTrigger value="messages" className="text-xs md:text-base relative">
+                <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Messages</span>
+                <span className="sm:hidden">Chat</span>
                 {task?._count?.messages > 0 && (
-                  <Badge className="ml-2 bg-primary text-primary-foreground">
+                  <Badge className="ml-1 md:ml-2 bg-primary text-primary-foreground text-[10px] md:text-xs px-1 md:px-1.5">
                     {task._count.messages}
                   </Badge>
                 )}
@@ -482,20 +484,20 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
           )}
         </TabsList>
 
-        <TabsContent value="details" className="mt-6">
+        <TabsContent value="details" className="mt-4 md:mt-6">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-3 text-lg">Full Description</h3>
-                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{task?.description}</p>
+                  <h3 className="font-semibold mb-3 text-base md:text-lg">Full Description</h3>
+                  <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap leading-relaxed break-words">{task?.description}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="offers" className="mt-6">
+        <TabsContent value="offers" className="mt-4 md:mt-6">
           <OfferList 
             taskId={task?.id} 
             isClient={isClient}
@@ -504,7 +506,7 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
           />
         </TabsContent>
 
-        <TabsContent value="messages" className="mt-6">
+        <TabsContent value="messages" className="mt-4 md:mt-6">
           <Chat 
             taskId={task?.id} 
             otherUser={

@@ -32,7 +32,7 @@ export default function DeveloperProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="text-center">Loading...</div>
       </div>
     )
@@ -40,7 +40,7 @@ export default function DeveloperProfilePage() {
 
   if (!developer) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
@@ -53,43 +53,43 @@ export default function DeveloperProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
       {/* Header */}
-      <div className="mb-6">
-        <Link href="/developers" className="text-sm text-muted-foreground hover:text-foreground">
+      <div className="mb-4 md:mb-6">
+        <Link href="/developers" className="text-xs md:text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
           ← Back to Developers
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* Main Profile */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-4 md:space-y-6">
           {/* Profile Header */}
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
+            <CardContent className="pt-4 md:pt-6">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 {developer.avatarUrl ? (
                   <img
                     src={developer.avatarUrl}
                     alt={developer.name || 'Developer'}
-                    className="w-24 h-24 rounded-full object-cover"
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-semibold">
+                  <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-primary/10 flex items-center justify-center text-xl md:text-2xl font-semibold flex-shrink-0">
                     {developer.name?.charAt(0).toUpperCase() || 'D'}
                   </div>
                 )}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-2xl font-bold">{developer.name || 'Developer'}</h1>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                    <h1 className="text-xl md:text-2xl font-bold break-words">{developer.name || 'Developer'}</h1>
                     {developer.verificationStatus === 'VERIFIED' && (
-                      <Badge variant="default" className="bg-green-600">
+                      <Badge variant="default" className="bg-green-600 text-xs md:text-sm w-fit">
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Verified
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm text-muted-foreground mb-4">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-semibold text-foreground">
@@ -175,22 +175,22 @@ export default function DeveloperProfilePage() {
         </div>
 
         {/* Sidebar - Booking & QR Code */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Book Developer */}
           <Card>
             <CardHeader>
-              <CardTitle>Book This Developer</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Book This Developer</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Create a task and this developer will be notified
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
-                className="w-full"
-                onClick={() => router.push(`/tasks/new?developer=${developer.id}`)}
+                className="w-full text-sm md:text-base"
+                onClick={() => router.push(`/book/${developer.slug || developer.id}`)}
               >
                 <Calendar className="w-4 h-4 mr-2" />
-                Create Task
+                Book Now
               </Button>
               <div className="text-xs text-muted-foreground text-center">
                 Or browse{' '}
@@ -204,20 +204,20 @@ export default function DeveloperProfilePage() {
           {/* QR Code */}
           <Card>
             <CardHeader>
-              <CardTitle>Share Profile</CardTitle>
-              <CardDescription>Scan QR code to view this profile</CardDescription>
+              <CardTitle className="text-base md:text-lg">Share Profile</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Scan QR code to view this profile</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center space-y-4">
               {profileUrl && (
                 <>
-                  <QRCode value={profileUrl} size={180} />
+                  <QRCode value={profileUrl} size={150} className="md:w-[180px] md:h-[180px]" />
                   <div className="w-full">
                     <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                       <input
                         type="text"
                         value={profileUrl}
                         readOnly
-                        className="flex-1 text-xs bg-transparent border-0 outline-none"
+                        className="flex-1 text-xs bg-transparent border-0 outline-none truncate"
                       />
                       <Button
                         size="sm"
@@ -226,6 +226,7 @@ export default function DeveloperProfilePage() {
                           navigator.clipboard.writeText(profileUrl)
                           alert('Link copied to clipboard!')
                         }}
+                        className="flex-shrink-0"
                       >
                         Copy
                       </Button>

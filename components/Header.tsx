@@ -126,15 +126,22 @@ export function Header() {
             </Link>
           </div>
           
+          {/* Desktop Logo - Hidden on mobile */}
+          <div className="hidden md:flex items-center">
+            <Link href="/" className="flex items-center touch-manipulation">
+              <img src="/logo.svg" alt="Skillyy" className="h-8 w-auto" />
+            </Link>
+          </div>
+          
           {/* Right side icons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2 ml-auto">
             {/* Notifications Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-10 md:w-10">
+                  <Bell className="h-4 w-4 md:h-5 md:w-5" />
                   {unreadCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 flex items-center justify-center p-0 text-[10px] md:text-xs">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </Badge>
                   )}
@@ -228,16 +235,16 @@ export function Header() {
             {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-10 md:w-10">
                   {user?.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.name || 'User'}
-                      className="h-8 w-8 rounded-full"
+                      className="h-7 w-7 md:h-8 md:w-8 rounded-full"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
                     </div>
                   )}
                 </Button>
@@ -245,16 +252,16 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer">
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/api/auth/signout')}>
+                <DropdownMenuItem onClick={() => router.push('/api/auth/signout')} className="cursor-pointer">
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -116,10 +116,10 @@ export default function AvailabilityPage() {
 
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Set Your Availability</h1>
-        <p className="text-muted-foreground">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Set Your Availability</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Let clients know when you're available for work. This helps with task matching.
         </p>
       </div>
@@ -138,15 +138,16 @@ export default function AvailabilityPage() {
             const isAvailable = daySlots.length > 0
 
             return (
-              <div key={day} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <Label className="text-lg font-semibold">{day}</Label>
+              <div key={day} className="border rounded-lg p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <Label className="text-base md:text-lg font-semibold">{day}</Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"
                       size="sm"
                       variant={isAvailable ? 'default' : 'outline'}
                       onClick={() => toggleDay(dayKey)}
+                      className="text-xs md:text-sm"
                     >
                       {isAvailable ? 'Available' : 'Set Available'}
                     </Button>
@@ -158,7 +159,7 @@ export default function AvailabilityPage() {
                     {daySlots.map((slot, index) => (
                       <div
                         key={index}
-                        className="flex items-end gap-2 p-3 bg-muted rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-end gap-2 p-3 bg-muted rounded-lg"
                       >
                         <div className="flex-1 grid grid-cols-2 gap-2">
                           <div>

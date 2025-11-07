@@ -129,19 +129,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-muted-foreground">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Settings</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Manage your account settings and preferences
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          {isWorker && <TabsTrigger value="payments">Payments</TabsTrigger>}
+      <Tabs defaultValue="profile" className="space-y-4 md:space-y-6">
+        <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex">
+          <TabsTrigger value="profile" className="text-xs md:text-sm">Profile</TabsTrigger>
+          <TabsTrigger value="account" className="text-xs md:text-sm">Account</TabsTrigger>
+          {isWorker && <TabsTrigger value="payments" className="text-xs md:text-sm">Payments</TabsTrigger>}
         </TabsList>
 
         {/* Profile Tab */}

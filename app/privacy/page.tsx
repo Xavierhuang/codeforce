@@ -1,44 +1,47 @@
+'use client'
+
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-
-export const metadata = {
-  title: 'CodeForce Privacy Policy',
-  description: 'CodeForce Global Privacy Policy',
-}
+import { Button } from '@/components/ui/button'
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary">
-            CodeForce
+      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center">
+            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
           </Link>
-          <div className="flex gap-4 items-center">
-            <Link href="/tasks" className="text-sm font-medium hover:text-primary">
+          <div className="hidden md:flex gap-6 items-center">
+            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
               Browse Tasks
             </Link>
-            <Link href="/developers" className="text-sm font-medium hover:text-primary">
+            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
               Find Developers
             </Link>
             <Link href="/auth/signin">
-              <span className="text-sm font-medium hover:text-primary">Sign In</span>
+              <Button size="sm" variant="outline">Sign In</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
+                Get Started
+              </Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
             ← Back to Home
           </Link>
         </div>
 
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <h1 className="text-3xl font-bold mb-2">CodeForce Global Privacy Policy</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Skillyy Global Privacy Policy</h1>
             <p className="text-muted-foreground mb-6">
               Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
@@ -48,7 +51,7 @@ export default function PrivacyPolicyPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
                 <p className="mb-4">
-                  This Global Privacy Policy ("Privacy Policy") describes how CodeForce, Inc. ("CodeForce," "we," "our," or "us") collects, uses, retains, discloses, and deletes your Personal Information on the CodeForce website and mobile applications (the "Platform"). It also explains your legal rights and options with respect to your information depending on where you reside.
+                  This Global Privacy Policy ("Privacy Policy") describes how Skillyy, Inc. ("Skillyy," "we," "our," or "us") collects, uses, retains, discloses, and deletes your Personal Information on the Skillyy website and mobile applications (the "Platform"). It also explains your legal rights and options with respect to your information depending on where you reside.
                 </p>
                 <p>
                   By using the Platform, you confirm that you have read and understood this Privacy Policy, and each applicable Terms of Service (together referred to as the "Agreement").
@@ -60,9 +63,9 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-2xl font-semibold mb-4">2. General Terms</h2>
                 <p className="mb-4">In this Privacy Policy:</p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
-                  <li>CodeForce, Inc. is referred to as "CodeForce," "we," "our," or "us."</li>
+                  <li>Skillyy, Inc. is referred to as "Skillyy," "we," "our," or "us."</li>
                   <li>Users of the Platform (Clients and Developers) as "You."</li>
-                  <li>The "Platform" refers to CodeForce's websites and mobile applications.</li>
+                  <li>The "Platform" refers to Skillyy's websites and mobile applications.</li>
                   <li>"Terms of Service" refers to the applicable legal terms you agree to when you use our products or services.</li>
                   <li>"Personal Information" is information that can directly or indirectly identify, or can reasonably identify, an individual, to the extent regulated under applicable privacy laws.</li>
                 </ul>
@@ -253,7 +256,7 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 <p className="mt-4">
-                  To exercise any of these rights, please submit a request to <a href="mailto:privacy@codeforce.com" className="text-primary hover:underline">privacy@codeforce.com</a>. We may require specific information from you to help us verify your identity and process your request. If we are unable to verify your identity, we may deny your request.
+                  To exercise any of these rights, please submit a request to <a href="mailto:privacy@skillyy.com" className="text-primary hover:underline">privacy@skillyy.com</a>. We may require specific information from you to help us verify your identity and process your request. If we are unable to verify your identity, we may deny your request.
                 </p>
               </section>
 
@@ -265,10 +268,10 @@ export default function PrivacyPolicyPage() {
                 </p>
                 <div className="bg-muted p-4 rounded-md">
                   <p className="font-semibold mb-1">Attn: Legal</p>
-                  <p>CodeForce, Inc.</p>
+                  <p>Skillyy, Inc.</p>
                   <p>Privacy Department</p>
                   <p className="mt-2">
-                    Email: <a href="mailto:privacy@codeforce.com" className="text-primary hover:underline">privacy@codeforce.com</a>
+                    Email: <a href="mailto:privacy@skillyy.com" className="text-primary hover:underline">privacy@skillyy.com</a>
                   </p>
                 </div>
               </section>
@@ -283,7 +286,7 @@ export default function PrivacyPolicyPage() {
                     <div className="space-y-3">
                       <div>
                         <h4 className="font-semibold mb-1">California Residents</h4>
-                        <p>California residents may request a list of the categories of Personal Information disclosed by us to third parties during the immediately preceding calendar year for those third parties' own direct marketing purposes. To exercise a request, please submit a request to <a href="mailto:privacy@codeforce.com" className="text-primary hover:underline">privacy@codeforce.com</a>. We may request additional information to verify your identity and confirm your California residence.</p>
+                        <p>California residents may request a list of the categories of Personal Information disclosed by us to third parties during the immediately preceding calendar year for those third parties' own direct marketing purposes. To exercise a request, please submit a request to <a href="mailto:privacy@skillyy.com" className="text-primary hover:underline">privacy@skillyy.com</a>. We may request additional information to verify your identity and confirm your California residence.</p>
                       </div>
                     </div>
                   </div>
@@ -326,8 +329,8 @@ export default function PrivacyPolicyPage() {
         </Card>
 
         {/* Related Links */}
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">Terms of Service</Link>
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground justify-center md:justify-start">
+          <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
           <span>•</span>
           <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
           <span>•</span>

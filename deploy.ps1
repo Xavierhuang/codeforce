@@ -26,13 +26,19 @@ pscp -pw $PASSWORD -hostkey $HOSTKEY ecosystem.config.js ${SERVER}:${SERVER_PATH
 
 Write-Host "✅ Files uploaded" -ForegroundColor Green
 
-# Step 2: Build
-Write-Host "🔨 Building application (this takes 2-3 minutes)..." -ForegroundColor Yellow
-plink -ssh $SERVER -pw $PASSWORD -hostkey $HOSTKEY "cd $SERVER_PATH && npm install && npm run build"
+# Step 2: Clean build and restart
+Write-Host "🧹 Cleaning old build cache..." -ForegroundColor Yellow
+$cleanCmd = 'cd /var/www/codeforce; rm -rf .next; rm -rf node_modules/.cache'
+plink -ssh $SERVER -pw $PASSWORD -hostkey $HOSTKEY $cleanCmd
 
-# Step 3: Restart
+Write-Host "🔨 Building application (this takes 2-3 minutes)..." -ForegroundColor Yellow
+$buildCmd = 'cd /var/www/codeforce; npm install; npm run build'
+plink -ssh $SERVER -pw $PASSWORD -hostkey $HOSTKEY $buildCmd
+
+# Step 3: Full restart (stop and start fresh)
 Write-Host "🔄 Restarting application..." -ForegroundColor Yellow
-plink -ssh $SERVER -pw $PASSWORD -hostkey $HOSTKEY "cd $SERVER_PATH && pm2 restart codeforce || pm2 start ecosystem.config.js"
+$restartCmd = 'cd /var/www/codeforce; pm2 stop codeforce 2>/dev/null || true; pm2 delete codeforce 2>/dev/null || true; pm2 start ecosystem.config.js; pm2 save'
+plink -ssh $SERVER -pw $PASSWORD -hostkey $HOSTKEY $restartCmd
 
 Write-Host "✅ Deployment complete!" -ForegroundColor Green
 Write-Host "🌐 Site: https://skillyy.com" -ForegroundColor Cyan

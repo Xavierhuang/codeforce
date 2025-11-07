@@ -77,11 +77,11 @@ export default function BookWorkerPage() {
 
   if (!session) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">Please sign in to book a specialist</p>
-            <Button onClick={() => router.push('/auth/signin')}>Sign In</Button>
+            <p className="text-sm md:text-base text-muted-foreground mb-4">Please sign in to book a specialist</p>
+            <Button onClick={() => router.push('/auth/signin')} size="sm" className="md:size-default">Sign In</Button>
           </CardContent>
         </Card>
       </div>
@@ -90,7 +90,7 @@ export default function BookWorkerPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="text-center">Loading...</div>
       </div>
     )
@@ -98,10 +98,10 @@ export default function BookWorkerPage() {
 
   if (!worker || !worker.hourlyRate) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Specialist not found or not available for direct booking</p>
+            <p className="text-sm md:text-base text-muted-foreground">Specialist not found or not available for direct booking</p>
           </CardContent>
         </Card>
       </div>
@@ -156,8 +156,8 @@ export default function BookWorkerPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="grid lg:grid-cols-3 gap-8">
+    <div className="container mx-auto px-4 py-4 md:py-8 max-w-6xl">
+      <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2">
           {step === 1 ? (
@@ -213,19 +213,19 @@ function Step1Form({
       <CardContent className="space-y-6">
         {/* Task Type Toggle */}
         <div>
-          <Label className="text-base font-semibold mb-3 block">
+          <Label className="text-sm md:text-base font-semibold mb-3 block">
             Is this a remote task or on-site?
           </Label>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             {(!worker?.serviceType || worker.serviceType === 'VIRTUAL' || worker.serviceType === 'BOTH') && (
               <Button
                 type="button"
                 variant={formData.taskType === 'VIRTUAL' ? 'default' : 'outline'}
                 onClick={() => setFormData({ ...formData, taskType: 'VIRTUAL' })}
-                className="flex-1"
+                className="flex-1 text-sm md:text-base"
                 disabled={worker?.serviceType === 'IN_PERSON'}
               >
-                <Wifi className="w-4 h-4 mr-2" />
+                <Wifi className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                 Remote
               </Button>
             )}
@@ -234,10 +234,10 @@ function Step1Form({
                 type="button"
                 variant={formData.taskType === 'IN_PERSON' ? 'default' : 'outline'}
                 onClick={() => setFormData({ ...formData, taskType: 'IN_PERSON' })}
-                className="flex-1"
+                className="flex-1 text-sm md:text-base"
                 disabled={!worker || worker.serviceType === 'VIRTUAL'}
               >
-                <Building2 className="w-4 h-4 mr-2" />
+                <Building2 className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                 On-site
               </Button>
             )}
@@ -246,8 +246,8 @@ function Step1Form({
 
         {/* Address Fields (only for on-site) */}
         {formData.taskType === 'IN_PERSON' && (
-          <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-            <Label className="text-base font-semibold">Your Task Location</Label>
+          <div className="space-y-3 md:space-y-4 p-3 md:p-4 border rounded-lg bg-muted/50">
+            <Label className="text-sm md:text-base font-semibold">Your Task Location</Label>
             <div>
               <Label htmlFor="address">Street Address *</Label>
               <Input
@@ -268,7 +268,7 @@ function Step1Form({
                 className="mt-1"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city">City *</Label>
                 <Input
@@ -295,7 +295,7 @@ function Step1Form({
 
         {/* Category Selection */}
         <div>
-          <Label htmlFor="category">Category *</Label>
+          <Label htmlFor="category" className="text-sm md:text-base">Category *</Label>
           <p className="text-xs text-muted-foreground mb-2">
             Select the category that best matches your needs
           </p>
@@ -322,7 +322,7 @@ function Step1Form({
         {/* Relevant Skills - Show worker's skills for matching */}
         {worker?.skills && worker.skills.length > 0 && (
           <div>
-            <Label>Relevant Skills (Optional)</Label>
+            <Label className="text-sm md:text-base">Relevant Skills (Optional)</Label>
             <p className="text-xs text-muted-foreground mb-2">
               Select skills that match your task needs. This helps ensure proper matching.
             </p>
@@ -331,7 +331,7 @@ function Step1Form({
                 <Badge
                   key={skill.id}
                   variant={formData.relevantSkills.includes(skill.skill) ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => {
                     setFormData({
                       ...formData,
@@ -351,20 +351,20 @@ function Step1Form({
 
         {/* Task Date & Time */}
         <div>
-          <Label htmlFor="scheduledAt">Task Date & Time *</Label>
+          <Label htmlFor="scheduledAt" className="text-sm md:text-base">Task Date & Time *</Label>
           <Input
             id="scheduledAt"
             type="datetime-local"
             value={formData.scheduledAt}
             onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-            className="mt-1"
+            className="mt-1 text-sm md:text-base"
             required
           />
         </div>
 
         {/* Task Duration */}
         <div>
-          <Label htmlFor="durationHours">Task Duration (hours) *</Label>
+          <Label htmlFor="durationHours" className="text-sm md:text-base">Task Duration (hours) *</Label>
           <Input
             id="durationHours"
             type="number"
@@ -372,20 +372,20 @@ function Step1Form({
             step="0.5"
             value={formData.durationHours}
             onChange={(e) => setFormData({ ...formData, durationHours: parseFloat(e.target.value) || 0 })}
-            className="mt-1"
+            className="mt-1 text-sm md:text-base"
             required
           />
         </div>
 
         {/* Task Details */}
         <div>
-          <Label htmlFor="taskDetails">Task Details *</Label>
+          <Label htmlFor="taskDetails" className="text-sm md:text-base">Task Details *</Label>
           <Textarea
             id="taskDetails"
             value={formData.taskDetails}
             onChange={(e) => setFormData({ ...formData, taskDetails: e.target.value })}
             placeholder="Tell us the details of your task..."
-            className="mt-1 min-h-[120px]"
+            className="mt-1 min-h-[100px] md:min-h-[120px] text-sm md:text-base"
             required
           />
         </div>
@@ -393,7 +393,7 @@ function Step1Form({
         <Button
           onClick={onSubmit}
           disabled={!canProceed || isLoading}
-          className="w-full"
+          className="w-full text-sm md:text-base"
           size="lg"
         >
           {isLoading ? 'Creating Booking...' : 'Continue to Payment'}
@@ -425,28 +425,30 @@ function Step2Confirm({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Confirm & Pay</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <Edit className="w-4 h-4 mr-2" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <CardTitle className="text-lg md:text-xl">Confirm & Pay</CardTitle>
+          <Button variant="ghost" size="sm" onClick={onBack} className="w-full sm:w-auto text-xs md:text-sm">
+            <Edit className="w-3 h-3 md:w-4 md:h-4 mr-2" />
             Edit Details
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 md:space-y-6">
         {/* Task Summary */}
-        <div className="space-y-2 p-4 border rounded-lg">
-          <div className="flex items-center gap-2">
-            <Badge variant={formData.taskType === 'VIRTUAL' ? 'outline' : 'default'}>
+        <div className="space-y-2 p-3 md:p-4 border rounded-lg">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={formData.taskType === 'VIRTUAL' ? 'outline' : 'default'} className="text-xs">
               {formData.taskType === 'VIRTUAL' ? <Wifi className="w-3 h-3 mr-1" /> : <Building2 className="w-3 h-3 mr-1" />}
               {formData.taskType === 'VIRTUAL' ? 'Remote' : 'On-site'}
             </Badge>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
-            <span>{new Date(formData.scheduledAt).toLocaleString()}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+              <span>{new Date(formData.scheduledAt).toLocaleString()}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs md:text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>{formData.durationHours} {formData.durationHours === 1 ? 'hour' : 'hours'}</span>
           </div>
@@ -484,22 +486,22 @@ function Step2Confirm({
         </div>
 
         {/* Price Breakdown */}
-        <div className="space-y-2 p-4 border rounded-lg">
-          <div className="flex justify-between text-sm">
-            <span>Hourly Rate × {formData.durationHours} hours</span>
-            <span>{formatCurrency(baseAmount)}</span>
+        <div className="space-y-2 p-3 md:p-4 border rounded-lg">
+          <div className="flex justify-between text-xs md:text-sm">
+            <span className="break-words">Hourly Rate × {formData.durationHours} hours</span>
+            <span className="ml-2 flex-shrink-0">{formatCurrency(baseAmount)}</span>
           </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
             <span>Trust & Support Fee (15%)</span>
-            <span>{formatCurrency(fees.trustAndSupportFee)}</span>
+            <span className="ml-2 flex-shrink-0">{formatCurrency(fees.trustAndSupportFee)}</span>
           </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
             <span>Processing Fee</span>
-            <span>{formatCurrency(fees.stripeFee)}</span>
+            <span className="ml-2 flex-shrink-0">{formatCurrency(fees.stripeFee)}</span>
           </div>
-          <div className="flex justify-between font-bold text-lg pt-2 border-t">
+          <div className="flex justify-between font-bold text-base md:text-lg pt-2 border-t">
             <span>Total</span>
-            <span className="text-primary">{formatCurrency(fees.totalAmount)}</span>
+            <span className="text-primary ml-2 flex-shrink-0">{formatCurrency(fees.totalAmount)}</span>
           </div>
         </div>
 
@@ -567,60 +569,60 @@ function WorkerInfoPanel({
   durationHours: number
 }) {
   return (
-    <Card className="sticky top-24">
+    <Card className="sticky top-20 md:top-24">
       <CardHeader>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           {worker.avatarUrl ? (
             <img
               src={worker.avatarUrl}
               alt={worker.name || 'Worker'}
-              className="w-16 h-16 rounded-full"
+              className="w-12 h-12 md:w-16 md:h-16 rounded-full flex-shrink-0"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-2xl font-semibold">
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg md:text-2xl font-semibold">
                 {worker.name?.[0]?.toUpperCase() || worker.email[0].toUpperCase()}
               </span>
             </div>
           )}
-          <div>
-            <CardTitle className="text-lg">{worker.name || 'Worker'}</CardTitle>
-            <div className="flex items-center gap-1 text-sm">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base md:text-lg break-words">{worker.name || 'Worker'}</CardTitle>
+            <div className="flex items-center gap-1 text-xs md:text-sm">
+              <Star className="w-3 h-3 md:w-4 md:h-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
               <span>{worker.rating?.toFixed(1) || '0.0'}</span>
               <span className="text-muted-foreground">({worker.ratingCount || 0} reviews)</span>
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4">
         <div>
-          <p className="text-sm text-muted-foreground">Tasks Completed</p>
-          <p className="text-2xl font-bold">{worker._count?.tasksAssigned || 0}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Tasks Completed</p>
+          <p className="text-xl md:text-2xl font-bold">{worker._count?.tasksAssigned || 0}</p>
         </div>
 
         <div>
-          <p className="text-sm text-muted-foreground">Hourly Rate</p>
-          <p className="text-2xl font-bold text-primary">
+          <p className="text-xs md:text-sm text-muted-foreground">Hourly Rate</p>
+          <p className="text-xl md:text-2xl font-bold text-primary">
             {formatCurrency(worker.hourlyRate)}/hour
           </p>
         </div>
 
         {durationHours > 0 && (
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2">Estimated Cost</p>
+          <div className="pt-3 md:pt-4 border-t">
+            <p className="text-xs md:text-sm text-muted-foreground mb-2">Estimated Cost</p>
             <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>{formatCurrency(worker.hourlyRate)} × {durationHours} hrs</span>
-                <span>{formatCurrency(baseAmount)}</span>
+              <div className="flex justify-between text-xs md:text-sm">
+                <span className="break-words">{formatCurrency(worker.hourlyRate)} × {durationHours} hrs</span>
+                <span className="ml-2 flex-shrink-0">{formatCurrency(baseAmount)}</span>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
+              <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
                 <span>+ Fees</span>
-                <span>{formatCurrency(fees.trustAndSupportFee + fees.stripeFee)}</span>
+                <span className="ml-2 flex-shrink-0">{formatCurrency(fees.trustAndSupportFee + fees.stripeFee)}</span>
               </div>
-              <div className="flex justify-between font-bold pt-2 border-t">
+              <div className="flex justify-between font-bold pt-2 border-t text-sm md:text-base">
                 <span>Total</span>
-                <span className="text-primary">{formatCurrency(fees.totalAmount)}</span>
+                <span className="text-primary ml-2 flex-shrink-0">{formatCurrency(fees.totalAmount)}</span>
               </div>
             </div>
           </div>

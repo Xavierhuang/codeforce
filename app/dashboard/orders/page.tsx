@@ -59,17 +59,17 @@ export default function BuyerOrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="text-center">Loading orders...</div>
       </div>
     )
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Orders</h1>
-        <p className="text-muted-foreground">
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">My Orders</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           View all your purchased offers and task progress
         </p>
       </div>
@@ -87,11 +87,11 @@ export default function BuyerOrdersPage() {
         <div className="space-y-4">
           {filteredTasks.map((task: any) => (
             <Card key={task.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-xl font-semibold">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                      <h3 className="text-lg md:text-xl font-semibold break-words">
                         {task.offer?.message || task.title}
                       </h3>
                       <StatusBadge status={task.status} />
