@@ -2,36 +2,11 @@
 
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 
 export default function CookiePolicyPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Find Developers
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="sm" variant="outline">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      {/* Header is handled by UnifiedHeader in root layout */}
       <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -103,7 +78,7 @@ export default function CookiePolicyPage() {
                 <h2 className="text-2xl font-semibold mb-4">5. Managing Cookies</h2>
                 <p className="mb-4">You can control and manage cookies in several ways:</p>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li><strong>Browser Settings:</strong> Most browsers allow you to refuse or delete cookies. Check your browser's help section for instructions.</li>
+                  <li><strong>Browser Settings:</strong> Most browsers allow you to refuse or delete cookies. Check your browser&apos;s help section for instructions.</li>
                   <li><strong>Platform Settings:</strong> Some cookie preferences can be managed through your account settings.</li>
                   <li><strong>Opt-Out Tools:</strong> Various tools are available to help you opt out of certain cookies.</li>
                 </ul>
@@ -124,7 +99,7 @@ export default function CookiePolicyPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">7. Updates to This Policy</h2>
                 <p>
-                  We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.
+                  We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the &quot;Last Updated&quot; date.
                 </p>
               </section>
 

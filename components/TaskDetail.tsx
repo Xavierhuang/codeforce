@@ -19,6 +19,8 @@ import toast from 'react-hot-toast'
 import { Play, CheckCircle, X, MessageSquare, DollarSign, FileText, MapPin, Clock, User, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ClockInOutButton } from '@/components/ClockInOutButton'
+import { BuyerInfoCard } from '@/components/BuyerInfoCard'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -384,6 +386,24 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             </div>
           </div>
 
+          {/* Time Tracking - Clock In/Out Button (for workers) */}
+          {isWorker && task && (
+            <div className="mb-6">
+              <ClockInOutButton task={task} onUpdate={mutate} />
+            </div>
+          )}
+
+          {/* Buyer Info Card (for workers) */}
+          {isWorker && task?.client && (
+            <div className="mb-6">
+              <BuyerInfoCard 
+                buyer={task.client} 
+                task={task} 
+                onContact={() => setActiveTab('messages')}
+              />
+            </div>
+          )}
+
           {/* Task Description */}
           <div className="space-y-4">
             <div>
@@ -395,19 +415,56 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             </div>
 
             {/* Additional Details */}
-            {task?.scheduledAt && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>Scheduled: {format(new Date(task.scheduledAt), 'MMM d, yyyy h:mm a')}</span>
-              </div>
-            )}
+            <div className="space-y-2">
+              {task?.scheduledAt && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Scheduled: {format(new Date(task.scheduledAt), 'MMM d, yyyy h:mm a')}</span>
+                </div>
+              )}
 
-            {task?.address && (
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <MapPin className="w-4 h-4 mt-0.5" />
-                <span>{task.address}</span>
-              </div>
-            )}
+              {task?.estimatedDurationMins && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Estimated Duration: {Math.floor(task.estimatedDurationMins / 60)}h {task.estimatedDurationMins % 60}m</span>
+                </div>
+              )}
+
+              {task?.totalTimeMinutes !== null && task?.totalTimeMinutes !== undefined && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Total Time Tracked: {Math.floor(task.totalTimeMinutes / 60)}h {task.totalTimeMinutes % 60}m</span>
+                </div>
+              )}
+
+              {task?.address && (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4 mt-0.5" />
+                  <span>{task.address}</span>
+                </div>
+              )}
+
+              {task?.subcategory && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <FileText className="w-4 h-4" />
+                  <span>Subcategory: {task.subcategory}</span>
+                </div>
+              )}
+
+              {task?.minBillableMins && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Minimum Billable: {Math.floor(task.minBillableMins / 60)}h {task.minBillableMins % 60}m</span>
+                </div>
+              )}
+
+              {task?.travelFee && task.travelFee > 0 && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span>Travel Fee: {formatCurrency(task.travelFee)}</span>
+                </div>
+              )}
+            </div>
 
             {/* Assigned Worker */}
             {task?.worker && (

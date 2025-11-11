@@ -21,7 +21,7 @@ export interface FeeConfig {
 
 /**
  * Default fee configuration
- * Can be overridden via environment variables
+ * Can be overridden via environment variables or database settings
  */
 const DEFAULT_FEE_CONFIG: FeeConfig = {
   platformFeeRate: parseFloat(process.env.STRIPE_PLATFORM_FEE_RATE || '0.15'),
@@ -31,15 +31,39 @@ const DEFAULT_FEE_CONFIG: FeeConfig = {
 }
 
 /**
+ * Get fee config from database settings (async)
+ * Falls back to defaults if database is unavailable
+ */
+export async function getFeeConfigFromSettings(): Promise<FeeConfig> {
+  try {
+    const { getPlatformSettings } = await import('./settings')
+    const settings = await getPlatformSettings()
+    return {
+      platformFeeRate: settings.platformFeeRate,
+      trustAndSupportFeeRate: settings.trustAndSupportFeeRate,
+      stripeFeeRate: parseFloat(process.env.STRIPE_FEE_RATE || '0.029'),
+      stripeFeeFixed: parseFloat(process.env.STRIPE_FEE_FIXED || '0.30'),
+    }
+  } catch (error) {
+    console.error('Error fetching fee config from settings:', error)
+    return DEFAULT_FEE_CONFIG
+  }
+}
+
+/**
  * Calculate all fees and amounts for a given base amount
  * @param baseAmount - The base price amount in dollars
- * @param config - Optional fee configuration (uses defaults if not provided)
+ * @param platformFeeRateOrConfig - Platform fee rate (0-1) or full FeeConfig object (uses defaults if not provided)
  * @returns FeeCalculation object with all calculated amounts
  */
 export function calculateFees(
   baseAmount: number,
-  config: FeeConfig = DEFAULT_FEE_CONFIG
+  platformFeeRateOrConfig?: number | FeeConfig
 ): FeeCalculation {
+  // Handle both number (platformFeeRate) and FeeConfig object
+  const config: FeeConfig = typeof platformFeeRateOrConfig === 'number'
+    ? { ...DEFAULT_FEE_CONFIG, platformFeeRate: platformFeeRateOrConfig }
+    : platformFeeRateOrConfig || DEFAULT_FEE_CONFIG
   const platformFee = baseAmount * config.platformFeeRate // 15% deducted from worker (tasker side)
   const trustAndSupportFee = baseAmount * config.trustAndSupportFeeRate // 15% added to buyer (buyer side)
   const stripeFee = baseAmount * config.stripeFeeRate + config.stripeFeeFixed

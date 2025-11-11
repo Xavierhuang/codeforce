@@ -30,7 +30,8 @@ export default function NotificationsPage() {
     if (!pusher) return
 
     pusherRef.current = pusher
-    const channel = pusher.subscribe(`user-${session.user.id}`)
+    // Subscribe to private user channel for notifications
+    const channel = pusher.subscribe(`private-user-${session.user.id}`)
 
     channel.bind('notification', () => {
       mutate() // Refresh notifications when new one arrives

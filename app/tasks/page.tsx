@@ -338,13 +338,11 @@ export default function TasksPage() {
               <p className="text-muted-foreground mb-6">
                 {filters.search || (filters.category && filters.category !== 'all') || (filters.type && filters.type !== 'all')
                   ? 'Try adjusting your filters to see more results.'
-                  : 'Be the first to post a task!'}
+                  : 'No tasks available at the moment.'}
               </p>
-              {session && (
-                <Link href="/tasks/new">
-                  <Button>Post a Task</Button>
-                </Link>
-              )}
+              <Link href="/developers">
+                <Button>Find Developers</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

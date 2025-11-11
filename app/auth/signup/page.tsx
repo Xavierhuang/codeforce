@@ -112,7 +112,7 @@ export default function SignUpPage() {
                   <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-lg">I'm a Buyer</div>
+                  <div className="font-semibold text-lg">I&apos;m a Buyer</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     I want to hire developers and get work done
                   </div>
@@ -130,7 +130,7 @@ export default function SignUpPage() {
                   <Briefcase className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-lg">I'm a Developer</div>
+                  <div className="font-semibold text-lg">I&apos;m a Developer</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     I want to offer my services and earn money
                   </div>

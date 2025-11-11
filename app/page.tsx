@@ -5,14 +5,41 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Bug, Globe, Smartphone, Settings } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Search, Star, CheckCircle, ChevronRight } from 'lucide-react'
+import useSWR from 'swr'
+import { formatCurrency } from '@/lib/utils'
+import { useState } from 'react'
+import { TaskerBadge } from '@/components/TaskerBadge'
+import { TaskerBadgeTier } from '@/lib/badge-tier'
 
 // Force dynamic rendering to prevent static caching
 export const dynamic = 'force-dynamic'
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+const POPULAR_CATEGORIES = [
+  'Bug Fix',
+  'Web Development',
+  'Mobile App',
+  'DevOps',
+  'API Integration',
+  'UI/UX Design',
+  'Database',
+  'Code Review'
+]
+
 export default function Home() {
   const { data: session } = useSession()
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Fetch recommended taskers
+  const { data: recommendedTaskers } = useSWR(
+    '/api/v1/search/developers?limit=6',
+    fetcher
+  )
 
   const handleGetStarted = () => {
     if (session) {
@@ -36,71 +63,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation - Always show on home page */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top" suppressHydrationWarning>
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center" suppressHydrationWarning>
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
-              Find Developers
-            </Link>
-            {session ? (
-              <Button 
-                onClick={handleGetStarted}
-                size="sm" 
-                className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-4 py-2 transition-colors touch-manipulation"
-              >
-                Get Started
-              </Button>
-            ) : (
-              <>
-                <Link href="/auth/signin" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors touch-manipulation">
-                  Sign In
-                </Link>
-                <Button 
-                  onClick={handleGetStarted}
-                  size="sm" 
-                  className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-4 py-2 transition-colors touch-manipulation"
-                >
-                  Get Started
-                </Button>
-              </>
-            )}
-          </div>
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            {session ? (
-              <Button 
-                onClick={handleGetStarted}
-                size="sm" 
-                className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900 font-medium rounded-md px-3 py-1.5 text-xs touch-manipulation"
-              >
-                Get Started
-              </Button>
-            ) : (
-              <Link href="/auth/signin">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="rounded-md px-3 py-1.5 text-xs touch-manipulation"
-                >
-                  Sign In
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-white" suppressHydrationWarning>
+      {/* Header is handled by UnifiedHeader in root layout */}
 
       {/* Hero Section */}
-      <main className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto py-12 md:py-20">
+      <main className="container mx-auto px-4" suppressHydrationWarning>
+        <div className="max-w-4xl mx-auto py-12 md:py-20" suppressHydrationWarning>
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-center mb-4 md:mb-6 leading-tight px-2">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Hire skilled developers</span>
@@ -114,77 +82,162 @@ export default function Home() {
             No task posting needed—just find, book, and get your work done.
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+          {/* Book Your Next Task Section - TaskRabbit Style */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+              Book Your Next Task
+            </h2>
+            
+            {/* Large Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-muted-foreground w-6 h-6" />
               <Input
                 type="text"
-                placeholder="Search for developers by skills or expertise..."
-                className="w-full pl-12 pr-4 py-6 text-lg rounded-full border-2 focus:border-primary"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Describe one task, e.g. fix the hole in my wall"
+                className="w-full pl-14 pr-4 py-6 text-lg rounded-lg border-2 focus:border-primary h-16"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const query = (e.target as HTMLInputElement).value
-                    window.location.href = `/developers?search=${encodeURIComponent(query)}`
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    router.push(`/developers?search=${encodeURIComponent(searchQuery.trim())}`)
                   }
                 }}
               />
-              <Link href="/developers">
-                <Button 
-                  size="lg" 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full px-8"
-                >
-                  Search
-                </Button>
-              </Link>
             </div>
             
-            {/* Quick Categories */}
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              {['Bug Fix', 'Web Development', 'Mobile App', 'API Integration', 'DevOps'].map((cat) => (
+            {/* Popular Categories - TaskRabbit Style */}
+            <div className="flex flex-wrap gap-3 justify-center mb-8">
+              {POPULAR_CATEGORIES.map((cat) => (
                 <Link 
                   key={cat} 
                   href={`/developers?category=${encodeURIComponent(cat)}`}
-                  className="px-4 py-2 text-sm bg-muted hover:bg-primary hover:text-primary-foreground rounded-full transition-colors"
+                  className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
                 >
                   {cat}
                 </Link>
               ))}
+              <Link 
+                href="/developers"
+                className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
+              >
+                See More
+              </Link>
             </div>
           </div>
 
-          {/* Category Navigation */}
-          <div className="flex justify-center gap-8 mb-16">
-            <Link href="/developers?category=Bug Fix" className="flex flex-col items-center group">
-              <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
-                <Bug className="w-6 h-6" />
+          {/* Taskers Recommended for You */}
+          {recommendedTaskers && recommendedTaskers.length > 0 && (
+            <section className="max-w-7xl mx-auto mb-16" suppressHydrationWarning>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  Taskers recommended for you
+                </h2>
+                <Link 
+                  href="/developers"
+                  className="text-primary hover:underline flex items-center gap-1 text-sm md:text-base"
+                >
+                  See all <ChevronRight className="w-4 h-4" />
+                </Link>
               </div>
-              <span className="text-sm font-medium text-primary">Bug Fix</span>
-            </Link>
-            <Link href="/developers?category=Web Development" className="flex flex-col items-center group">
-              <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
-                <Globe className="w-6 h-6" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recommendedTaskers.slice(0, 6).map((tasker: any) => {
+                  const topServices = tasker.workerServices?.slice(0, 3) || []
+                  const completedTasks = tasker._count?.tasksAssigned || 0
+                  const rating = tasker.rating || 0
+                  const reviewCount = tasker._count?.reviewsReceived || 0
+                  
+                  return (
+                    <Card key={tasker.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        {/* Popular Badge */}
+                        <div className="text-xs text-muted-foreground mb-3">
+                          Popular in your area
+                        </div>
+                        
+                        {/* Profile Picture and Name */}
+                        <div className="flex items-start gap-4 mb-4">
+                          {tasker.avatarUrl ? (
+                            <img
+                              src={tasker.avatarUrl}
+                              alt={tasker.name || 'Tasker'}
+                              className="w-16 h-16 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-xl font-semibold">
+                              {tasker.name?.charAt(0).toUpperCase() || 'T'}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-lg truncate">
+                                {tasker.name || 'Tasker'}
+                              </h3>
+                              {tasker.badgeTier && tasker.badgeTier !== 'STARTER' && (
+                                <TaskerBadge 
+                                  tier={tasker.badgeTier as TaskerBadgeTier} 
+                                  size="sm"
+                                />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span>{completedTasks} Completed Tasks</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-semibold">{rating.toFixed(1)}</span>
+                              <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="border-t pt-4">
+                          <div className="text-xs font-semibold text-muted-foreground mb-3">
+                            Top Skills
+                          </div>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {topServices.length > 0 ? (
+                              topServices.map((service: any) => (
+                                <Link
+                                  key={service.id}
+                                  href={`/developers/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
+                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 hover:bg-primary hover:text-primary-foreground rounded transition-all"
+                                >
+                                  {service.skillName} for {formatCurrency(service.hourlyRate)}/hr
+                                </Link>
+                              ))
+                            ) : (
+                              tasker.skills?.slice(0, 3).map((skill: any) => (
+                                <span
+                                  key={skill.id}
+                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded"
+                                >
+                                  {skill.skill}
+                                  {tasker.hourlyRate && ` for ${formatCurrency(tasker.hourlyRate)}/hr`}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                          <Link href={`/developers/${tasker.slug || tasker.id}`}>
+                            <Button variant="outline" className="w-full">
+                              View Tasker Profile
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
-              <span className="text-sm font-medium">Web Dev</span>
-            </Link>
-            <Link href="/developers?category=Mobile App" className="flex flex-col items-center group">
-              <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
-                <Smartphone className="w-6 h-6" />
-              </div>
-              <span className="text-sm font-medium">Mobile</span>
-            </Link>
-            <Link href="/developers?category=DevOps" className="flex flex-col items-center group">
-              <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-2 transition-colors">
-                <Settings className="w-6 h-6" />
-              </div>
-              <span className="text-sm font-medium">DevOps</span>
-            </Link>
-          </div>
+            </section>
+          )}
+
         </div>
 
         {/* How It Works */}
-        <section className="bg-muted/30 py-20">
-          <div className="container mx-auto px-4">
+        <section className="bg-muted/30 py-20" suppressHydrationWarning>
+          <div className="container mx-auto px-4" suppressHydrationWarning>
             <h2 className="text-4xl font-bold text-center mb-12">
               How it works
             </h2>
@@ -221,12 +274,12 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 text-center">
+        <section className="py-20 text-center" suppressHydrationWarning>
           <h2 className="text-4xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-xl text-muted-foreground mb-8">
             Join Skillyy as a buyer or developer
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center" suppressHydrationWarning>
             <Button 
               onClick={(e) => {
                 e.preventDefault()
@@ -250,49 +303,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t bg-gray-50 mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-semibold mb-4">Skillyy</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/" className="hover:text-foreground">About Us</Link></li>
-                <li><button onClick={handleBecomeDeveloper} type="button" className="hover:text-foreground text-left w-full text-left">Become a Developer</button></li>
-                <li><Link href="/tasks" className="hover:text-foreground">Browse Tasks</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/help" className="hover:text-foreground">Help Center</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground">Contact Us</Link></li>
-                <li><Link href="/safety" className="hover:text-foreground">Safety</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground">Terms of Service</Link></li>
-                <li><Link href="/cookie" className="hover:text-foreground">Cookie Policy</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Connect</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="/careers" className="hover:text-foreground">Careers</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} Skillyy, Inc. All rights reserved.</p>
-            <p className="mt-2">Connecting clients with skilled technical professionals including developers, editors, designers, and social media managers.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

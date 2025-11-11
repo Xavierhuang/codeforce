@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
-import { calculateFees, calculateAmountInCents } from '@/lib/stripe-fees'
+import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
 import { createNotification, checkAndSendOfflineNotification } from '@/lib/notifications'
 import { triggerMessageEvent } from '@/lib/pusher'
 
@@ -65,8 +65,9 @@ export async function POST(
       )
     }
 
-    // Calculate fees
-    const fees = calculateFees(offer.price)
+    // Calculate fees with database settings
+    const feeConfig = await getFeeConfigFromSettings()
+    const fees = calculateFees(offer.price, feeConfig)
 
     // Create PaymentIntent with metadata for webhook processing
     const paymentIntent = await stripe.paymentIntents.create({
@@ -98,5 +99,12 @@ export async function POST(
     )
   }
 }
+
+
+
+
+
+
+
 
 

@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, getCurrentUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
+import { validateBody, validateSearchParams } from '@/lib/validation'
+import { ReviewCreateSchema, ReviewQuerySchema } from '@/lib/validation-schemas'
+import { sanitizeText } from '@/lib/sanitize'
+import { handleApiError, Errors } from '@/lib/errors'
+import { updateUserRating } from '@/lib/rating-calculator'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth()
-    const body = await req.json()
-    const { targetUserId, taskId, rating, comment } = body
-
-    if (!targetUserId || !rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: 'Valid target user ID and rating (1-5) are required' },
-        { status: 400 }
-      )
+    
+    // Rate limiting for review creation
+    const rateLimitResponse = await rateLimit(req, rateLimitConfigs.review, user.id)
+    if (rateLimitResponse) {
+      return rateLimitResponse
     }
+    
+    // Validate request body
+    const validation = await validateBody(req, ReviewCreateSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+    
+    const { targetUserId, taskId, rating, comment, serviceName } = validation.data
 
     // Verify the task exists and user was involved
     const task = await prisma.task.findUnique({
@@ -21,18 +32,23 @@ export async function POST(req: NextRequest) {
     })
 
     if (!task) {
+      throw Errors.notFound('Task')
+    }
+
+    // CRITICAL: Only allow reviews for completed tasks
+    if (task.status !== 'COMPLETED') {
       return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
+        { 
+          error: 'Reviews can only be submitted for completed tasks',
+          taskStatus: task.status,
+        },
+        { status: 400 }
       )
     }
 
     // Verify user was involved in the task (either client or worker)
     if (task.clientId !== user.id && task.workerId !== user.id) {
-      return NextResponse.json(
-        { error: 'You can only review users involved in this task' },
-        { status: 403 }
-      )
+      throw Errors.forbidden('You can only review users involved in this task')
     }
 
     // Verify target user was the other party in the task
@@ -67,98 +83,151 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create review
-    const review = await prisma.review.create({
-      data: {
-        reviewerId: user.id,
-        targetUserId,
-        taskId,
-        rating,
-        comment: comment || null,
-      },
-      include: {
-        reviewer: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
+    // Create review and update rating atomically in a transaction
+    const review = await prisma.$transaction(async (tx) => {
+      // Create the review
+      const newReview = await tx.review.create({
+        data: {
+          reviewerId: user.id,
+          targetUserId,
+          taskId,
+          rating,
+          comment: comment ? sanitizeText(comment) : null,
+          serviceName: serviceName ? sanitizeText(serviceName) : null,
+        },
+        include: {
+          reviewer: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            },
           },
         },
-      },
-    })
+      })
 
-    // Update target user's rating
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId },
-      include: {
-        reviewsReceived: true,
-      },
-    })
+      // Use database aggregation for atomic rating calculation
+      // This prevents race conditions when multiple reviews are created simultaneously
+      // Only count approved reviews
+      const ratingData = await tx.review.aggregate({
+        where: {
+          targetUserId,
+          status: 'APPROVED',
+        },
+        _avg: { rating: true },
+        _count: { rating: true },
+      })
 
-    if (targetUser) {
-      const totalRating = targetUser.reviewsReceived.reduce((sum: number, r: any) => sum + r.rating, 0)
-      const newRating = totalRating / targetUser.reviewsReceived.length
-      const ratingCount = targetUser.reviewsReceived.length
-
-      await prisma.user.update({
+      // Update target user's rating atomically
+      await tx.user.update({
         where: { id: targetUserId },
         data: {
-          rating: newRating,
-          ratingCount,
+          rating: ratingData._avg.rating ? Number(ratingData._avg.rating.toFixed(2)) : 0,
+          ratingCount: ratingData._count.rating || 0,
         },
       })
-    }
+
+      // Update service-specific rating if serviceName is provided
+      if (serviceName) {
+        // Update WorkerService rating (only approved reviews)
+        const serviceRatingData = await tx.review.aggregate({
+          where: {
+            targetUserId,
+            serviceName: sanitizeText(serviceName),
+            status: 'APPROVED', // Only count approved reviews
+          },
+          _avg: { rating: true },
+          _count: { rating: true },
+        })
+        
+        await tx.workerService.updateMany({
+          where: {
+            workerId: targetUserId,
+            skillName: sanitizeText(serviceName),
+          },
+          data: {
+            rating: serviceRatingData._avg.rating ? Number(serviceRatingData._avg.rating.toFixed(2)) : 0,
+            ratingCount: serviceRatingData._count.rating || 0,
+          },
+        })
+      }
+
+      return newReview
+    })
 
     return NextResponse.json(review, { status: 201 })
-  } catch (error: any) {
-    console.error('Error creating review:', error)
-    if (error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  } catch (error: unknown) {
+    return handleApiError(error, 'Failed to create review')
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    const { searchParams } = new URL(req.url)
-    const taskId = searchParams.get('taskId')
-    const reviewerId = searchParams.get('reviewerId')
-
+    
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      throw Errors.unauthorized()
     }
-
-    const where: any = {}
+    
+    const { searchParams } = new URL(req.url)
+    
+    // Validate query parameters
+    const queryValidation = validateSearchParams(searchParams, ReviewQuerySchema)
+    if (!queryValidation.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid query parameters',
+          details: queryValidation.errors.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        },
+        { status: 400 }
+      )
+    }
+    
+    const { targetUserId, taskId, reviewerId, page, limit } = queryValidation.data
+    
+    const where: any = {
+      targetUserId,
+      status: 'APPROVED', // Only show approved reviews to users
+    }
     if (taskId) where.taskId = taskId
     if (reviewerId) where.reviewerId = reviewerId
 
-    const reviews = await prisma.review.findMany({
-      where,
-      include: {
-        reviewer: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
+    const skip = (page - 1) * limit
+    
+    const [reviews, total] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        include: {
+          reviewer: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.review.count({ where }),
+    ])
+
+    return NextResponse.json({
+      reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     })
-
-    return NextResponse.json(reviews)
-  } catch (error) {
-    console.error('Error fetching reviews:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  } catch (error: unknown) {
+    return handleApiError(error, 'Failed to fetch reviews')
   }
 }

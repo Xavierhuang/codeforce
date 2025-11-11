@@ -69,12 +69,6 @@ export function MobileNav() {
         label: 'My Tasks',
         icon: Briefcase,
         roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-      },
-      {
-        href: '/tasks',
-        label: 'Browse Tasks',
-        icon: Search,
-        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       }
     )
   }

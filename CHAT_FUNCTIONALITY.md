@@ -103,3 +103,10 @@ This would automatically check for new messages every 3 seconds, but it's less e
 The Pusher integration is already coded and ready - you just need to add the keys to enable real-time features.
 
 
+
+
+
+
+
+
+

@@ -2,22 +2,45 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { generateUniqueSlug, generateSlug } from '@/lib/slug'
+import { validateBody } from '@/lib/validation'
+import { SignupSchema } from '@/lib/validation-schemas'
+import { validatePasswordStrength } from '@/lib/password-policy'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { getPlatformSettings } from '@/lib/settings'
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { email, password, name, phone, role } = body
+  // Rate limiting - strict for signup to prevent abuse
+  const rateLimitResponse = await rateLimit(req, rateLimitConfigs.auth)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
 
-    if (!email || !password) {
+  try {
+    // Check if new registrations are allowed
+    const settings = await getPlatformSettings()
+    if (!settings.allowNewRegistrations) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
+        { error: 'New registrations are currently disabled. Please contact support for assistance.' },
+        { status: 403 }
       )
     }
+    // Validate request body
+    const validation = await validateBody(req, SignupSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+    
+    const { email, password, name, phone, role } = validation.data
 
-    if (password.length < 8) {
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password)
+    if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
+        {
+          error: 'Password does not meet security requirements',
+          details: passwordValidation.errors,
+          strength: passwordValidation.strength,
+        },
         { status: 400 }
       )
     }
@@ -26,13 +49,6 @@ export async function POST(req: NextRequest) {
     if (role === 'WORKER' && !phone) {
       return NextResponse.json(
         { error: 'Phone number is required for developers' },
-        { status: 400 }
-      )
-    }
-
-    if (phone && !/^\+[1-9]\d{1,14}$/.test(phone)) {
-      return NextResponse.json(
-        { error: 'Phone number must be in E.164 format (e.g., +1234567890)' },
         { status: 400 }
       )
     }

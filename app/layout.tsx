@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { UnifiedHeader } from '@/components/header/HeaderData'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,7 +32,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <Providers>{children}</Providers>
+          <Providers header={<UnifiedHeader />}>
+            {children}
+          </Providers>
         </ErrorBoundary>
       </body>
     </html>

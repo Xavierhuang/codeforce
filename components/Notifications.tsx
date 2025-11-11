@@ -12,6 +12,8 @@ import { Bell, Check, X } from 'lucide-react'
 import { getPusherClient } from '@/lib/pusher-client'
 import { useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
+import { LoadingPage } from '@/components/ui/loading'
+import { EmptyStateCard } from '@/components/ui/empty-state'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -31,10 +33,12 @@ export function Notifications() {
     if (!pusher) return
 
     pusherRef.current = pusher
-    const channel = pusher.subscribe(`user-${session.user.id}`)
+    // Subscribe to private user channel for notifications
+    const channel = pusher.subscribe(`private-user-${session.user.id}`)
 
     channel.bind('notification', () => {
       mutate() // Refresh notifications when new one arrives
+      toast.success('New notification received')
     })
 
     return () => {
@@ -63,18 +67,21 @@ export function Notifications() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-4 text-muted-foreground">Loading notifications...</div>
+      <Card>
+        <CardContent className="py-8">
+          <LoadingPage message="Loading notifications..." />
+        </CardContent>
+      </Card>
     )
   }
 
   if (!notifications || notifications.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground">No notifications yet</p>
-        </CardContent>
-      </Card>
+      <EmptyStateCard
+        icon={Bell}
+        title="No notifications yet"
+        description="You&apos;ll see notifications here when you receive updates about your tasks, messages, and account activity."
+      />
     )
   }
 
@@ -132,5 +139,10 @@ export function Notifications() {
     </div>
   )
 }
+
+
+
+
+
 
 

@@ -120,7 +120,7 @@ export default function AvailabilityPage() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Set Your Availability</h1>
         <p className="text-sm md:text-base text-muted-foreground">
-          Let clients know when you're available for work. This helps with task matching.
+          Let clients know when you&apos;re available for work. This helps with task matching.
         </p>
       </div>
 

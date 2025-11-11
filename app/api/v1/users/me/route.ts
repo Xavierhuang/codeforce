@@ -56,27 +56,49 @@ export async function PUT(req: NextRequest) {
       name,
       bio,
       phone,
+      avatarUrl,
+      avatarCropX,
+      avatarCropY,
+      avatarCropScale,
+      bannerUrl,
+      website,
+      linkedinUrl,
+      githubUrl,
+      location,
       locationLat,
       locationLng,
       serviceRadiusMiles,
       availability,
       skills,
+      workerServices,
       idDocumentUrl,
       idDocumentType,
       slug,
       hourlyRate,
       serviceType,
+      yearsOfExperience,
+      education,
+      languages,
+      certifications,
+      // Buyer-specific fields
+      company,
+      companySize,
+      industry,
+      projectTypes,
+      budgetRange,
+      preferredCommunication,
+      typicalProjectDuration,
     } = body
 
-    // Get current user to check existing slug
+    // Get current user to check existing slug and idDocumentUrl
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { slug: true, role: true },
+      select: { slug: true, role: true, idDocumentUrl: true },
     })
 
-    // Validate and update slug for workers
+    // Validate and update slug for workers and clients
     let updatedSlug = currentUser?.slug
-    if (slug !== undefined && currentUser?.role === 'WORKER') {
+    if (slug !== undefined && (currentUser?.role === 'WORKER' || currentUser?.role === 'CLIENT')) {
       if (slug && slug.trim()) {
         // Check if slug is already taken by another user
         const existingUser = await prisma.user.findFirst({
@@ -111,25 +133,51 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    // Update user
-    const updateData: any = {
-      name: name !== undefined ? name : undefined,
-      bio: bio !== undefined ? bio : undefined,
-      phone: phone !== undefined ? phone : undefined,
-      locationLat: locationLat !== undefined ? locationLat : undefined,
-      locationLng: locationLng !== undefined ? locationLng : undefined,
-      serviceRadiusMiles:
-        serviceRadiusMiles !== undefined ? serviceRadiusMiles : undefined,
-      availability: availability ? JSON.parse(JSON.stringify(availability)) : undefined,
-      idDocumentUrl: idDocumentUrl !== undefined ? idDocumentUrl : undefined,
-      idDocumentType: idDocumentType !== undefined ? idDocumentType : undefined,
-      idDocumentUploadedAt: idDocumentUrl && !user.idDocumentUrl ? new Date() : undefined,
-      hourlyRate: hourlyRate !== undefined ? hourlyRate : undefined,
-      serviceType: serviceType !== undefined ? serviceType : undefined,
+    // Update user - filter out undefined values to avoid Prisma errors
+    const updateData: any = {}
+    
+    if (name !== undefined) updateData.name = name
+    if (bio !== undefined) updateData.bio = bio
+    if (phone !== undefined) updateData.phone = phone // Private - not shown on public profiles
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
+    if (avatarCropX !== undefined) updateData.avatarCropX = avatarCropX
+    if (avatarCropY !== undefined) updateData.avatarCropY = avatarCropY
+    if (avatarCropScale !== undefined) updateData.avatarCropScale = avatarCropScale
+    if (bannerUrl !== undefined) updateData.bannerUrl = bannerUrl
+    if (website !== undefined) updateData.website = website
+    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl
+    if (githubUrl !== undefined) updateData.githubUrl = githubUrl
+    if (location !== undefined) updateData.location = location
+    if (locationLat !== undefined) updateData.locationLat = locationLat
+    if (locationLng !== undefined) updateData.locationLng = locationLng
+    if (serviceRadiusMiles !== undefined) updateData.serviceRadiusMiles = serviceRadiusMiles
+    if (availability) updateData.availability = JSON.parse(JSON.stringify(availability))
+    if (workerServices !== undefined && Array.isArray(workerServices)) updateData.workerServices = workerServices
+    if (idDocumentUrl !== undefined) {
+      updateData.idDocumentUrl = idDocumentUrl
+      // Set upload date if this is a new document
+      if (!currentUser?.idDocumentUrl) {
+        updateData.idDocumentUploadedAt = new Date()
+      }
     }
+    if (idDocumentType !== undefined) updateData.idDocumentType = idDocumentType
+    if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate
+    if (serviceType !== undefined) updateData.serviceType = serviceType
+    if (yearsOfExperience !== undefined) updateData.yearsOfExperience = yearsOfExperience
+    if (education !== undefined) updateData.education = education
+    if (languages !== undefined) updateData.languages = languages
+    if (certifications !== undefined) updateData.certifications = certifications
+    // Buyer-specific fields
+    if (company !== undefined) updateData.company = company
+    if (companySize !== undefined) updateData.companySize = companySize
+    if (industry !== undefined) updateData.industry = industry
+    if (projectTypes !== undefined) updateData.projectTypes = projectTypes
+    if (budgetRange !== undefined) updateData.budgetRange = budgetRange
+    if (preferredCommunication !== undefined) updateData.preferredCommunication = preferredCommunication
+    if (typicalProjectDuration !== undefined) updateData.typicalProjectDuration = typicalProjectDuration
 
-    // Add slug if it's a worker and slug was provided or needs to be generated
-    if (currentUser?.role === 'WORKER' && updatedSlug) {
+    // Add slug if it's a worker or client and slug was provided or needs to be generated
+    if ((currentUser?.role === 'WORKER' || currentUser?.role === 'CLIENT') && updatedSlug) {
       updateData.slug = updatedSlug
     }
 
@@ -170,6 +218,8 @@ export async function PUT(req: NextRequest) {
         })
       }
     }
+
+    // workerServices are now saved directly in the updateData above
 
     const userWithRelations = await prisma.user.findUnique({
       where: { id: user.id },

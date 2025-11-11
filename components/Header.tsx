@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import Link from 'next/link'
-import { User, Bell, Check, CheckCheck } from 'lucide-react'
+import { User, Bell, Check, CheckCheck, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,10 +31,6 @@ export function Header() {
     status === 'authenticated' ? '/api/v1/users/me' : null,
     fetcher
   )
-
-  if (status !== 'authenticated' || !session) {
-    return null
-  }
 
   // Fetch recent notifications (last 10) for dropdown
   const { data: allNotifications, mutate: mutateNotifications } = useSWR(
@@ -72,6 +68,10 @@ export function Header() {
       channel.unsubscribe()
     }
   }, [session?.user?.id, mutateNotifications])
+
+  if (status !== 'authenticated' || !session) {
+    return null
+  }
 
   const handleMarkAsRead = async (notificationId: string, e?: React.MouseEvent) => {
     if (e) {
@@ -256,14 +256,18 @@ export function Header() {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer">
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/api/auth/signout')} className="cursor-pointer">
-                  Sign Out
-                </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/support')} className="cursor-pointer">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Support
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer">
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/api/auth/signout')} className="cursor-pointer">
+                      Sign Out
+                    </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

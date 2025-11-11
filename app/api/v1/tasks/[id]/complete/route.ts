@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
-import { calculateFees, calculateAmountInCents } from '@/lib/stripe-fees'
+import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -62,11 +62,12 @@ export async function POST(
         if (paymentIntent.status === 'requires_capture') {
           await stripe.paymentIntents.capture(task.paymentIntentId)
 
-          // Calculate payout amounts using centralized function
+          // Calculate payout amounts using centralized function with database settings
           // Worker gets: baseAmount - platformFee (platform covers Stripe fees)
           // Trust & Support fee is NOT deducted from worker (it's a buyer fee)
           const baseAmount = task.price || 0
-          const fees = calculateFees(baseAmount)
+          const feeConfig = await getFeeConfigFromSettings()
+          const fees = calculateFees(baseAmount, feeConfig)
 
           // Add earnings to worker's wallet instead of automatic transfer
           await prisma.$transaction([

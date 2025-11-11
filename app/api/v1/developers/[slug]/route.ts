@@ -12,8 +12,33 @@ export async function GET(
       where: {
         slug: slug,
         role: 'WORKER', // Only workers have public profiles
+        verificationStatus: 'VERIFIED', // Only show verified developers
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        bio: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        slug: true,
+        rating: true,
+        ratingCount: true,
+        hourlyRate: true,
+        serviceType: true,
+        serviceRadiusMiles: true,
+        locationLat: true,
+        locationLng: true,
+        verificationStatus: true,
+        badgeTier: true,
+        // Professional links (public)
+        website: true,
+        linkedinUrl: true,
+        githubUrl: true,
+        // Professional information (public)
+        yearsOfExperience: true,
+        education: true,
+        languages: true,
+        certifications: true,
         skills: true,
         reviewsReceived: {
           include: {
@@ -50,15 +75,7 @@ export async function GET(
       )
     }
 
-    // Don't expose sensitive information
-    const { hashedPassword, email, phone, idDocumentUrl, ...publicProfile } =
-      developer
-
-    return NextResponse.json({
-      ...publicProfile,
-      // Include email for display (but not full user object)
-      email: developer.email,
-    })
+    return NextResponse.json(developer)
   } catch (error) {
     console.error('Error fetching developer profile:', error)
     return NextResponse.json(

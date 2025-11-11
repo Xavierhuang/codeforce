@@ -32,31 +32,7 @@ export default function CareersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Find Developers
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="sm" variant="outline">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      {/* Header is handled by UnifiedHeader in root layout */}
       <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -84,7 +60,7 @@ export default function CareersPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Remote-First</h3>
                   <p className="text-sm text-muted-foreground">
-                    Work from anywhere. We're a fully remote team with flexible hours.
+                    Work from anywhere. We&apos;re a fully remote team with flexible hours.
                   </p>
                 </div>
                 <div>
@@ -148,9 +124,9 @@ export default function CareersPage() {
           {/* General Application */}
           <Card className="bg-primary/5">
             <CardContent className="pt-6 text-center">
-              <h2 className="text-2xl font-bold mb-4">Don't See a Role That Fits?</h2>
+              <h2 className="text-2xl font-bold mb-4">Don&apos;t See a Role That Fits?</h2>
               <p className="text-muted-foreground mb-6">
-                We're always looking for talented people. Send us your resume and we'll keep you in mind for future opportunities.
+                We&apos;re always looking for talented people. Send us your resume and we&apos;ll keep you in mind for future opportunities.
               </p>
               <Link href="/contact">
                 <Button size="lg">Get in Touch</Button>
@@ -162,5 +138,7 @@ export default function CareersPage() {
     </div>
   )
 }
+
+
 
 

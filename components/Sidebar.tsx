@@ -14,9 +14,16 @@ import {
   ExternalLink,
   Copy,
   ShoppingBag,
-  Briefcase
+  Briefcase,
+  MessageSquare,
+  Users,
+  ClipboardList,
+  DollarSign,
+  Settings,
+  AlertTriangle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { QRCode } from '@/components/QRCode'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -26,6 +33,8 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   roles?: ('CLIENT' | 'WORKER' | 'ADMIN')[]
+  badge?: number
+  badgeColor?: string
 }
 
 export function Sidebar() {
@@ -37,6 +46,28 @@ export function Sidebar() {
   )
   const [profileUrl, setProfileUrl] = useState('')
   const [slug, setSlug] = useState<string | null>(null)
+
+  // Fetch admin data for badges
+  const isAdmin = user?.role === 'ADMIN'
+  const { data: pendingUsers } = useSWR(
+    isAdmin ? '/api/v1/admin/users' : null,
+    fetcher
+  )
+  const { data: payoutRequests } = useSWR(
+    isAdmin ? '/api/v1/payouts/request' : null,
+    fetcher
+  )
+  const { data: supportTickets } = useSWR(
+    isAdmin ? '/api/v1/admin/support' : null,
+    fetcher
+  )
+
+  const pendingVerifications = pendingUsers?.filter((u: any) => u.verificationStatus === 'PENDING').length || 0
+  const pendingPayouts = payoutRequests?.filter((r: any) => r.status === 'PENDING').length || 0
+  const openTickets = supportTickets?.filter((t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length || 0
+  const reports = supportTickets?.filter((t: any) => 
+    t.category === 'REPORT_USER' || t.category === 'REPORT_TASK'
+  ) || []
 
   useEffect(() => {
     if (user?.slug) {
@@ -56,7 +87,6 @@ export function Sidebar() {
 
   const isClient = user?.role === 'CLIENT'
   const isWorker = user?.role === 'WORKER'
-  const isAdmin = user?.role === 'ADMIN'
 
   const navItems: NavItem[] = []
 
@@ -82,12 +112,6 @@ export function Sidebar() {
         href: '/dashboard/tasks',
         label: 'My Tasks',
         icon: Briefcase,
-        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-      },
-      {
-        href: '/tasks',
-        label: 'Browse Tasks',
-        icon: Search,
         roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       }
     )
@@ -117,13 +141,64 @@ export function Sidebar() {
     )
   }
 
+  // Admin navigation items
   if (isAdmin) {
-    navItems.push({
-      href: '/admin',
-      label: 'Admin Panel',
-      icon: ShieldCheck,
-      roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-    })
+    navItems.push(
+      {
+        href: '/admin/stats',
+        label: 'Statistics',
+        icon: LayoutDashboard,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/users',
+        label: 'Users',
+        icon: Users,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/verifications',
+        label: 'Verifications',
+        icon: ShieldCheck,
+        badge: pendingVerifications,
+        badgeColor: 'bg-red-500',
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/tasks',
+        label: 'Tasks',
+        icon: ClipboardList,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/payouts',
+        label: 'Payout Requests',
+        icon: DollarSign,
+        badge: pendingPayouts,
+        badgeColor: 'bg-yellow-500',
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/settings',
+        label: 'Settings',
+        icon: Settings,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/reports',
+        label: 'Reports',
+        icon: AlertTriangle,
+        badge: reports?.filter((r: any) => r.status === 'OPEN').length || 0,
+        badgeColor: 'bg-red-500',
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/compliance',
+        label: 'Compliance',
+        icon: ShieldCheck,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      }
+    )
   }
 
   const filteredNavItems = navItems.filter(
@@ -141,19 +216,34 @@ export function Sidebar() {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {filteredNavItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || (item.href !== '/' && item.href !== '/dashboard' && pathname?.startsWith(item.href))
+          // Handle active state for admin pages
+          let isActive = false
+          if (item.href === '/dashboard') {
+            isActive = pathname === '/dashboard' || (pathname?.startsWith('/dashboard') && !pathname?.startsWith('/admin'))
+          } else if (item.href === '/admin/stats') {
+            isActive = pathname === '/admin' || pathname === '/admin/stats'
+          } else {
+            isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href))
+          }
           
           return (
             <Link key={item.href} href={item.href}>
               <div
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <Badge className={`${item.badgeColor || 'bg-primary'} text-white text-xs min-w-[20px] flex items-center justify-center`}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </Badge>
+                )}
               </div>
             </Link>
           )

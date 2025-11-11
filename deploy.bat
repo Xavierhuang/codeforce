@@ -36,3 +36,10 @@ echo 🌐 Site: https://skillyy.com
 pause
 
 
+
+
+
+
+
+
+

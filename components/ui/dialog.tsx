@@ -106,3 +106,12 @@ export function DialogClose({ onOpenChange }: { onOpenChange: (open: boolean) =>
   )
 }
 
+interface DialogTriggerProps {
+  asChild?: boolean
+  children: React.ReactNode
+}
+
+export function DialogTrigger({ asChild, children }: DialogTriggerProps) {
+  return <>{children}</>
+}
+

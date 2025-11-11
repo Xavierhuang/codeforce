@@ -8,31 +8,7 @@ import { Users, Target, Shield, Zap } from 'lucide-react'
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Find Developers
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="sm" variant="outline">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      {/* Header is handled by UnifiedHeader in root layout */}
       <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -54,7 +30,7 @@ export default function AboutPage() {
             <CardContent className="pt-6">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">Our Mission</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Skillyy is revolutionizing how businesses connect with technical talent. We've built a platform that makes it easy to find, hire, and work with skilled developers, designers, and technical professionals. Whether you need a quick bug fix, a full-stack application, or ongoing technical support, Skillyy connects you with verified professionals ready to get the job done.
+                Skillyy is revolutionizing how businesses connect with technical talent. We&apos;ve built a platform that makes it easy to find, hire, and work with skilled developers, designers, and technical professionals. Whether you need a quick bug fix, a full-stack application, or ongoing technical support, Skillyy connects you with verified professionals ready to get the job done.
               </p>
             </CardContent>
           </Card>
@@ -146,7 +122,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Get It Done</h3>
                     <p className="text-muted-foreground">
-                      Communicate directly with your developer, track progress, and release payment only when you're satisfied with the work.
+                      Communicate directly with your developer, track progress, and release payment only when you&apos;re satisfied with the work.
                     </p>
                   </div>
                 </div>
@@ -174,5 +150,7 @@ export default function AboutPage() {
     </div>
   )
 }
+
+
 
 

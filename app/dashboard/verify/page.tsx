@@ -258,7 +258,7 @@ export default function VerifyPage() {
                 >
                   <option value="">Select ID type...</option>
                   <option value="passport">Passport</option>
-                  <option value="drivers_license">Driver's License</option>
+                  <option value="drivers_license">Driver&apos;s License</option>
                   <option value="national_id">National ID</option>
                   <option value="other">Other Government ID</option>
                 </select>
@@ -305,7 +305,7 @@ export default function VerifyPage() {
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                 <p className="text-sm text-yellow-800">
                   <strong>Privacy:</strong> Your ID document is stored securely and only used for verification purposes. 
-                  Only admins can view it, and it's never shared with clients or other users.
+                  Only admins can view it, and it&apos;s never shared with clients or other users.
                 </p>
               </div>
             </CardContent>
@@ -474,7 +474,7 @@ export default function VerifyPage() {
                       className="mt-1 text-sm md:text-base"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Maximum distance you're willing to travel for on-site tasks
+                      Maximum distance you&apos;re willing to travel for on-site tasks
                     </p>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
@@ -507,7 +507,7 @@ export default function VerifyPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary">•</span>
-                  <span>Once verified, you'll receive a badge and can start receiving task invitations</span>
+                  <span>Once verified, you&apos;ll receive a badge and can start receiving task invitations</span>
                 </li>
               </ul>
             </CardContent>
@@ -544,7 +544,7 @@ export default function VerifyPage() {
         <Card>
           <CardContent className="py-8 text-center">
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">You're Verified!</h2>
+            <h2 className="text-2xl font-bold mb-2">You&apos;re Verified!</h2>
             <p className="text-muted-foreground mb-6">
               Your profile is verified and you can now receive task invitations.
             </p>

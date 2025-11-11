@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
-import { calculateFees, calculateAmountInCents } from '@/lib/stripe-fees'
+import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
+import { getPlatformSettings } from '@/lib/settings'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
         hourlyRate: true,
         serviceType: true,
         role: true,
+        verificationStatus: true,
       },
     })
 
@@ -90,8 +92,35 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Calculate fees
-    const fees = calculateFees(baseAmount)
+    // Check platform settings
+    const settings = await getPlatformSettings()
+    
+    // Check worker verification requirement
+    if (settings.workerVerificationRequired && worker.verificationStatus !== 'VERIFIED') {
+      return NextResponse.json(
+        { error: 'This worker must be verified before accepting bookings' },
+        { status: 403 }
+      )
+    }
+    
+    // Validate task amount limits
+    if (baseAmount < settings.minTaskAmount) {
+      return NextResponse.json(
+        { error: `Minimum task amount is $${settings.minTaskAmount.toFixed(2)}` },
+        { status: 400 }
+      )
+    }
+    
+    if (baseAmount > settings.maxTaskAmount) {
+      return NextResponse.json(
+        { error: `Maximum task amount is $${settings.maxTaskAmount.toFixed(2)}` },
+        { status: 400 }
+      )
+    }
+
+    // Calculate fees with database settings
+    const feeConfig = await getFeeConfigFromSettings()
+    const fees = calculateFees(baseAmount, feeConfig)
 
     // Create PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({

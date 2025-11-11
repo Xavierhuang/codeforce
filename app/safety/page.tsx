@@ -8,31 +8,7 @@ import { Shield, AlertTriangle, CheckCircle, Lock, Users, Eye } from 'lucide-rea
 export default function SafetyPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Find Developers
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="sm" variant="outline">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      {/* Header is handled by UnifiedHeader in root layout */}
       <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -177,5 +153,7 @@ export default function SafetyPage() {
     </div>
   )
 }
+
+
 
 

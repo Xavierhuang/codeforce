@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 import { sendTaskBookingNotification } from '@/lib/twilio'
-import { calculateFees, calculateAmountInCents } from '@/lib/stripe-fees'
+import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -65,11 +65,12 @@ export async function POST(
       )
     }
 
-    // Calculate fees using centralized function
+    // Calculate fees using centralized function with database settings
     // Buyer pays: baseAmount + trustAndSupportFee (15%) + Stripe fees
     // Worker receives: baseAmount - platformFee (15%) - Stripe fees
     // Platform gets: platformFee (from worker) + trustAndSupportFee (from buyer)
-    const fees = calculateFees(offer.price)
+    const feeConfig = await getFeeConfigFromSettings()
+    const fees = calculateFees(offer.price, feeConfig)
 
     // Create PaymentIntent to hold funds in escrow
     let paymentIntent

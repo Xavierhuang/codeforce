@@ -65,11 +65,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // AUTO-VERIFY: Automatically verify if basic requirements are met
-    // This allows instant verification without admin bottleneck
-    // Admins can still manually reject if needed via admin panel
-    
-    const verificationStatus = 'VERIFIED' // Auto-verify for MVP
+    // Set status to PENDING - requires admin approval
+    const verificationStatus = 'PENDING'
 
     await prisma.user.update({
       where: { id: worker.id },
@@ -78,11 +75,11 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // TODO: Send notification to admin about new verification (for monitoring)
-    // Admins can review and manually reject if needed
+    // TODO: Send notification to admin about new verification request
+    // Admins will review and approve/reject via admin panel
 
     return NextResponse.json({
-      message: 'You are now verified! You can start receiving task invitations.',
+      message: 'Verification submitted! An admin will review your profile within 24-48 hours.',
       status: verificationStatus,
     })
   } catch (error: any) {

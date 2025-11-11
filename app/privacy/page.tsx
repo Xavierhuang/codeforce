@@ -2,36 +2,11 @@
 
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 safe-area-inset-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="Skillyy" className="h-8 md:h-[50px] w-auto" />
-          </Link>
-          <div className="hidden md:flex gap-6 items-center">
-            <Link href="/tasks" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Browse Tasks
-            </Link>
-            <Link href="/developers" className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors">
-              Find Developers
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="sm" variant="outline">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      {/* Header is handled by UnifiedHeader in root layout */}
       <main className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="mb-6">
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -51,10 +26,10 @@ export default function PrivacyPolicyPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
                 <p className="mb-4">
-                  This Global Privacy Policy ("Privacy Policy") describes how Skillyy, Inc. ("Skillyy," "we," "our," or "us") collects, uses, retains, discloses, and deletes your Personal Information on the Skillyy website and mobile applications (the "Platform"). It also explains your legal rights and options with respect to your information depending on where you reside.
+                  This Global Privacy Policy (&quot;Privacy Policy&quot;) describes how Skillyy, Inc. (&quot;Skillyy,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) collects, uses, retains, discloses, and deletes your Personal Information on the Skillyy website and mobile applications (the &quot;Platform&quot;). It also explains your legal rights and options with respect to your information depending on where you reside.
                 </p>
                 <p>
-                  By using the Platform, you confirm that you have read and understood this Privacy Policy, and each applicable Terms of Service (together referred to as the "Agreement").
+                  By using the Platform, you confirm that you have read and understood this Privacy Policy, and each applicable Terms of Service (together referred to as the &quot;Agreement&quot;).
                 </p>
               </section>
 
@@ -63,11 +38,11 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-2xl font-semibold mb-4">2. General Terms</h2>
                 <p className="mb-4">In this Privacy Policy:</p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
-                  <li>Skillyy, Inc. is referred to as "Skillyy," "we," "our," or "us."</li>
-                  <li>Users of the Platform (Clients and Developers) as "You."</li>
-                  <li>The "Platform" refers to Skillyy's websites and mobile applications.</li>
-                  <li>"Terms of Service" refers to the applicable legal terms you agree to when you use our products or services.</li>
-                  <li>"Personal Information" is information that can directly or indirectly identify, or can reasonably identify, an individual, to the extent regulated under applicable privacy laws.</li>
+                  <li>Skillyy, Inc. is referred to as &quot;Skillyy,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us.&quot;</li>
+                  <li>Users of the Platform (Clients and Developers) as &quot;You.&quot;</li>
+                  <li>The &quot;Platform&quot; refers to Skillyy&apos;s websites and mobile applications.</li>
+                  <li>&quot;Terms of Service&quot; refers to the applicable legal terms you agree to when you use our products or services.</li>
+                  <li>&quot;Personal Information&quot; is information that can directly or indirectly identify, or can reasonably identify, an individual, to the extent regulated under applicable privacy laws.</li>
                 </ul>
               </section>
 
@@ -91,7 +66,7 @@ export default function PrivacyPolicyPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Identity Information</h3>
-                    <p>Such as your date of birth, and depending on where you reside, your social security, tax ID number, VAT ID number, or social insurance number, and photo of your ID document such as your passport, local ID, or driver's license (for developer verification).</p>
+                    <p>Such as your date of birth, and depending on where you reside, your social security, tax ID number, VAT ID number, or social insurance number, and photo of your ID document such as your passport, local ID, or driver&apos;s license (for developer verification).</p>
                   </div>
 
                   <div>
@@ -116,7 +91,7 @@ export default function PrivacyPolicyPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Device Data</h3>
-                    <p>Including data about the type of device or browser you use, your device's operating system, internet service provider, device's regional and language settings, and device identifiers such as IP address and AD ID.</p>
+                    <p>Including data about the type of device or browser you use, your device&apos;s operating system, internet service provider, device&apos;s regional and language settings, and device identifiers such as IP address and AD ID.</p>
                   </div>
 
                   <div>
@@ -126,7 +101,7 @@ export default function PrivacyPolicyPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Service Use Data</h3>
-                    <p>Including your activities on the Platform's features and webpages, the time of day you browse, and emails and advertisements that you view and may interact with.</p>
+                    <p>Including your activities on the Platform&apos;s features and webpages, the time of day you browse, and emails and advertisements that you view and may interact with.</p>
                   </div>
                 </div>
               </section>
@@ -147,8 +122,8 @@ export default function PrivacyPolicyPage() {
                   <li>To maintain the integrity of the Platform</li>
                   <li>For analysis to improve the Platform</li>
                   <li>To contact you with transactional and promotional communications</li>
-                  <li>To provide you with customer support, and to assist in the resolution of your, or a third party's, complaints</li>
-                  <li>To advertise our Platform's or a partner's products or services that we think might interest you</li>
+                  <li>To provide you with customer support, and to assist in the resolution of your, or a third party&apos;s, complaints</li>
+                  <li>To advertise our Platform&apos;s or a partner&apos;s products or services that we think might interest you</li>
                   <li>To enforce the relevant Terms of Service</li>
                   <li>As otherwise set forth in other terms of the Agreement or as otherwise permitted under applicable laws</li>
                 </ul>
@@ -164,7 +139,7 @@ export default function PrivacyPolicyPage() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Service Providers</h3>
-                    <p>To operate the Platform and process Personal Information in accordance with CodeForce's instructions and on its behalf, such as:</p>
+                    <p>To operate the Platform and process Personal Information in accordance with CodeForce&apos;s instructions and on its behalf, such as:</p>
                     <ul className="list-disc pl-6 space-y-1 mt-2">
                       <li>Email origination</li>
                       <li>Identity verification and background checks as permitted under applicable laws</li>
@@ -200,7 +175,7 @@ export default function PrivacyPolicyPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">6. Retention of Personal Information</h2>
                 <p>
-                  We retain your Personal Information for as long as necessary to provide you with our products or services and fulfill the purposes described in this Privacy Policy. When we no longer need to use your information and there is no need for us to keep it to comply with our legal obligations or to the extent permitted under applicable laws, we'll either delete it from our systems or deidentify it so that we can't use it to reidentify you.
+                  We retain your Personal Information for as long as necessary to provide you with our products or services and fulfill the purposes described in this Privacy Policy. When we no longer need to use your information and there is no need for us to keep it to comply with our legal obligations or to the extent permitted under applicable laws, we&apos;ll either delete it from our systems or deidentify it so that we can&apos;t use it to reidentify you.
                 </p>
               </section>
 
@@ -215,11 +190,11 @@ export default function PrivacyPolicyPage() {
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Opt-Out of Promotional Communications</h3>
                     <p className="mb-2">
-                      You may opt-out of receiving promotional updates via email, SMS, or push notifications by visiting the "Notifications" page in your Account Settings and setting your preferences. Other opt-out mechanisms include:
+                      You may opt-out of receiving promotional updates via email, SMS, or push notifications by visiting the &quot;Notifications&quot; page in your Account Settings and setting your preferences. Other opt-out mechanisms include:
                     </p>
                     <ul className="list-disc pl-6 space-y-1">
                       <li>Opt out of promotional email marketing by clicking on the unsubscribe link in the email</li>
-                      <li>Opt out of promotional text messages by following the instructions provided in those messages to text the word "STOP"</li>
+                      <li>Opt out of promotional text messages by following the instructions provided in those messages to text the word &quot;STOP&quot;</li>
                     </ul>
                     <p className="mt-2">
                       We may still continue to send you transactional communications, such as those about your account, Tasks, transactions, servicing, or ongoing business relationship with you.
@@ -241,7 +216,7 @@ export default function PrivacyPolicyPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Right to Correct</h3>
-                    <p>You have the right to update and correct inaccuracies in your account at any time by logging in and clicking on the "Account" tab. There, you can view, update, and correct your account information.</p>
+                    <p>You have the right to update and correct inaccuracies in your account at any time by logging in and clicking on the &quot;Account&quot; tab. There, you can view, update, and correct your account information.</p>
                   </div>
 
                   <div>
@@ -286,7 +261,7 @@ export default function PrivacyPolicyPage() {
                     <div className="space-y-3">
                       <div>
                         <h4 className="font-semibold mb-1">California Residents</h4>
-                        <p>California residents may request a list of the categories of Personal Information disclosed by us to third parties during the immediately preceding calendar year for those third parties' own direct marketing purposes. To exercise a request, please submit a request to <a href="mailto:privacy@skillyy.com" className="text-primary hover:underline">privacy@skillyy.com</a>. We may request additional information to verify your identity and confirm your California residence.</p>
+                        <p>California residents may request a list of the categories of Personal Information disclosed by us to third parties during the immediately preceding calendar year for those third parties&apos; own direct marketing purposes. To exercise a request, please submit a request to <a href="mailto:privacy@skillyy.com" className="text-primary hover:underline">privacy@skillyy.com</a>. We may request additional information to verify your identity and confirm your California residence.</p>
                       </div>
                     </div>
                   </div>
@@ -301,7 +276,7 @@ export default function PrivacyPolicyPage() {
                     <div className="space-y-3">
                       <div>
                         <h4 className="font-semibold mb-1">Legal Bases for Using Your Personal Information</h4>
-                        <p className="mb-2">In accordance with the General Data Protection Regulation ("GDPR") and the United Kingdom General Data Protection Regulation ("UK GDPR"), we rely on the following legal basis for processing your Personal Information:</p>
+                        <p className="mb-2">In accordance with the General Data Protection Regulation (&quot;GDPR&quot;) and the United Kingdom General Data Protection Regulation (&quot;UK GDPR&quot;), we rely on the following legal basis for processing your Personal Information:</p>
                         <ul className="list-disc pl-6 space-y-1">
                           <li><strong>Performance of a Contract:</strong> To operate the Platform and connect you with other users</li>
                           <li><strong>Consent:</strong> For promotional communications and marketing</li>

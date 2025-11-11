@@ -59,14 +59,14 @@ export default function WorkerTasksPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8">
+      <div className="container mx-auto px-4 md:px-8 py-4 md:py-8 max-w-7xl">
         <div className="text-center">Loading tasks...</div>
       </div>
     )
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="container mx-auto px-4 md:px-8 py-4 md:py-8 max-w-7xl">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">My Tasks</h1>
         <p className="text-sm md:text-base text-muted-foreground">

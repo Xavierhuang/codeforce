@@ -28,3 +28,10 @@ pm2 list 2>/dev/null || echo "PM2 NOT RUNNING"
 ss -tlnp | grep 3000 || echo "PORT 3000 NOT LISTENING"
 
 
+
+
+
+
+
+
+

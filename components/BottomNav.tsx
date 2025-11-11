@@ -72,12 +72,6 @@ export function BottomNav() {
         roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },
       {
-        href: '/tasks',
-        label: 'Browse',
-        icon: Search,
-        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-      },
-      {
         href: '/dashboard/wallet',
         label: 'Wallet',
         icon: Wallet,

@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 import { calculateAmountInCents } from '@/lib/stripe-fees'
+import { getPlatformSettings } from '@/lib/settings'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -50,12 +51,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check if auto-approve is enabled
+    const settings = await getPlatformSettings()
+    const shouldAutoApprove = settings.autoApprovePayouts
+
     // Create payout request
     const payoutRequest = await prisma.payoutRequest.create({
       data: {
         workerId: worker.id,
         amount,
         notes: notes || null,
+        status: shouldAutoApprove ? 'APPROVED' : 'PENDING',
+        processedBy: shouldAutoApprove ? worker.id : null, // Mark as auto-approved
       },
       include: {
         worker: {
@@ -132,5 +139,7 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+
+
 
 

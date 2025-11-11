@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { Sidebar } from './Sidebar'
 
 export function AuthenticatedLayout({
   children,
@@ -32,20 +31,10 @@ export function AuthenticatedLayout({
     )
   }
 
-  // Show sidebar only if authenticated
-  if (status === 'authenticated' && session) {
-    return (
-      <div className="flex min-h-screen bg-background">
-        <Sidebar />
-        <main className="flex-1 ml-64 overflow-auto">
-          {children}
-        </main>
-      </div>
-    )
-  }
-
-  // For public pages, don't show sidebar
+  // No sidebar - using unified header navigation
   return <>{children}</>
 }
+
+
 
 

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const admin = await requireRole('ADMIN')
     const body = await req.json()
-    const { userId, status } = body
+    const { userId, status, reason } = body
 
     if (!userId || !status) {
       return NextResponse.json(
@@ -37,7 +37,29 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // TODO: Send notification to user about verification status change
+    // Send notification to user about verification status change
+    if (user) {
+      let notificationMessage = ''
+      if (status === 'VERIFIED') {
+        notificationMessage = 'Your verification has been approved! You can now receive task invitations.'
+      } else if (status === 'REJECTED') {
+        notificationMessage = reason 
+          ? `Your verification was rejected: ${reason}`
+          : 'Your verification was rejected. Please review your profile and resubmit.'
+      } else if (status === 'PENDING') {
+        notificationMessage = 'Your verification status has been reset to pending. Please wait for admin review.'
+      }
+
+      if (notificationMessage) {
+        await prisma.notification.create({
+          data: {
+            userId: user.id,
+            type: 'verification_status_changed',
+            message: notificationMessage,
+          },
+        })
+      }
+    }
 
     return NextResponse.json({
       message: `User verification status updated to ${status}`,

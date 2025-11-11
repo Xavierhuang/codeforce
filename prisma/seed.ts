@@ -7,9 +7,10 @@ async function main() {
   console.log('🌱 Starting database seed...')
 
   // Default admin credentials (can be overridden via environment variables)
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@codeforce.com'
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456'
-  const adminName = process.env.ADMIN_NAME || 'Admin User'
+  // Trim whitespace to prevent issues with .env formatting
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@codeforce.com').trim()
+  const adminPassword = (process.env.ADMIN_PASSWORD || 'admin123456').trim()
+  const adminName = (process.env.ADMIN_NAME || 'Admin User').trim()
 
   // Check if admin user already exists
   const existingAdmin = await prisma.user.findUnique({

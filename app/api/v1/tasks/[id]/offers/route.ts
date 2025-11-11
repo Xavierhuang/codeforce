@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole, requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
+import { validateBody, validateParams } from '@/lib/validation'
+import { OfferCreateSchema, TaskIdParamSchema } from '@/lib/validation-schemas'
+import { z } from 'zod'
+import { sanitizeText } from '@/lib/sanitize'
+import { createNotification } from '@/lib/notifications'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
 export async function POST(
   req: NextRequest,
@@ -8,18 +14,45 @@ export async function POST(
 ) {
   try {
     const worker = await requireRole('WORKER')
-    const body = await req.json()
-    const { price, hourly, message, estimatedDurationMins } = body
-
-    if (!price || price <= 0) {
+    
+    // Rate limiting for offer submission
+    const rateLimitResponse = await rateLimit(req, rateLimitConfigs.offer, worker.id)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
+    
+    // Validate route parameters
+    const paramValidation = validateParams(params, TaskIdParamSchema)
+    if (!paramValidation.success) {
       return NextResponse.json(
-        { error: 'Valid price is required' },
+        {
+          error: 'Invalid task ID',
+          details: paramValidation.errors.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        },
         { status: 400 }
       )
     }
+    
+    // Validate request body
+    const validation = await validateBody(req, OfferCreateSchema.extend({
+      hourly: z.boolean().optional(),
+      estimatedDurationMins: z.number().int().positive().max(10080).optional().nullable(),
+    }))
+    if (!validation.success) {
+      return validation.response
+    }
+    
+    const { price, message, estimatedCompletionDate } = validation.data
+    const hourly = (validation.data as any).hourly || false
+    const estimatedDurationMins = (validation.data as any).estimatedDurationMins || null
+    
+    const taskId = paramValidation.data.id
 
     const task = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id: taskId },
     })
 
     if (!task) {
@@ -36,7 +69,7 @@ export async function POST(
     // Check if worker already made an offer
     const existingOffer = await prisma.offer.findFirst({
       where: {
-        taskId: params.id,
+        taskId: taskId,
         workerId: worker.id,
         status: { in: ['PENDING', 'ACCEPTED'] },
       },
@@ -51,11 +84,12 @@ export async function POST(
 
     const offer = await prisma.offer.create({
       data: {
-        taskId: params.id,
+        taskId: taskId,
         workerId: worker.id,
         price,
         hourly: hourly || false,
-        message: message || null,
+        message: message ? sanitizeText(message) : null,
+        estimatedCompletionDate: estimatedCompletionDate ? new Date(estimatedCompletionDate) : null,
         estimatedDurationMins: estimatedDurationMins || null,
       },
       include: {
@@ -75,12 +109,18 @@ export async function POST(
     // Update task status to OFFERED if it was OPEN
     if (task.status === 'OPEN') {
       await prisma.task.update({
-        where: { id: params.id },
+        where: { id: taskId },
         data: { status: 'OFFERED' },
       })
     }
 
-    // TODO: Send notification to client
+    // Send notification to client
+    await createNotification(
+      task.clientId,
+      'offer_submitted',
+      `New offer received for task "${task.title}" from ${worker.name || 'a worker'}`,
+      taskId
+    )
 
     return NextResponse.json(offer, { status: 201 })
   } catch (error: any) {

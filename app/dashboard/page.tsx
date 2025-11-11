@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import useSWR from 'swr'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,6 +45,7 @@ const CATEGORIES = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const { data: user } = useSWR(
     session ? '/api/v1/users/me' : null,
@@ -61,15 +63,16 @@ export default function DashboardPage() {
 
   // For clients: fetch developers by category
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('Bug Fix')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
 
-  const { data: developers } = useSWR(
+  const { data: developers, error: developersError } = useSWR(
     isClient ? '/api/v1/search/developers' : null,
     fetcher
   )
 
   // Filter developers by category and search
   const filteredDevelopers = developers?.filter((dev: any) => {
+    // If no category selected, show all developers
     const categoryMatch = !selectedCategory || 
       dev.skills?.some((skill: any) => 
         skill.skill.toLowerCase().includes(selectedCategory.toLowerCase())
@@ -99,8 +102,8 @@ export default function DashboardPage() {
   const stats = workerStats?.stats || {}
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-6 md:mb-8">
+    <div className="container mx-auto px-4 md:px-8 py-4 md:py-8 max-w-7xl" suppressHydrationWarning>
+      <div className="mb-6 md:mb-8" suppressHydrationWarning>
         <h1 className="text-2xl md:text-4xl font-bold mb-2">
           Welcome back{user?.name ? `, ${user.name}` : ''}!
         </h1>
@@ -405,7 +408,15 @@ export default function DashboardPage() {
             </Card>
 
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
+              <Button
+                variant={selectedCategory === '' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('')}
+                className="touch-manipulation whitespace-nowrap"
+              >
+                All
+              </Button>
               {CATEGORIES.map((category) => (
                 <Button
                   key={category}
@@ -418,6 +429,173 @@ export default function DashboardPage() {
                 </Button>
               ))}
             </div>
+
+            {/* Available Workers - Filtered Results */}
+            {filteredDevelopers.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Available Workers</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {filteredDevelopers.length} developer{filteredDevelopers.length !== 1 ? 's' : ''} found
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {filteredDevelopers.map((developer: any) => (
+                    <Card key={developer.id} className="border-2 hover:shadow-xl transition-all duration-300 cursor-pointer touch-manipulation group">
+                      <Link href={`/developers/${developer.slug || developer.id}`} className="block">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              {developer.avatarUrl ? (
+                                <img
+                                  src={developer.avatarUrl}
+                                  alt={developer.name || 'Developer'}
+                                  className="w-12 h-12 rounded-full ring-2 ring-border group-hover:ring-primary transition-all"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-border group-hover:ring-primary transition-all">
+                                  <span className="text-lg font-semibold">
+                                    {developer.name?.[0]?.toUpperCase() || developer.email[0].toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <div>
+                                <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Developer'}</CardTitle>
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                  <span>
+                                    {developer.rating?.toFixed(1) || '0.0'} ({developer.ratingCount || 0})
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {developer.verificationStatus === 'VERIFIED' && (
+                              <Badge variant="default" className="shrink-0">Verified</Badge>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {developer.bio && (
+                            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                              {developer.bio}
+                            </p>
+                          )}
+
+                          {developer.skills && developer.skills.length > 0 && (
+                            <div className="mb-4">
+                              <div className="flex flex-wrap gap-1">
+                                {developer.skills.slice(0, 3).map((skill: any) => (
+                                  <Badge key={skill.id} variant="secondary" className="text-xs">
+                                    {skill.skill}
+                                  </Badge>
+                                ))}
+                                {developer.skills.length > 3 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    +{developer.skills.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 mb-4">
+                            {developer.serviceType === 'VIRTUAL' || developer.serviceType === null ? (
+                              <Badge variant="outline" className="text-xs">
+                                <Wifi className="w-3 h-3 mr-1" />
+                                Remote
+                              </Badge>
+                            ) : developer.serviceType === 'IN_PERSON' ? (
+                              <Badge variant="outline" className="text-xs">
+                                <Building2 className="w-3 h-3 mr-1" />
+                                On-site
+                              </Badge>
+                            ) : (
+                              <>
+                                <Badge variant="outline" className="text-xs">
+                                  <Wifi className="w-3 h-3 mr-1" />
+                                  Remote
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  <Building2 className="w-3 h-3 mr-1" />
+                                  On-site
+                                </Badge>
+                              </>
+                            )}
+                          </div>
+
+                          {developer.hourlyRate && (
+                            <div className="mb-4">
+                              <p className="text-xs text-muted-foreground">Hourly Rate</p>
+                              <p className="text-lg font-bold text-primary">
+                                {formatCurrency(developer.hourlyRate)}/hour
+                              </p>
+                            </div>
+                          )}
+
+                          {developer.locationLat && developer.locationLng && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
+                              <MapPin className="w-4 h-4" />
+                              <span>Available for in-person</span>
+                              {developer.serviceRadiusMiles && (
+                                <span>• {developer.serviceRadiusMiles} mi radius</span>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center pt-4 border-t">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Tasks completed</p>
+                              <p className="font-semibold">{developer._count?.tasksAssigned || 0}</p>
+                            </div>
+                            {developer.hourlyRate ? (
+                              <Button 
+                                size="sm" 
+                                className="group-hover:scale-105 transition-transform"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  router.push(`/book/${developer.slug || developer.id}`)
+                                }}
+                              >
+                                Book Now
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="group-hover:scale-105 transition-transform"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  router.push(`/developers/${developer.slug || developer.id}`)
+                                }}
+                              >
+                                View Profile
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Results Message */}
+            {filteredDevelopers.length === 0 && (searchQuery || selectedCategory) && developers && developers.length > 0 && (
+              <Card className="border-2">
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground mb-4">No developers found matching your search.</p>
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('')
+                    setSelectedCategory('')
+                  }}>
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Developers Grid by Category */}
             {CATEGORIES.map((category) => {
@@ -541,9 +719,30 @@ export default function DashboardPage() {
                                 <p className="font-semibold">{developer._count?.tasksAssigned || 0}</p>
                               </div>
                               {developer.hourlyRate ? (
-                                <Button size="sm" className="group-hover:scale-105 transition-transform">Book Now</Button>
+                                <Button 
+                                  size="sm" 
+                                  className="group-hover:scale-105 transition-transform"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    router.push(`/book/${developer.slug || developer.id}`)
+                                  }}
+                                >
+                                  Book Now
+                                </Button>
                               ) : (
-                                <Button size="sm" variant="outline" className="group-hover:scale-105 transition-transform">View Profile</Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="group-hover:scale-105 transition-transform"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    router.push(`/developers/${developer.slug || developer.id}`)
+                                  }}
+                                >
+                                  View Profile
+                                </Button>
                               )}
                             </div>
                           </CardContent>
@@ -564,7 +763,20 @@ export default function DashboardPage() {
               )
             })}
 
-            {(!developers || developers.length === 0) && (
+            {developersError && (
+              <Card className="border-2">
+                <CardContent className="py-12 text-center">
+                  <p className="text-red-600 mb-2">Error loading developers</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {developersError?.message || 'Please try refreshing the page'}
+                  </p>
+                  <Link href="/developers">
+                    <Button>Browse All Developers</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+            {!developersError && (!developers || developers.length === 0) && (
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">No developers found.</p>

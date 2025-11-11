@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from './auth'
 import { prisma } from './prisma'
+import { checkSuspension } from './suspension-check'
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions)
@@ -18,6 +19,10 @@ export async function requireAuth() {
   if (!user) {
     throw new Error('Unauthorized')
   }
+  
+  // Check if user account is suspended
+  await checkSuspension(user.id)
+  
   return user
 }
 

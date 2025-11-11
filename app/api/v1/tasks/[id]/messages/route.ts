@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { triggerMessageEvent } from '@/lib/pusher'
+import { sanitizeText } from '@/lib/sanitize'
+import { createNotification } from '@/lib/notifications'
 
 export async function GET(
   req: NextRequest,
@@ -95,14 +97,21 @@ export async function POST(
     }
 
     // Determine receiver (the other participant)
-    const receiverId = user.id === task.clientId ? task.workerId : task.clientId
+    let receiverId: string | undefined
+    if (task.clientId && task.workerId) {
+      receiverId = user.id === task.clientId ? task.workerId : task.clientId
+    } else if (task.clientId && user.id !== task.clientId) {
+      receiverId = task.clientId
+    } else if (task.workerId && user.id !== task.workerId) {
+      receiverId = task.workerId
+    }
 
     const message = await prisma.message.create({
       data: {
         taskId: params.id,
         senderId: user.id,
-        receiverId: receiverId || undefined,
-        content: content.trim(),
+        receiverId: receiverId,
+        content: sanitizeText(content.trim()),
         attachments: attachmentIds
           ? {
               connect: attachmentIds.map((id: string) => ({ id })),
@@ -127,6 +136,21 @@ export async function POST(
     } catch (error) {
       console.error('Failed to trigger Pusher event:', error)
       // Don't fail the request if Pusher fails
+    }
+
+    // Create notification for receiver if message was sent
+    if (receiverId) {
+      try {
+        await createNotification(
+          receiverId,
+          'message_received',
+          `New message from ${message.sender.name || 'User'}`,
+          params.id
+        )
+      } catch (error) {
+        console.error('Failed to create message notification:', error)
+        // Don't fail the request if notification fails
+      }
     }
 
     return NextResponse.json(message, { status: 201 })

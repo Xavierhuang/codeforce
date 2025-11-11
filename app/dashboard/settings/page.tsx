@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatCurrency } from '@/lib/utils'
 import toast from 'react-hot-toast'
-import { User, Mail, Phone, CreditCard, ShieldCheck, Save, ExternalLink } from 'lucide-react'
+import { User, Mail, Phone, CreditCard, ShieldCheck, Save, ExternalLink, MessageSquare } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -138,10 +138,11 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4 md:space-y-6">
-        <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex">
+        <TabsList className={`w-full md:w-auto grid ${isWorker ? 'grid-cols-4' : 'grid-cols-3'} md:inline-flex`}>
           <TabsTrigger value="profile" className="text-xs md:text-sm">Profile</TabsTrigger>
           <TabsTrigger value="account" className="text-xs md:text-sm">Account</TabsTrigger>
           {isWorker && <TabsTrigger value="payments" className="text-xs md:text-sm">Payments</TabsTrigger>}
+          <TabsTrigger value="support" className="text-xs md:text-sm">Support</TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -341,7 +342,7 @@ export default function SettingsPage() {
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
                         Connect your Stripe account to receive payouts from completed tasks.
-                        You'll be redirected to Stripe to complete the onboarding process.
+                        You&apos;ll be redirected to Stripe to complete the onboarding process.
                       </p>
                       <Button
                         onClick={handleConnectStripe}
@@ -382,6 +383,38 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
         )}
+
+        {/* Support & Help Tab */}
+        <TabsContent value="support">
+          <Card>
+            <CardHeader>
+              <CardTitle>Support & Help</CardTitle>
+              <CardDescription>
+                Get help from our support team or report issues
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-medium">Contact Support</p>
+                    <p className="text-sm text-muted-foreground">
+                      Create a support ticket to get help from our team
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className="w-full mt-3"
+                  onClick={() => router.push('/dashboard/support')}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Go to Support
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   )

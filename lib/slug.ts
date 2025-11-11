@@ -18,7 +18,11 @@ export function generateUniqueSlug(base: string, existingSlugs: string[]): strin
   let uniqueSlug = slug
   let counter = 1
 
-  while (existingSlugs.includes(uniqueSlug)) {
+  // Case-insensitive comparison
+  const lowerExisting = existingSlugs.map(s => s.toLowerCase())
+  const lowerSlug = slug.toLowerCase()
+
+  while (lowerExisting.includes(uniqueSlug.toLowerCase())) {
     uniqueSlug = `${slug}-${counter}`
     counter++
   }

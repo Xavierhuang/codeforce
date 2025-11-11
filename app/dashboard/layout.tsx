@@ -5,7 +5,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Sidebar is now handled globally in AppLayout
+  // Navigation is handled by UnifiedHeader in AppLayout
   return <>{children}</>
 }
 

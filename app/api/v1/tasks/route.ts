@@ -1,65 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
+import { validateBody } from '@/lib/validation'
+import { TaskCreateSchema } from '@/lib/validation-schemas'
+import { sanitizeText } from '@/lib/sanitize'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth()
     
-    if (user.role !== 'CLIENT' && user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Only clients can create tasks' }, { status: 403 })
+    // Rate limiting for task creation
+    const rateLimitResponse = await rateLimit(req, rateLimitConfigs.task, user.id)
+    if (rateLimitResponse) {
+      return rateLimitResponse
     }
-
-    const body = await req.json()
-    const {
-      title,
-      description,
-      type,
-      category,
-      subcategory,
-      scheduledAt,
-      address,
-      lat,
-      lng,
-      budget,
-      estimatedDurationMins,
-    } = body
-
-    if (!title || !description || !category) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    const task = await prisma.task.create({
-      data: {
-        title,
-        description,
-        category,
-        subcategory: subcategory || null,
-        type: type || 'VIRTUAL',
-        clientId: user.id,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        address: address || null,
-        addressLat: lat || null,
-        addressLng: lng || null,
-        price: budget || null,
-        estimatedDurationMins: estimatedDurationMins || null,
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(task, { status: 201 })
+    
+    // Task creation is disabled - tasks are only created through direct bookings
+    return NextResponse.json({ error: 'Task creation is disabled. Please book developers directly.' }, { status: 403 })
   } catch (error: any) {
     console.error('Error creating task:', error)
     if (error.message === 'Unauthorized') {
@@ -86,16 +44,25 @@ export async function GET(req: NextRequest) {
     const where: any = {}
 
     // If user wants their own tasks, filter by their role
-    if (myTasks && user) {
+    if (myTasks) {
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Authentication required to view your tasks' },
+          { status: 401 }
+        )
+      }
       if (user.role === 'WORKER') {
         where.workerId = user.id
       } else if (user.role === 'CLIENT') {
         where.clientId = user.id
+      } else {
+        // Admin or other roles - return empty array
+        return NextResponse.json([])
       }
       // Show all statuses for user's own tasks
     } else if (status) {
       where.status = status
-    } else if (!myTasks) {
+    } else if (!myTasks && !user) {
       // Public browsing: only show open tasks
       where.status = { in: ['OPEN', 'OFFERED'] }
     }
@@ -163,10 +130,31 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json(tasks)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tasks:', error)
+    console.error('Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    })
+    
+    // Check if this is a Prisma schema mismatch error
+    if (error?.message?.includes('Unknown field') || error?.message?.includes('does not exist')) {
+      return NextResponse.json(
+        { 
+          error: 'Database schema mismatch. Please run: npx prisma db push',
+          details: 'The database schema is out of sync with the Prisma schema.',
+          code: 'SCHEMA_MISMATCH'
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      },
       { status: 500 }
     )
   }

@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     const users = await prisma.user.findMany({
       where,
       include: {
+        skills: true,
         _count: {
           select: {
             tasksPosted: true,
@@ -41,11 +42,13 @@ export async function GET(req: NextRequest) {
       take: 100,
     })
 
-    // Don't expose sensitive info
+    // Include all verification details for admin review
+    // Note: phone is shown to admins for verification purposes
     const safeUsers = users.map((u: any) => ({
       ...u,
       hashedPassword: undefined,
-      phone: u.phone ? '***' : null,
+      // Include all verification-related fields for admin review
+      // phone is included for admin verification purposes
     }))
 
     return NextResponse.json(safeUsers)

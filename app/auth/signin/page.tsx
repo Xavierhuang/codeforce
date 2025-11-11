@@ -40,7 +40,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-screen">
+    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-screen" suppressHydrationWarning>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Sign In</CardTitle>
@@ -76,7 +76,7 @@ export default function SignInPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/auth/signup" className="text-primary hover:underline">
               Sign up
             </a>
