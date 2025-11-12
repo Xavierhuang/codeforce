@@ -35,12 +35,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div 
         className="fixed inset-0 bg-black/50" 
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50">
+      <div className="relative z-50 w-full max-h-[90vh] overflow-y-auto">
         {children}
       </div>
     </div>
@@ -51,7 +51,7 @@ export function DialogContent({ className, children, ...props }: DialogContentPr
   return (
     <div
       className={cn(
-        'bg-background rounded-lg shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-auto',
+        'bg-background rounded-lg sm:rounded-xl shadow-lg w-full max-w-md mx-auto',
         className
       )}
       {...props}
@@ -98,10 +98,10 @@ export function DialogClose({ onOpenChange }: { onOpenChange: (open: boolean) =>
     <Button
       variant="ghost"
       size="icon"
-      className="absolute right-4 top-4"
+      className="absolute right-2 top-2 sm:right-4 sm:top-4 h-8 w-8 sm:h-10 sm:w-10 touch-manipulation"
       onClick={() => onOpenChange(false)}
     >
-      <X className="h-4 w-4" />
+      <X className="h-4 w-4 sm:h-5 sm:w-5" />
     </Button>
   )
 }

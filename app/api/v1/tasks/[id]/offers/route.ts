@@ -89,7 +89,6 @@ export async function POST(
         price,
         hourly: hourly || false,
         message: message ? sanitizeText(message) : null,
-        estimatedCompletionDate: estimatedCompletionDate ? new Date(estimatedCompletionDate) : null,
         estimatedDurationMins: estimatedDurationMins || null,
       },
       include: {
@@ -166,6 +165,9 @@ export async function GET(
             id: true,
             name: true,
             avatarUrl: true,
+            avatarCropX: true,
+            avatarCropY: true,
+            avatarCropScale: true,
             rating: true,
             ratingCount: true,
             skills: true,

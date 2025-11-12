@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-helpers'
-import { pusherServer } from '@/lib/pusher'
+import { pusherServer, getPusherServerInstance } from '@/lib/pusher'
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if Pusher is configured
+    const server = getPusherServerInstance()
+    if (!server) {
+      return NextResponse.json(
+        { error: 'Pusher is not configured' },
+        { status: 503 }
+      )
+    }
+
     const user = await requireAuth()
     const body = await req.json()
     const { socket_id, channel_name } = body
@@ -70,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Authorize the channel
     // For presence channels, include user info
     if (presenceTaskMatch) {
-      const auth = pusherServer.authorizeChannel(socket_id, channel_name, {
+      const auth = server.authorizeChannel(socket_id, channel_name, {
         user_id: user.id,
         user_info: {
           name: user.name || 'User',
@@ -79,7 +88,7 @@ export async function POST(req: NextRequest) {
       })
       return NextResponse.json(auth)
     } else {
-      const auth = pusherServer.authorizeChannel(socket_id, channel_name)
+      const auth = server.authorizeChannel(socket_id, channel_name)
       return NextResponse.json(auth)
     }
   } catch (error: any) {

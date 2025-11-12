@@ -27,10 +27,17 @@ export async function POST(req: NextRequest) {
     // Validate request body
     const validation = await validateBody(req, SignupSchema)
     if (!validation.success) {
+      console.error('Signup validation error:', validation.response)
       return validation.response
     }
     
     const { email, password, name, phone, role } = validation.data
+    
+    // Normalize phone - convert empty string to null
+    const normalizedPhone = phone && phone.trim() !== '' ? phone.trim() : null
+    
+    // Normalize name - convert empty string to null
+    const normalizedName = name && name.trim() !== '' ? name.trim() : null
 
     // Validate password strength
     const passwordValidation = validatePasswordStrength(password)
@@ -46,9 +53,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate phone number for workers (must be in E.164 format)
-    if (role === 'WORKER' && !phone) {
+    if (role === 'WORKER' && !normalizedPhone) {
       return NextResponse.json(
-        { error: 'Phone number is required for developers' },
+        { error: 'Phone number is required for developers and must be in E.164 format (e.g., +1234567890)' },
+        { status: 400 }
+      )
+    }
+    
+    // Validate phone format if provided
+    if (normalizedPhone && !/^\+[1-9]\d{1,14}$/.test(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Phone number must be in E.164 format (e.g., +1234567890)' },
         { status: 400 }
       )
     }
@@ -86,8 +101,8 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: {
         email,
-        name: name || null,
-        phone: phone || null,
+        name: normalizedName,
+        phone: normalizedPhone,
         slug,
         hashedPassword,
         role: role === 'WORKER' ? 'WORKER' : 'CLIENT',

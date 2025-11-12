@@ -229,32 +229,36 @@ export default function AvailabilityPage() {
             )
           })}
 
-          <div className="flex gap-4 pt-4">
-            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1 w-full sm:w-auto">
               {isSaving ? 'Saving...' : 'Save Availability'}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Set default availability (Mon-Fri 9-5)
-                const defaultAvail: Record<string, TimeSlot[]> = {}
-                DAYS.slice(0, 5).forEach((day) => {
-                  defaultAvail[day.toLowerCase()] = [{ start: '09:00', end: '17:00' }]
-                })
-                setAvailability(defaultAvail)
-              }}
-            >
-              Set Default (Mon-Fri 9-5)
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Clear all availability
-                setAvailability({})
-              }}
-            >
-              Clear All
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1 sm:flex-initial">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Set default availability (Mon-Fri 9-5)
+                  const defaultAvail: Record<string, TimeSlot[]> = {}
+                  DAYS.slice(0, 5).forEach((day) => {
+                    defaultAvail[day.toLowerCase()] = [{ start: '09:00', end: '17:00' }]
+                  })
+                  setAvailability(defaultAvail)
+                }}
+                className="w-full sm:w-auto text-xs sm:text-sm"
+              >
+                Set Default (Mon-Fri 9-5)
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Clear all availability
+                  setAvailability({})
+                }}
+                className="w-full sm:w-auto text-xs sm:text-sm"
+              >
+                Clear All
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

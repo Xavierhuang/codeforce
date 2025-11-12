@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { pusherServer } from './pusher'
+import { sendPushNotificationToUser } from './pusher-beams'
 
 /**
  * Notification helper functions
@@ -23,6 +24,32 @@ export type NotificationType =
   | 'review_reminder'
   | 'payment_received'
   | 'payout_processed'
+
+/**
+ * Get notification title based on type
+ */
+function getNotificationTitle(type: NotificationType): string {
+  const titles: Record<NotificationType, string> = {
+    task_created: 'New Task',
+    task_completed: 'Task Completed',
+    offer_submitted: 'New Offer',
+    offer_accepted: 'Offer Accepted',
+    message_received: 'New Message',
+    support_ticket_created: 'Support Ticket',
+    support_ticket_replied: 'Support Reply',
+    support_ticket_status_changed: 'Ticket Updated',
+    verification_requested: 'Verification Request',
+    verification_approved: 'Verification Approved',
+    verification_rejected: 'Verification Rejected',
+    account_suspended: 'Account Suspended',
+    platform_announcement: 'Platform Announcement',
+    review_received: 'New Review',
+    review_reminder: 'Review Reminder',
+    payment_received: 'Payment Received',
+    payout_processed: 'Payout Processed',
+  }
+  return titles[type] || 'Notification'
+}
 
 /**
  * Create a notification for a user
@@ -55,6 +82,23 @@ export async function createNotification(
     } catch (pusherError) {
       console.error(`Failed to trigger Pusher event for user ${userId}:`, pusherError)
       // Don't throw - Pusher failures shouldn't break notification creation
+    }
+
+    // Send push notification via Pusher Beams
+    try {
+      const deepLink = taskId 
+        ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com'}/tasks/${taskId}`
+        : undefined
+      
+      await sendPushNotificationToUser(
+        userId,
+        getNotificationTitle(type),
+        message,
+        deepLink
+      )
+    } catch (beamsError) {
+      console.error(`Failed to send push notification for user ${userId}:`, beamsError)
+      // Don't throw - push notifications are optional
     }
   } catch (error) {
     console.error(`Failed to create notification for user ${userId}:`, error)
@@ -103,6 +147,24 @@ export async function createNotifications(
     } catch (pusherError) {
       console.error('Failed to trigger Pusher events for notifications:', pusherError)
       // Don't throw - Pusher failures shouldn't break notification creation
+    }
+
+    // Send push notifications via Pusher Beams
+    try {
+      const { sendPushNotificationToUsers } = await import('./pusher-beams')
+      const deepLink = taskId 
+        ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com'}/tasks/${taskId}`
+        : undefined
+      
+      await sendPushNotificationToUsers(
+        userIds,
+        getNotificationTitle(type),
+        message,
+        deepLink
+      )
+    } catch (beamsError) {
+      console.error('Failed to send push notifications:', beamsError)
+      // Don't throw - push notifications are optional
     }
   } catch (error) {
     console.error('Failed to create notifications:', error)

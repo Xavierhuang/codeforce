@@ -9,7 +9,7 @@ export interface GeocodeResult {
   formattedAddress: string
 }
 
-export function parseAddressComponents(place: google.maps.places.PlaceResult | google.maps.GeocoderResult): GeocodeResult {
+export function parseAddressComponents(place: any): GeocodeResult {
   const addressComponents = place.address_components || []
   let streetNumber = ''
   let route = ''
@@ -18,7 +18,7 @@ export function parseAddressComponents(place: google.maps.places.PlaceResult | g
   let postalCode = ''
   let country = ''
 
-  addressComponents.forEach((component) => {
+  addressComponents.forEach((component: any) => {
     const types = component.types
 
     if (types.includes('street_number')) {
@@ -72,7 +72,7 @@ export function geocodeAddress(address: string): Promise<GeocodeResult> {
 
     const geocoder = new window.google.maps.Geocoder()
 
-    geocoder.geocode({ address }, (results, status) => {
+    geocoder.geocode({ address }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
         resolve(parseAddressComponents(results[0]))
       } else {
@@ -91,7 +91,7 @@ export function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult>
 
     const geocoder = new window.google.maps.Geocoder()
 
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+    geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
         resolve(parseAddressComponents(results[0]))
       } else {

@@ -12,6 +12,7 @@ import toast from 'react-hot-toast'
 import { getPusherClient } from '@/lib/pusher-client'
 import { Send, Circle, User } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { containsContactInfo, getContactInfoErrorMessage } from '@/lib/contact-filter'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -60,7 +61,8 @@ export function Chat({ taskId, otherUser }: ChatProps) {
       mutate() // Refresh messages when new message arrives
     })
 
-    channel.bind('typing', (data: { userId: string; isTyping: boolean }) => {
+    // Listen for typing events (client events)
+    channel.bind('client-typing', (data: { userId: string; isTyping: boolean }) => {
       if (data.userId === session.user?.id) return
       
       setTypingUsers((prev) => {
@@ -149,6 +151,12 @@ export function Chat({ taskId, otherUser }: ChatProps) {
     e.preventDefault()
     if (!message.trim() || isSubmitting) return
 
+    // Check for contact information (email/phone)
+    if (containsContactInfo(message)) {
+      toast.error(getContactInfoErrorMessage(message))
+      return
+    }
+
     // Stop typing indicator
     if (channelRef.current && session?.user?.id) {
       channelRef.current.trigger('client-typing', {
@@ -169,7 +177,8 @@ export function Chat({ taskId, otherUser }: ChatProps) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to send message')
       }
 
       setMessage('')

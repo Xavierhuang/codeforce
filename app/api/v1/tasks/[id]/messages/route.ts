@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { triggerMessageEvent } from '@/lib/pusher'
 import { sanitizeText } from '@/lib/sanitize'
 import { createNotification } from '@/lib/notifications'
+import { containsContactInfo, getContactInfoErrorMessage } from '@/lib/contact-filter'
 
 export async function GET(
   req: NextRequest,
@@ -71,6 +72,14 @@ export async function POST(
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
         { error: 'Message content is required' },
+        { status: 400 }
+      )
+    }
+
+    // Check for contact information (email/phone) - prevent sharing personal contact info
+    if (containsContactInfo(content)) {
+      return NextResponse.json(
+        { error: getContactInfoErrorMessage(content) },
         { status: 400 }
       )
     }

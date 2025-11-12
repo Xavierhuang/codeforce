@@ -114,28 +114,7 @@ export async function PUT(
         },
       })
       
-      // Recalculate service-specific rating if serviceName exists
-      if (review.serviceName) {
-        const serviceRatingData = await tx.review.aggregate({
-          where: {
-            targetUserId: review.targetUserId,
-            serviceName: review.serviceName,
-          },
-          _avg: { rating: true },
-          _count: { rating: true },
-        })
-        
-        await tx.workerService.updateMany({
-          where: {
-            workerId: review.targetUserId,
-            skillName: review.serviceName,
-          },
-          data: {
-            rating: serviceRatingData._avg.rating ? Number(serviceRatingData._avg.rating.toFixed(2)) : 0,
-            ratingCount: serviceRatingData._count.rating || 0,
-          },
-        })
-      }
+      // Service-specific ratings not implemented - Review model doesn't have serviceName field
       
       return updated
     })
@@ -206,28 +185,7 @@ export async function DELETE(
         },
       })
       
-      // Recalculate service-specific rating if serviceName exists
-      if (review.serviceName) {
-        const serviceRatingData = await tx.review.aggregate({
-          where: {
-            targetUserId: review.targetUserId,
-            serviceName: review.serviceName,
-          },
-          _avg: { rating: true },
-          _count: { rating: true },
-        })
-        
-        await tx.workerService.updateMany({
-          where: {
-            workerId: review.targetUserId,
-            skillName: review.serviceName,
-          },
-          data: {
-            rating: serviceRatingData._avg.rating ? Number(serviceRatingData._avg.rating.toFixed(2)) : 0,
-            ratingCount: serviceRatingData._count.rating || 0,
-          },
-        })
-      }
+      // Service-specific ratings not implemented - Review model doesn't have serviceName field
     })
     
     return NextResponse.json({ message: 'Review deleted successfully' })

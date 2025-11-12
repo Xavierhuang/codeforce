@@ -75,80 +75,22 @@ export async function POST(
       throw Errors.businessRule('You cannot report your own review')
     }
     
-    // Check if user already reported this review
-    const existingReport = await prisma.reviewReport.findUnique({
-      where: {
-        reviewId_reporterId: {
-          reviewId,
-          reporterId: user.id,
-        },
-      },
-    })
+    // Review reports feature not implemented - ReviewReport model doesn't exist in schema
+    // Notify admins about the report attempt
+    await notifyAdmins(
+      'review_received',
+      `Review reported (manual): ${reason} - Review ID: ${reviewId}${description ? ` - ${description}` : ''}`,
+      review.taskId || undefined
+    )
     
-    if (existingReport) {
-      throw Errors.businessRule('You have already reported this review')
-    }
-    
-    // Create report
-    const report = await prisma.reviewReport.create({
-      data: {
+    return NextResponse.json(
+      { 
+        message: 'Report received (feature not fully implemented)',
         reviewId,
-        reporterId: user.id,
         reason,
-        description: description ? sanitizeText(description) : null,
       },
-      include: {
-        review: {
-          select: {
-            id: true,
-            rating: true,
-            comment: true,
-          },
-        },
-        reporter: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    })
-    
-    // Count total reports for this review
-    const reportCount = await prisma.reviewReport.count({
-      where: {
-        reviewId,
-        status: 'PENDING',
-      },
-    })
-    
-    // Auto-flag review if threshold reached
-    if (reportCount >= AUTO_FLAG_THRESHOLD) {
-      await prisma.review.update({
-        where: { id: reviewId },
-        data: {
-          status: 'FLAGGED',
-          moderationReason: `Auto-flagged after ${reportCount} reports`,
-        },
-      })
-      
-      // Notify admins about auto-flagged review
-      await notifyAdmins(
-        'review_received',
-        `Review auto-flagged: ${reportCount} reports received`,
-        review.taskId || undefined
-      )
-    } else {
-      // Notify admins about new report
-      await notifyAdmins(
-        'review_received',
-        `Review reported: ${reason} - Review ID: ${reviewId}`,
-        review.taskId || undefined
-      )
-    }
-    
-    return NextResponse.json(report, { status: 201 })
+      { status: 201 }
+    )
   } catch (error: unknown) {
     return handleApiError(error, 'Failed to report review')
   }

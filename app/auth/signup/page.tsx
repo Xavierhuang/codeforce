@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import toast from 'react-hot-toast'
 import { signIn } from 'next-auth/react'
-import { User, Briefcase } from 'lucide-react'
+import { User, Briefcase, Eye, EyeOff, Check } from 'lucide-react'
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -25,6 +25,7 @@ export default function SignUpPage() {
     role: (roleParam || 'CLIENT') as 'CLIENT' | 'WORKER',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     // Show dialog if no role parameter is provided
@@ -39,6 +40,18 @@ export default function SignUpPage() {
     setFormData({ ...formData, role })
     setShowRoleDialog(false)
   }
+
+  // Password validation checks
+  const passwordChecks = {
+    minLength: formData.password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;':"\\|,.<>\/?]/.test(formData.password),
+    noSpaces: !/\s/.test(formData.password),
+  }
+
+  const isPasswordValid = Object.values(passwordChecks).every(check => check)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,6 +72,12 @@ export default function SignUpPage() {
 
       if (!response.ok) {
         const error = await response.json()
+        console.error('Signup error:', error)
+        // Show detailed validation errors if available
+        if (error.details && Array.isArray(error.details)) {
+          const errorMessages = error.details.map((d: any) => `${d.field}: ${d.message}`).join(', ')
+          throw new Error(errorMessages || error.error || 'Failed to sign up')
+        }
         throw new Error(error.error || 'Failed to sign up')
       }
 
@@ -93,27 +112,27 @@ export default function SignUpPage() {
         }
         setShowRoleDialog(open)
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-4 sm:mx-auto p-4 sm:p-6">
           <DialogClose onOpenChange={setShowRoleDialog} />
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Choose Your Role</DialogTitle>
-            <DialogDescription className="text-center">
+          <DialogHeader className="mb-4 sm:mb-6">
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-center">Choose Your Role</DialogTitle>
+            <DialogDescription className="text-center text-xs sm:text-sm mt-2">
               Select how you want to use Skillyy
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <Button
               onClick={() => handleRoleSelect('CLIENT')}
               variant="outline"
-              className="h-auto p-6 flex flex-col items-start gap-3 hover:border-primary hover:bg-primary/5 transition-all touch-manipulation"
+              className="h-auto p-4 sm:p-6 flex flex-col items-start gap-2 sm:gap-3 hover:border-primary hover:bg-primary/5 transition-all touch-manipulation active:scale-[0.98]"
             >
               <div className="flex items-center gap-3 w-full">
-                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                  <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                  <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-lg">I&apos;m a Buyer</div>
-                  <div className="text-sm text-muted-foreground mt-1">
+                <div className="flex-1 text-left min-w-0">
+                  <div className="font-semibold text-base sm:text-lg">I&apos;m a Buyer</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
                     I want to hire developers and get work done
                   </div>
                 </div>
@@ -123,15 +142,15 @@ export default function SignUpPage() {
             <Button
               onClick={() => handleRoleSelect('WORKER')}
               variant="outline"
-              className="h-auto p-6 flex flex-col items-start gap-3 hover:border-primary hover:bg-primary/5 transition-all touch-manipulation"
+              className="h-auto p-4 sm:p-6 flex flex-col items-start gap-2 sm:gap-3 hover:border-primary hover:bg-primary/5 transition-all touch-manipulation active:scale-[0.98]"
             >
               <div className="flex items-center gap-3 w-full">
-                <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                  <Briefcase className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                  <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-lg">I&apos;m a Developer</div>
-                  <div className="text-sm text-muted-foreground mt-1">
+                <div className="flex-1 text-left min-w-0">
+                  <div className="font-semibold text-base sm:text-lg">I&apos;m a Developer</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
                     I want to offer my services and earn money
                   </div>
                 </div>
@@ -177,18 +196,57 @@ export default function SignUpPage() {
               </div>
               <div>
                 <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  minLength={8}
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Must be at least 8 characters
-                </p>
+                <div className="relative mt-1">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={8}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {formData.password && (
+                  <div className="mt-2 space-y-1.5">
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.minLength ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.minLength ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>At least 8 characters</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.hasUpperCase ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.hasUpperCase ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>One uppercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.hasLowerCase ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.hasLowerCase ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>One lowercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.hasNumber ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>One number</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.hasSpecialChar ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>One special character</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs transition-colors ${passwordChecks.noSpaces ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      <Check className={`h-3.5 w-3.5 ${passwordChecks.noSpaces ? 'opacity-100' : 'opacity-0'}`} />
+                      <span>No spaces</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="phone">

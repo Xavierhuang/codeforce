@@ -12,6 +12,9 @@ export async function GET(req: NextRequest) {
     const near = searchParams.get('near')
     const radius = searchParams.get('radius')
     const minRating = searchParams.get('minRating')
+    const minPrice = searchParams.get('minPrice')
+    const maxPrice = searchParams.get('maxPrice')
+    const serviceType = searchParams.get('serviceType')
     const availableOnly = searchParams.get('availableOnly') === 'true'
     const limit = parseInt(searchParams.get('limit') || '50')
 
@@ -42,6 +45,45 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      where.hourlyRate = {}
+      if (minPrice) {
+        where.hourlyRate.gte = parseFloat(minPrice)
+      }
+      if (maxPrice) {
+        where.hourlyRate.lte = parseFloat(maxPrice)
+      }
+    }
+
+    // Filter by service type
+    if (serviceType) {
+      const serviceTypes = serviceType.split(',').map((s: string) => s.trim())
+      const normalizedTypes: string[] = []
+      
+      serviceTypes.forEach((type: string) => {
+        if (type.toLowerCase() === 'remote') {
+          normalizedTypes.push('VIRTUAL')
+        } else if (type.toLowerCase() === 'on-site') {
+          normalizedTypes.push('IN_PERSON')
+        } else if (type.toLowerCase() === 'both') {
+          // If "Both" is selected, don't filter
+          return
+        }
+      })
+      
+      if (normalizedTypes.length > 0 && !serviceTypes.some((t: string) => t.toLowerCase() === 'both')) {
+        if (normalizedTypes.length === 1) {
+          where.serviceType = normalizedTypes[0]
+        } else {
+          where.serviceType = {
+            in: normalizedTypes,
+          }
+        }
+      }
+      // If "Both" is in the list, don't add serviceType filter (show all)
+    }
+
     // Geo-location filtering
     if (near && radius) {
       const [lat, lng] = near.split(',').map(Number)
@@ -58,7 +100,26 @@ export async function GET(req: NextRequest) {
 
     const developers = await prisma.user.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        slug: true,
+        avatarUrl: true,
+        avatarCropX: true,
+        avatarCropY: true,
+        avatarCropScale: true,
+        bio: true,
+        hourlyRate: true,
+        rating: true,
+        serviceType: true,
+        locationLat: true,
+        locationLng: true,
+        serviceRadiusMiles: true,
+        verificationStatus: true,
+        badgeTier: true,
+        createdAt: true,
+        updatedAt: true,
         skills: true,
         reviewsReceived: {
           take: 5,

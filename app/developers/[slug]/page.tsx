@@ -14,6 +14,7 @@ import { TaskerBadge } from '@/components/TaskerBadge'
 import { TaskerBadgeTier } from '@/lib/badge-tier'
 import { GoogleMapsLoader } from '@/components/maps/GoogleMapsLoader'
 import { LocationPicker } from '@/components/maps/LocationPicker'
+import { AvatarDisplay } from '@/components/AvatarDisplay'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -81,17 +82,18 @@ export default function DeveloperProfilePage() {
           <div className="flex flex-col md:flex-row md:items-start gap-6 mb-6 pb-6 border-b">
             {/* Avatar */}
             <div className="relative -mt-20 md:-mt-24 flex-shrink-0">
-              {developer.avatarUrl ? (
-                <img
-                  src={developer.avatarUrl}
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                <AvatarDisplay
+                  src={developer.avatarUrl || undefined}
                   alt={developer.name || 'Developer'}
-                  className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg object-cover"
+                  fallback={developer.name?.[0]?.toUpperCase() || 'D'}
+                  className="w-full h-full"
+                  cropX={developer.avatarCropX ?? undefined}
+                  cropY={developer.avatarCropY ?? undefined}
+                  cropScale={developer.avatarCropScale ?? undefined}
+                  size={160}
                 />
-              ) : (
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg bg-[#94FE0C]/20 flex items-center justify-center text-4xl md:text-5xl font-bold text-gray-900">
-                  {developer.name?.[0]?.toUpperCase() || 'D'}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Profile Info */}

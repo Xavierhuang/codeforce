@@ -13,15 +13,6 @@ export async function GET(
   { params }: { params: { fileId: string } }
 ) {
   try {
-    // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
     // Parse fileId: "type:uuid"
     const [type, uuid] = params.fileId.split(':')
     
@@ -41,9 +32,20 @@ export async function GET(
       )
     }
 
-    // Security: Check if user has permission to access this file
-    // For now, allow access if user is authenticated
-    // TODO: Add more granular permissions (e.g., only owner can access their files)
+    // Security: Require authentication for sensitive files (id_document, attachment)
+    // Allow public access for avatar and banner (needed for public profiles)
+    const publicTypes = ['avatar', 'banner']
+    const requiresAuth = !publicTypes.includes(type)
+    
+    if (requiresAuth) {
+      const user = await getCurrentUser()
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        )
+      }
+    }
     
     // Try common extensions for the file type
     const possibleExtensions = type === 'id_document' || type === 'attachment' 
@@ -85,11 +87,16 @@ export async function GET(
     const mimeType = mimeTypes[foundExtension] || 'application/octet-stream'
 
     // Return file with appropriate headers
+    // Public files (avatar, banner) can be cached publicly, private files should be cached privately
+    const cacheControl = publicTypes.includes(type)
+      ? 'public, max-age=31536000, immutable' // Cache publicly for 1 year (immutable)
+      : 'private, max-age=3600' // Cache privately for 1 hour
+    
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': mimeType,
         'Content-Disposition': `inline; filename="${uuid}.${foundExtension}"`,
-        'Cache-Control': 'private, max-age=3600', // Cache for 1 hour
+        'Cache-Control': cacheControl,
         'X-Content-Type-Options': 'nosniff',
       },
     })

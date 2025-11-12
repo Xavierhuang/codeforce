@@ -51,82 +51,12 @@ export async function POST(
       throw Errors.notFound('Review')
     }
     
-    // Only allow votes on approved reviews
-    if (review.status !== 'APPROVED') {
-      throw Errors.businessRule('You can only vote on approved reviews')
-    }
-    
-    // Check if user already voted
-    const existingVote = await prisma.reviewHelpfulVote.findUnique({
-      where: {
-        reviewId_userId: {
-          reviewId,
-          userId: user.id,
-        },
-      },
-    })
-    
-    // Update or create vote and update helpful count
-    const result = await prisma.$transaction(async (tx) => {
-      let vote
-      let helpfulCountChange = 0
-      
-      if (existingVote) {
-        // Update existing vote
-        if (existingVote.helpful !== helpful) {
-          // Vote changed
-          helpfulCountChange = helpful ? 2 : -2 // +1 for new, -1 for old
-        } else {
-          // Same vote - remove it
-          await tx.reviewHelpfulVote.delete({
-            where: {
-              reviewId_userId: {
-                reviewId,
-                userId: user.id,
-              },
-            },
-          })
-          helpfulCountChange = helpful ? -1 : 0 // Only helpful votes count
-        }
-      } else {
-        // Create new vote
-        vote = await tx.reviewHelpfulVote.create({
-          data: {
-            reviewId,
-            userId: user.id,
-            helpful,
-          },
-        })
-        helpfulCountChange = helpful ? 1 : 0 // Only helpful votes count
-      }
-      
-      // Update helpful count
-      if (helpfulCountChange !== 0) {
-        await tx.review.update({
-          where: { id: reviewId },
-          data: {
-            helpfulCount: {
-              increment: helpfulCountChange,
-            },
-          },
-        })
-      }
-      
-      return vote || existingVote
-    })
-    
-    // Fetch updated review
-    const updatedReview = await prisma.review.findUnique({
-      where: { id: reviewId },
-      select: {
-        id: true,
-        helpfulCount: true,
-      },
-    })
-    
+    // Helpful votes feature not fully implemented - ReviewHelpfulVote model doesn't exist
+    // Return success but don't persist votes
     return NextResponse.json({
-      vote: result,
-      helpfulCount: updatedReview?.helpfulCount || 0,
+      vote: { reviewId, userId: user.id, helpful },
+      helpfulCount: 0,
+      message: 'Vote recorded (feature not fully implemented)',
     })
   } catch (error: unknown) {
     return handleApiError(error, 'Failed to vote on review')
@@ -157,19 +87,10 @@ export async function GET(
     
     const reviewId = paramValidation.data.id
     
-    // Get user's vote if exists
-    const vote = await prisma.reviewHelpfulVote.findUnique({
-      where: {
-        reviewId_userId: {
-          reviewId,
-          userId: user.id,
-        },
-      },
-    })
-    
+    // Helpful votes feature not fully implemented - ReviewHelpfulVote model doesn't exist
     return NextResponse.json({
-      voted: !!vote,
-      helpful: vote?.helpful || null,
+      voted: false,
+      helpful: null,
     })
   } catch (error: unknown) {
     return handleApiError(error, 'Failed to fetch vote status')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
@@ -38,6 +38,9 @@ export default function ProfileSetupPage() {
     bio: '',
     avatarUrl: '',
     bannerUrl: '',
+    avatarCropX: '',
+    avatarCropY: '',
+    avatarCropScale: '',
     email: '',
     phone: '',
     website: '',
@@ -80,11 +83,23 @@ export default function ProfileSetupPage() {
   const [showAvatarCropper, setShowAvatarCropper] = useState(false)
   const [avatarCropData, setAvatarCropData] = useState<{ x: number; y: number; scale: number } | null>(null)
   const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string>('')
+  const bannerUrlRef = useRef<string>('') // Track locally set banner URL
 
   useEffect(() => {
     if (user) {
       const userBannerUrl = (user as any).bannerUrl || ''
-      setFormData({
+      // Initialize ref with user's banner URL if not already set
+      if (!bannerUrlRef.current && userBannerUrl) {
+        bannerUrlRef.current = userBannerUrl
+        setBannerPreview(userBannerUrl)
+      }
+      // Use locally set banner URL if it exists, otherwise use user data
+      const currentBannerUrl = bannerUrlRef.current || userBannerUrl
+      if (currentBannerUrl && !bannerPreview) {
+        setBannerPreview(currentBannerUrl)
+      }
+      
+      setFormData((prev) => ({
         name: user.name || '',
         bio: user.bio || '',
         avatarUrl: user.avatarUrl || '',
@@ -106,7 +121,7 @@ export default function ProfileSetupPage() {
         education: user.education || '',
         languages: user.languages || '',
         certifications: user.certifications || '',
-        bannerUrl: userBannerUrl,
+        bannerUrl: currentBannerUrl, // Preserve locally set bannerUrl
         slug: user.slug || '',
         // Buyer-specific fields
         company: (user as any).company || '',
@@ -116,7 +131,7 @@ export default function ProfileSetupPage() {
         budgetRange: (user as any).budgetRange || '',
         preferredCommunication: (user as any).preferredCommunication || '',
         typicalProjectDuration: (user as any).typicalProjectDuration || '',
-      })
+      }))
       setSkills(user.skills?.map((s: any) => ({ skill: s.skill, level: s.level })) || [])
       setWorkerServices((user as any).workerServices?.map((s: any) => ({
         id: s.id,
@@ -133,8 +148,15 @@ export default function ProfileSetupPage() {
           scale: user.avatarCropScale || 1,
         })
       }
-      // Always update bannerPreview from user data when it changes
-      if (userBannerUrl) {
+      // Initialize ref from user data on first load if not already set
+      if (!bannerUrlRef.current && userBannerUrl) {
+        bannerUrlRef.current = userBannerUrl
+      }
+      
+      // Update bannerPreview - prefer locally set banner, then user data
+      if (bannerUrlRef.current) {
+        setBannerPreview(bannerUrlRef.current)
+      } else if (userBannerUrl) {
         setBannerPreview(userBannerUrl)
       } else {
         // Only clear if we don't have a local preview
@@ -259,7 +281,10 @@ export default function ProfileSetupPage() {
           throw new Error('No URL returned from upload')
         }
         
+        // Store in ref to persist across re-renders
+        bannerUrlRef.current = uploadData.url
         setFormData((prev) => ({ ...prev, bannerUrl: uploadData.url }))
+        setBannerPreview(uploadData.url)
         toast.success('Banner uploaded successfully')
       } catch (error: any) {
         console.error('Error uploading banner:', error)
@@ -323,7 +348,7 @@ export default function ProfileSetupPage() {
         body: JSON.stringify({
           name: formData.name,
           bio: formData.bio,
-          avatarUrl: formData.avatarUrl,
+          avatarUrl: formData.avatarUrl || null,
           avatarCropX: formData.avatarCropX ? parseFloat(formData.avatarCropX) : undefined,
           avatarCropY: formData.avatarCropY ? parseFloat(formData.avatarCropY) : undefined,
           avatarCropScale: formData.avatarCropScale ? parseFloat(formData.avatarCropScale) : undefined,
@@ -341,7 +366,7 @@ export default function ProfileSetupPage() {
           education: isWorker ? (formData.education || undefined) : undefined,
           languages: isWorker ? (formData.languages || undefined) : undefined,
           certifications: isWorker ? (formData.certifications || undefined) : undefined,
-          bannerUrl: formData.bannerUrl || undefined,
+          bannerUrl: formData.bannerUrl && formData.bannerUrl.trim() ? formData.bannerUrl.trim() : null,
           slug: (isWorker || isClient) ? formData.slug || undefined : undefined,
           workerServices: isWorker ? workerServices : undefined,
           // Buyer-specific fields
@@ -388,7 +413,8 @@ export default function ProfileSetupPage() {
         education: updatedUser?.education || '',
         languages: updatedUser?.languages || '',
         certifications: updatedUser?.certifications || '',
-        bannerUrl: userBannerUrl,
+        slug: updatedUser?.slug || '',
+        bannerUrl: userBannerUrl || '',
         // Buyer-specific fields
         company: updatedUser?.company || '',
         companySize: updatedUser?.companySize || '',
@@ -427,12 +453,20 @@ export default function ProfileSetupPage() {
         }
       }
       
-      // Update bannerPreview if bannerUrl was saved
+      // Update bannerPreview and ref if bannerUrl was saved
       if (updatedUser?.bannerUrl) {
+        bannerUrlRef.current = updatedUser.bannerUrl
         setBannerPreview(updatedUser.bannerUrl)
+        setFormData((prev) => ({ ...prev, bannerUrl: updatedUser.bannerUrl }))
       } else if (formData.bannerUrl) {
         // If API doesn't return bannerUrl but we have it in formData, use that
+        bannerUrlRef.current = formData.bannerUrl
         setBannerPreview(formData.bannerUrl)
+      } else {
+        // Clear banner if it was removed
+        bannerUrlRef.current = ''
+        setBannerPreview('')
+        setFormData((prev) => ({ ...prev, bannerUrl: '' }))
       }
       
       // Refresh user data to ensure everything is in sync
@@ -524,10 +558,10 @@ export default function ProfileSetupPage() {
             <div className="px-6 pt-4 pb-6">
               <div className="flex flex-col md:flex-row md:items-start gap-4">
                 {/* Avatar */}
-                <div className="relative -mt-20 md:-mt-24">
+                <div className="relative -mt-20 md:-mt-24 group">
                   <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg overflow-hidden">
                     <AvatarDisplay
-                      src={avatarPreview || undefined}
+                      src={avatarPreview || formData.avatarUrl || undefined}
                       alt="Profile"
                       fallback={formData.name?.[0]?.toUpperCase() || 'U'}
                       className="w-full h-full"
@@ -537,9 +571,10 @@ export default function ProfileSetupPage() {
                       size={160}
                     />
                   </div>
+                  {/* Upload button - always visible */}
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full border-2 border-gray-200 flex items-center justify-center cursor-pointer shadow-md hover:bg-gray-50 transition-all"
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full border-2 border-gray-200 flex items-center justify-center cursor-pointer shadow-md hover:bg-gray-50 transition-all z-10"
                   >
                     <Upload className="w-4 h-4 text-gray-700" />
                     <input
@@ -550,6 +585,22 @@ export default function ProfileSetupPage() {
                       className="hidden"
                     />
                   </label>
+                  {/* Crop button - appears on hover when avatar exists */}
+                  {avatarPreview || formData.avatarUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (avatarPreview || formData.avatarUrl) {
+                          setPendingAvatarUrl(avatarPreview || formData.avatarUrl)
+                          setShowAvatarCropper(true)
+                        }
+                      }}
+                      className="absolute top-0 right-0 w-10 h-10 bg-white rounded-full border-2 border-gray-200 flex items-center justify-center cursor-pointer shadow-md hover:bg-gray-50 transition-all opacity-0 group-hover:opacity-100 z-10"
+                      title="Crop avatar"
+                    >
+                      <Image className="w-4 h-4 text-gray-700" />
+                    </button>
+                  ) : null}
                 </div>
 
                 {/* Profile Info */}
@@ -721,7 +772,7 @@ export default function ProfileSetupPage() {
                     <div>
                       <Label htmlFor="slug" className="text-xs text-gray-500 mb-1 block">Profile URL</Label>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">codeforce.com/</span>
+                        <span className="text-sm text-gray-500">skillyy.com/</span>
                         <Input
                           id="slug"
                           name="slug"
@@ -1213,6 +1264,11 @@ export default function ProfileSetupPage() {
           open={showAvatarCropper}
           onClose={handleAvatarCropCancel}
           onSave={handleAvatarCropSave}
+          initialCrop={avatarCropData || (formData.avatarCropX && formData.avatarCropY && formData.avatarCropScale ? {
+            x: parseFloat(formData.avatarCropX),
+            y: parseFloat(formData.avatarCropY),
+            scale: parseFloat(formData.avatarCropScale),
+          } : null)}
         />
       )}
     </div>

@@ -29,24 +29,31 @@ export function AvatarDisplay({
   size = 40,
 }: AvatarDisplayProps) {
   const imageStyle = useMemo(() => {
-    if (!src || (!cropX && !cropY && !cropScale)) {
+    if (!src) {
       return {}
     }
 
-    // Convert crop position (0-1) to CSS object-position percentage
-    // cropX/Y of 0 means top-left, 1 means bottom-right
+    // cropX/Y are normalized center points (0-1 range)
     // CSS object-position uses percentages where 0% is left/top, 100% is right/bottom
     const xPercent = cropX !== null && cropX !== undefined ? cropX * 100 : 50
     const yPercent = cropY !== null && cropY !== undefined ? cropY * 100 : 50
     
     // Apply scale (zoom) - CSS transform scale
+    // Only apply scale if it's greater than 1 to avoid shrinking
     const scale = cropScale && cropScale > 1 ? cropScale : 1
 
-    return {
+    const style: React.CSSProperties = {
       objectPosition: `${xPercent}% ${yPercent}%`,
-      transform: scale > 1 ? `scale(${scale})` : undefined,
-      transformOrigin: 'center center',
+      objectFit: 'cover',
     }
+
+    // Only apply transform if scale > 1
+    if (scale > 1) {
+      style.transform = `scale(${scale})`
+      style.transformOrigin = 'center center'
+    }
+
+    return style
   }, [src, cropX, cropY, cropScale])
 
   if (!src) {
@@ -71,7 +78,7 @@ export function AvatarDisplay({
       <img
         src={src}
         alt={alt}
-        className="w-full h-full object-cover"
+        className="w-full h-full"
         style={imageStyle}
       />
     </div>

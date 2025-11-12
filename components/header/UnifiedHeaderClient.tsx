@@ -105,7 +105,7 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
     fetcher
   )
   const { data: payoutRequests } = useSWR(
-    isAdmin ? '/api/v1/admin/payouts/request' : null,
+    isAdmin ? '/api/v1/payouts/request' : null,
     fetcher
   )
   const { data: supportTickets } = useSWR(
@@ -302,11 +302,11 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 safe-area-inset-top shadow-sm" suppressHydrationWarning>
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+      <div className="container mx-auto px-3 md:px-4">
+        <div className="flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
-          <Link href={status === 'authenticated' ? '/dashboard' : '/'} className="flex items-center gap-2">
-            <img src="/logo.svg" alt="CodeForce" className="h-8 w-auto" />
+          <Link href={status === 'authenticated' ? '/dashboard' : '/'} className="flex items-center gap-2 flex-shrink-0">
+            <img src="/logo.svg" alt="Skillyy" className="h-7 w-auto md:h-8 md:w-auto" />
           </Link>
 
           {isAuthenticated ? (
@@ -342,30 +342,30 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
               </nav>
 
               {/* Right Section - Authenticated */}
-              <div className="flex items-center gap-2">
-                {/* Wallet (Workers only) */}
+              <div className="flex items-center gap-1 md:gap-2">
+                {/* Wallet (Workers only) - Hidden on mobile to save space */}
                 {isWorker && (
-                  <Link href="/dashboard/wallet">
+                  <Link href="/dashboard/wallet" className="hidden md:block">
                     <Button variant="ghost" size="icon" className="relative h-9 w-9">
                       <Wallet className="h-4 w-4" />
                     </Button>
                   </Link>
                 )}
                 
-                {/* Broadcast (Admins only) */}
+                {/* Broadcast (Admins only) - Hidden on mobile to save space */}
                 {isAdmin && (
-                  <Link href="/admin/settings#broadcast">
+                  <Link href="/admin/settings#broadcast" className="hidden md:block">
                     <Button variant="ghost" size="icon" className="relative h-9 w-9">
                       <Megaphone className="h-4 w-4" />
                     </Button>
                   </Link>
                 )}
                 
-                {/* Notifications */}
+                {/* Notifications - Always visible on mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                      <Bell className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-9 md:w-9">
+                      <Bell className="h-4 w-4 md:h-4 md:w-4" />
                       {unreadCount > 0 && (
                         <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] bg-red-500 text-white">
                           {unreadCount > 99 ? '99+' : unreadCount}
@@ -454,10 +454,10 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* User Profile */}
+                {/* User Profile - Always visible on mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                    <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-9 md:w-9">
                       {user?.avatarUrl ? (
                         <img
                           src={user.avatarUrl}
@@ -501,7 +501,7 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={async () => {
-                        await signOut({ callbackUrl: '/' })
+                        await signOut({ callbackUrl: 'https://skillyy.com/' })
                       }} 
                       className="cursor-pointer"
                     >
@@ -509,20 +509,6 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* Mobile Menu Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden h-9 w-9"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  {mobileMenuOpen ? (
-                    <X className="h-5 w-5" />
-                  ) : (
-                    <Menu className="h-5 w-5" />
-                  )}
-                </Button>
               </div>
             </>
           ) : (
@@ -578,91 +564,44 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
           )}
         </div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
+        {/* Mobile Navigation - Only show when NOT authenticated (authenticated users use bottom nav) */}
+        {mobileMenuOpen && !isAuthenticated && (
           <div className="md:hidden border-t bg-white py-4">
             <nav className="flex flex-col gap-1">
-              {isAuthenticated ? (
-                <>
-                  {/* Wallet link for workers (mobile) */}
-                  {isWorker && (
-                    <Link
-                      href="/dashboard/wallet"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        pathname === '/dashboard/wallet'
-                          ? 'bg-[#94FE0C]/20 text-gray-900'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Wallet className="w-5 h-5" />
-                      <span>Wallet</span>
-                    </Link>
-                  )}
-                  {/* Authenticated mobile menu */}
-                  {filteredNavItems.map((item) => {
-                  const Icon = item.icon
-                  const active = isActive(item.href)
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        active
-                          ? 'bg-[#94FE0C]/20 text-gray-900'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <Badge className={`${item.badgeColor || 'bg-[#94FE0C]'} text-gray-900 text-xs min-w-[20px] h-5 flex items-center justify-center px-1.5 ml-auto`}>
-                          {item.badge > 99 ? '99+' : item.badge}
-                        </Badge>
-                      )}
-                    </Link>
-                  )
-                  })}
-                </>
-              ) : (
-                // Public mobile menu
-                <>
-                  {publicNavItems.map((item) => {
-                    const active = pathname === item.href || pathname?.startsWith(item.href)
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          active
-                            ? 'bg-[#94FE0C]/20 text-gray-900'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        {item.label}
-                      </Link>
-                    )
-                  })}
-                  <div className="border-t my-2 pt-2">
-                    <Link
-                      href="/auth/signin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/auth/signup"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-2 rounded-lg text-sm font-medium bg-[#94FE0C] text-gray-900 hover:bg-[#7FE00A] mt-2"
-                    >
-                      Get Started
-                    </Link>
-                  </div>
-                </>
-              )}
+              {/* Public mobile menu */}
+              {publicNavItems.map((item) => {
+                const active = pathname === item.href || pathname?.startsWith(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-[#94FE0C]/20 text-gray-900'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
+              <div className="border-t my-2 pt-2">
+                <Link
+                  href="/auth/signin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm font-medium bg-[#94FE0C] text-gray-900 hover:bg-[#7FE00A] mt-2"
+                >
+                  Get Started
+                </Link>
+              </div>
             </nav>
           </div>
         )}

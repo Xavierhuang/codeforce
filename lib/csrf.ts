@@ -28,7 +28,7 @@ export function storeCSRFToken(sessionId: string, token: string): void {
   // Clean up expired tokens periodically
   if (csrfTokens.size > 1000) {
     const now = Date.now()
-    for (const [id, data] of csrfTokens.entries()) {
+    for (const [id, data] of Array.from(csrfTokens.entries())) {
       if (data.expiresAt < now) {
         csrfTokens.delete(id)
       }

@@ -22,7 +22,6 @@ export async function GET(
         slug: true,
         rating: true,
         ratingCount: true,
-        location: true,
         locationLat: true,
         locationLng: true,
         verificationStatus: true,

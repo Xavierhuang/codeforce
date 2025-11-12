@@ -8,7 +8,6 @@ import { z } from 'zod'
 const ReviewAnalyticsQuerySchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  serviceName: z.string().optional(),
 }).strict()
 
 export async function GET(req: NextRequest) {
@@ -32,12 +31,10 @@ export async function GET(req: NextRequest) {
       )
     }
     
-    const { startDate, endDate, serviceName } = queryValidation.data
+    const { startDate, endDate } = queryValidation.data
     
     // Build where clause
-    const where: any = {
-      status: 'APPROVED',
-    }
+    const where: any = {}
     
     if (startDate) {
       where.createdAt = { ...where.createdAt, gte: new Date(startDate) }
@@ -47,10 +44,6 @@ export async function GET(req: NextRequest) {
       where.createdAt = { ...where.createdAt, lte: new Date(endDate) }
     }
     
-    if (serviceName) {
-      where.serviceName = serviceName
-    }
-    
     // Get all reviews for analytics
     const reviews = await prisma.review.findMany({
       where,
@@ -58,11 +51,10 @@ export async function GET(req: NextRequest) {
         id: true,
         rating: true,
         createdAt: true,
-        serviceName: true,
         targetUserId: true,
         reviewerId: true,
         comment: true,
-        reply: true,
+        taskId: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -88,67 +80,39 @@ export async function GET(req: NextRequest) {
     const reviewsWithComments = reviews.filter(r => r.comment && r.comment.trim().length > 0).length
     const commentRate = totalReviews > 0 ? (reviewsWithComments / totalReviews) * 100 : 0
     
-    // Reviews with replies
-    const reviewsWithReplies = reviews.filter(r => r.reply && r.reply.trim().length > 0).length
-    const replyRate = totalReviews > 0 ? (reviewsWithReplies / totalReviews) * 100 : 0
+    // Reviews with replies (reviews don't have replies, removing this metric)
+    const replyRate = 0
     
-    // Reviews by service (if not filtering by service)
+    // Reviews by service (grouped by task category if available)
     const reviewsByService: Record<string, { count: number; avgRating: number }> = {}
-    if (!serviceName) {
-      reviews.forEach(review => {
-        const service = review.serviceName || 'General'
-        if (!reviewsByService[service]) {
-          reviewsByService[service] = { count: 0, avgRating: 0, totalRating: 0 }
-        }
-        reviewsByService[service].count++
-        reviewsByService[service].totalRating = (reviewsByService[service].totalRating || 0) + review.rating
-      })
-      
-      // Calculate averages
-      Object.keys(reviewsByService).forEach(service => {
-        const data = reviewsByService[service]
-        reviewsByService[service] = {
-          count: data.count,
-          avgRating: data.totalRating / data.count,
-        }
-        delete (reviewsByService[service] as any).totalRating
-      })
-    }
     
     // Reviews over time (last 12 months)
     const now = new Date()
-    const monthsData: Record<string, { count: number; avgRating: number }> = {}
+    const monthsDataTemp: Record<string, { count: number; totalRating: number }> = {}
     
     for (let i = 11; i >= 0; i--) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`
-      monthsData[monthKey] = { count: 0, avgRating: 0, totalRating: 0 }
+      monthsDataTemp[monthKey] = { count: 0, totalRating: 0 }
     }
     
     reviews.forEach(review => {
       const reviewDate = new Date(review.createdAt)
       const monthKey = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, '0')}`
-      if (monthsData[monthKey]) {
-        monthsData[monthKey].count++
-        monthsData[monthKey].totalRating = (monthsData[monthKey].totalRating || 0) + review.rating
+      if (monthsDataTemp[monthKey]) {
+        monthsDataTemp[monthKey].count++
+        monthsDataTemp[monthKey].totalRating += review.rating
       }
     })
     
     // Calculate averages for months
-    Object.keys(monthsData).forEach(month => {
-      const data = monthsData[month]
-      if (data.count > 0) {
-        monthsData[month] = {
-          count: data.count,
-          avgRating: data.totalRating / data.count,
-        }
-      } else {
-        monthsData[month] = {
-          count: 0,
-          avgRating: 0,
-        }
+    const monthsData: Record<string, { count: number; avgRating: number }> = {}
+    Object.keys(monthsDataTemp).forEach(month => {
+      const data = monthsDataTemp[month]
+      monthsData[month] = {
+        count: data.count,
+        avgRating: data.count > 0 ? data.totalRating / data.count : 0,
       }
-      delete (monthsData[month] as any).totalRating
     })
     
     // Unique reviewers and targets
@@ -165,7 +129,7 @@ export async function GET(req: NextRequest) {
         uniqueReviewers,
         uniqueTargets,
       },
-      byService: reviewsByService,
+      byService: {}, // Service grouping removed as Review model doesn't have serviceName
       overTime: monthsData,
       period: {
         startDate: startDate || null,

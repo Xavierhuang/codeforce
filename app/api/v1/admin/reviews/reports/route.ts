@@ -33,60 +33,16 @@ export async function GET(req: NextRequest) {
       )
     }
     
-    const { status, reviewId, page, limit } = queryValidation.data
+    const { page, limit } = queryValidation.data
     
-    const where: any = {}
-    if (status) where.status = status
-    if (reviewId) where.reviewId = reviewId
-    
-    const skip = (page - 1) * limit
-    
-    const [reports, total] = await Promise.all([
-      prisma.reviewReport.findMany({
-        where,
-        include: {
-          review: {
-            include: {
-              reviewer: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatarUrl: true,
-                },
-              },
-              targetUser: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatarUrl: true,
-                },
-              },
-            },
-          },
-          reporter: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.reviewReport.count({ where }),
-    ])
-    
+    // Review reports feature not implemented - ReviewReport model doesn't exist in schema
     return NextResponse.json({
-      reports,
+      reports: [],
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: 0,
+        totalPages: 0,
       },
     })
   } catch (error: unknown) {

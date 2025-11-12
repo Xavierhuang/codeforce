@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Cropper from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -13,38 +13,60 @@ interface AvatarCropperProps {
   open: boolean
   onClose: () => void
   onSave: (cropData: { x: number; y: number; scale: number }) => void
+  initialCrop?: { x: number; y: number; scale: number } | null
 }
 
-export function AvatarCropper({ image, open, onClose, onSave }: AvatarCropperProps) {
+export function AvatarCropper({ image, open, onClose, onSave, initialCrop }: AvatarCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [croppedArea, setCroppedArea] = useState<any>(null)
+
+  // Initialize crop and zoom from initialCrop when dialog opens
+  useEffect(() => {
+    if (open && initialCrop) {
+      // Convert normalized center point (0-1) back to crop position
+      // This is approximate - react-easy-crop uses pixel-based positioning
+      // For now, we'll start from center and let user adjust
+      setZoom(initialCrop.scale || 1)
+      // Note: We can't perfectly restore the exact crop position without image dimensions
+      // The user will need to adjust, but zoom will be preserved
+    } else if (open) {
+      // Reset to defaults when opening without initial crop
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+    }
+  }, [open, initialCrop])
 
   const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels)
+    setCroppedArea(croppedArea)
   }, [])
 
   const handleSave = () => {
-    // Normalize crop position to 0-1 range
-    // react-easy-crop provides pixel values, but we need normalized values
-    // The crop position is relative to the image, so we'll store it as-is
-    // and let CSS handle the positioning
-    // For a better approach, we calculate the center point relative to image dimensions
-    // But since we don't have image dimensions here, we'll use a simplified approach
-    // where we store the relative position (will be normalized by the display component)
+    // react-easy-crop's croppedArea contains x, y, width, height as percentages (0-100)
+    // We need to calculate the center point of the crop area, normalized to 0-1
+    // Center X = x + (width / 2), normalized to 0-1
+    // Center Y = y + (height / 2), normalized to 0-1
     
-    // Convert crop position to normalized 0-1 range
-    // crop.x and crop.y are in pixels, but react-easy-crop handles this internally
-    // We need to normalize based on the cropped area
-    const normalizedX = croppedAreaPixels ? (croppedAreaPixels.x / (croppedAreaPixels.width || 1)) : 0.5
-    const normalizedY = croppedAreaPixels ? (croppedAreaPixels.y / (croppedAreaPixels.height || 1)) : 0.5
-    
-    const cropData = {
-      x: normalizedX,
-      y: normalizedY,
-      scale: zoom,
+    if (croppedArea) {
+      // croppedArea values are percentages (0-100), convert to 0-1
+      const centerX = (croppedArea.x + croppedArea.width / 2) / 100
+      const centerY = (croppedArea.y + croppedArea.height / 2) / 100
+      
+      const cropData = {
+        x: centerX,
+        y: centerY,
+        scale: zoom,
+      }
+      onSave(cropData)
+    } else {
+      // Fallback if croppedArea is not available
+      const cropData = {
+        x: 0.5,
+        y: 0.5,
+        scale: zoom,
+      }
+      onSave(cropData)
     }
-    onSave(cropData)
   }
 
   return (

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Errors } from './errors'
 import { getRedisClient, isRedisAvailable } from './redis'
 
 /**
@@ -26,7 +25,7 @@ const rateLimitStore = new Map<string, RateLimitRecord>()
 // Cleanup old entries every 5 minutes (for in-memory fallback)
 setInterval(() => {
   const now = Date.now()
-  for (const [key, record] of rateLimitStore.entries()) {
+  for (const [key, record] of Array.from(rateLimitStore.entries())) {
     if (now > record.resetTime) {
       rateLimitStore.delete(key)
     }
@@ -259,9 +258,9 @@ export const rateLimitConfigs = {
 export async function addRateLimitHeaders(
   response: NextResponse,
   config: RateLimitConfig,
-  identifier: string
+  identifier?: string
 ): Promise<NextResponse> {
-  const key = `${config.windowMs}:${config.maxRequests}:${identifier}`
+  const key = `${config.windowMs}:${config.maxRequests}:${identifier || 'unknown'}`
   
   try {
     const redisAvailable = await isRedisAvailable()

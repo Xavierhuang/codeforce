@@ -103,7 +103,20 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
     })
   })
 
-  const stats = workerStats?.stats || {}
+  const stats = workerStats?.stats || {
+    walletBalance: 0,
+    totalEarnings: 0,
+    completedTasks: 0,
+    inProgressTasks: 0,
+    assignedTasks: 0,
+    pendingOffers: 0,
+    openTasks: 0,
+    averageRating: 0,
+    ratingCount: 0,
+    thisMonthEarnings: 0,
+    thisMonthCompleted: 0,
+    pendingPayoutAmount: 0,
+  }
 
   return (
     <div className="p-4 md:p-8" suppressHydrationWarning>
@@ -285,29 +298,6 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {!user.stripeAccountId && (
-                <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 hover:shadow-lg transition-all duration-300">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">Set Up Payments</CardTitle>
-                        <CardDescription>
-                          Connect your Stripe account to receive payouts.
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href="/dashboard/settings">
-                      <Button variant="outline" className="w-full">Connect Stripe</Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              )}
-
               {stats.pendingPayoutAmount > 0 && (
                 <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 hover:shadow-lg transition-all duration-300">
                   <CardHeader>

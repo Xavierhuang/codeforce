@@ -22,11 +22,6 @@ export async function getRecommendedDevelopers(limit: number = 6) {
       },
       include: {
         skills: true,
-        workerServices: {
-          where: { isActive: true },
-          orderBy: { tasksCompleted: 'desc' },
-          take: 3,
-        },
         _count: {
           select: {
             tasksAssigned: {
@@ -62,7 +57,7 @@ export async function getRecommendedDevelopers(limit: number = 6) {
         bio: dev.bio,
         badgeTier: dev.badgeTier || calculatedTier,
         skills: dev.skills,
-        workerServices: dev.workerServices,
+        workerServices: ((dev as any).workerServices as any) || [],
         _count: dev._count,
         availabilityScore,
         hasAvailability,
@@ -111,10 +106,6 @@ export async function getServerUser() {
       where: { id: user.id },
       include: {
         skills: true,
-        workerServices: {
-          where: { isActive: true },
-          orderBy: { createdAt: 'desc' },
-        },
       },
     })
 
@@ -130,30 +121,29 @@ export async function getServerUser() {
  */
 export async function getWorkerStats(userId: string) {
   try {
+    // Fetch user first to get walletBalance
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { walletBalance: true },
+    })
+    
     // Fetch stats in parallel
     const [
-      walletBalance,
       totalEarnings,
       completedTasks,
       inProgressTasks,
       assignedTasks,
       pendingOffers,
       openTasks,
-      averageRating,
-      ratingCount,
+      ratingAggregate,
       thisMonthEarnings,
       thisMonthCompleted,
       recentCompleted,
     ] = await Promise.all([
-      // Wallet balance
-      prisma.wallet.findUnique({
-        where: { userId },
-        select: { balance: true },
-      }),
       // Total earnings
       prisma.task.aggregate({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'COMPLETED',
         },
         _sum: {
@@ -163,21 +153,21 @@ export async function getWorkerStats(userId: string) {
       // Completed tasks count
       prisma.task.count({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'COMPLETED',
         },
       }),
       // In progress tasks
       prisma.task.count({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'IN_PROGRESS',
         },
       }),
       // Assigned tasks
       prisma.task.count({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'ASSIGNED',
         },
       }),
@@ -198,7 +188,6 @@ export async function getWorkerStats(userId: string) {
       prisma.review.aggregate({
         where: {
           targetUserId: userId,
-          status: 'APPROVED',
         },
         _avg: {
           rating: true,
@@ -208,7 +197,7 @@ export async function getWorkerStats(userId: string) {
       // This month earnings
       prisma.task.aggregate({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'COMPLETED',
           completedAt: {
             gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -221,7 +210,7 @@ export async function getWorkerStats(userId: string) {
       // This month completed
       prisma.task.count({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'COMPLETED',
           completedAt: {
             gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -231,7 +220,7 @@ export async function getWorkerStats(userId: string) {
       // Recent completed tasks
       prisma.task.findMany({
         where: {
-          assignedWorkerId: userId,
+          workerId: userId,
           status: 'COMPLETED',
         },
         select: {
@@ -250,7 +239,7 @@ export async function getWorkerStats(userId: string) {
     // Calculate pending payout
     const pendingPayout = await prisma.payoutRequest.aggregate({
       where: {
-        userId,
+        workerId: userId,
         status: 'PENDING',
       },
       _sum: {
@@ -260,15 +249,15 @@ export async function getWorkerStats(userId: string) {
 
     return {
       stats: {
-        walletBalance: walletBalance?.balance || 0,
+        walletBalance: user?.walletBalance || 0,
         totalEarnings: totalEarnings._sum.price || 0,
         completedTasks: completedTasks,
         inProgressTasks: inProgressTasks,
         assignedTasks: assignedTasks,
         pendingOffers: pendingOffers,
         openTasks: openTasks,
-        averageRating: averageRating._avg.rating || 0,
-        ratingCount: averageRating._count || 0,
+        averageRating: ratingAggregate._avg.rating || 0,
+        ratingCount: ratingAggregate._count || 0,
         thisMonthEarnings: thisMonthEarnings._sum.price || 0,
         thisMonthCompleted: thisMonthCompleted,
         pendingPayoutAmount: pendingPayout._sum.amount || 0,
@@ -293,11 +282,6 @@ export async function getDevelopersForClient() {
       },
       include: {
         skills: true,
-        workerServices: {
-          where: { isActive: true },
-          orderBy: { tasksCompleted: 'desc' },
-          take: 3,
-        },
         _count: {
           select: {
             tasksAssigned: {

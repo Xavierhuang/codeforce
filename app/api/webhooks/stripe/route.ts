@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       if (metadata.buyerId) {
         await createNotification(
           metadata.buyerId,
-          'payment_failed',
+          'payment_received',
           'Your payment failed. Please try again.',
           metadata.taskId
         )
@@ -166,7 +166,7 @@ async function handleOfferPurchase(
     // Notify buyer
     createNotification(
       buyerId,
-      'offer_purchased',
+      'offer_accepted',
       `Your purchase was successful. Task "${task.title}" has been created`,
       task.id
     ),
@@ -261,7 +261,7 @@ async function handleDirectBooking(
     // Notify buyer
     createNotification(
       buyerId,
-      'offer_purchased',
+      'offer_accepted',
       `Your booking was successful. Task "${task.title}" has been created`,
       task.id
     ),

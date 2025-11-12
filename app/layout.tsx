@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { Providers } from './providers'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -31,6 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        {/* Pusher Push Notifications SDK */}
+        <Script
+          src="https://js.pusher.com/beams/2.1.0/push-notifications-cdn.js"
+          strategy="afterInteractive"
+        />
         <ErrorBoundary>
           <Providers header={<UnifiedHeader />}>
             {children}

@@ -59,50 +59,11 @@ export async function POST(
       throw Errors.forbidden('Only the reviewed user can reply to this review')
     }
     
-    // Check if reply already exists
-    if (review.reply) {
-      throw Errors.businessRule('A reply already exists for this review')
-    }
-    
-    // Check time limit (30 days)
-    const daysSinceReview = (Date.now() - review.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-    if (daysSinceReview > REPLY_TIME_LIMIT_DAYS) {
-      throw Errors.businessRule(
-        `Replies can only be added within ${REPLY_TIME_LIMIT_DAYS} days of the review`
-      )
-    }
-    
-    // Only allow replies to approved reviews
-    if (review.status !== 'APPROVED') {
-      throw Errors.businessRule('You can only reply to approved reviews')
-    }
-    
-    // Update review with reply
-    const updatedReview = await prisma.review.update({
-      where: { id: reviewId },
-      data: {
-        reply: sanitizeText(reply),
-        repliedAt: new Date(),
-      },
-      include: {
-        reviewer: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-        targetUser: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-    
-    return NextResponse.json(updatedReview)
+    // Review replies feature not implemented - Review model doesn't have reply/repliedAt fields
+    return NextResponse.json(
+      { error: 'Review replies feature not implemented' },
+      { status: 501 }
+    )
   } catch (error: unknown) {
     return handleApiError(error, 'Failed to add reply to review')
   }
@@ -154,42 +115,11 @@ export async function PUT(
       throw Errors.forbidden('Only the reviewed user can edit the reply')
     }
     
-    // Check if reply exists
-    if (!review.reply || !review.repliedAt) {
-      throw Errors.businessRule('No reply exists to edit')
-    }
-    
-    // Check time limit for editing (7 days from reply)
-    const daysSinceReply = (Date.now() - review.repliedAt.getTime()) / (1000 * 60 * 60 * 24)
-    if (daysSinceReply > 7) {
-      throw Errors.businessRule('Replies can only be edited within 7 days')
-    }
-    
-    // Update reply
-    const updatedReview = await prisma.review.update({
-      where: { id: reviewId },
-      data: {
-        reply: sanitizeText(reply),
-      },
-      include: {
-        reviewer: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-        targetUser: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-    
-    return NextResponse.json(updatedReview)
+    // Review replies feature not implemented - Review model doesn't have reply/repliedAt fields
+    return NextResponse.json(
+      { error: 'Review replies feature not implemented' },
+      { status: 501 }
+    )
   } catch (error: unknown) {
     return handleApiError(error, 'Failed to update reply')
   }

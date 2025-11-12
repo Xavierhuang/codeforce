@@ -11,7 +11,12 @@ import {
   Search,
   ShoppingBag,
   Briefcase,
-  Wallet
+  Wallet,
+  User,
+  Users,
+  DollarSign,
+  AlertTriangle,
+  Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useSWR from 'swr'
@@ -39,32 +44,58 @@ export function BottomNav() {
 
   const isClient = user?.role === 'CLIENT'
   const isWorker = user?.role === 'WORKER'
+  const isAdmin = user?.role === 'ADMIN'
 
-  // Only show bottom nav on main dashboard pages
-  const showBottomNav = pathname?.startsWith('/dashboard') || pathname === '/tasks'
+  // Show bottom nav on dashboard pages, admin pages, developers page, and profile pages
+  const showBottomNav = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname === '/tasks' || pathname === '/developers' || pathname?.startsWith('/developers/')
   if (!showBottomNav) return null
 
-  // Primary navigation items for bottom nav (max 5)
-  const primaryNavItems: NavItem[] = [
-    {
-      href: '/dashboard',
-      label: 'Home',
-      icon: LayoutDashboard,
-      roles: ['CLIENT', 'WORKER', 'ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-    },
-  ]
+  // Primary navigation items for bottom nav (exactly 5 items)
+  let primaryNavItems: NavItem[] = []
 
-  if (isClient) {
-    primaryNavItems.push({
-      href: '/dashboard/orders',
-      label: 'Orders',
-      icon: ShoppingBag,
-      roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-    })
-  }
-
-  if (isWorker) {
-    primaryNavItems.push(
+  if (isAdmin) {
+    // Admins: Home (Admin Dashboard), Users, Verifications, Payouts, Settings
+    primaryNavItems = [
+      {
+        href: '/admin',
+        label: 'Home',
+        icon: LayoutDashboard,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/users',
+        label: 'Users',
+        icon: Users,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/verifications',
+        label: 'Verify',
+        icon: ShieldCheck,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/payouts',
+        label: 'Payouts',
+        icon: DollarSign,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/settings',
+        label: 'Settings',
+        icon: Settings,
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+    ]
+  } else if (isWorker) {
+    // Workers: Home, Tasks, Wallet, Calendar, Availability
+    primaryNavItems = [
+      {
+        href: '/dashboard',
+        label: 'Home',
+        icon: LayoutDashboard,
+        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
       {
         href: '/dashboard/tasks',
         label: 'Tasks',
@@ -76,20 +107,59 @@ export function BottomNav() {
         label: 'Wallet',
         icon: Wallet,
         roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-      }
-    )
+      },
+      {
+        href: '/dashboard/calendar',
+        label: 'Calendar',
+        icon: Calendar,
+        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/dashboard/availability',
+        label: 'Availability',
+        icon: Clock,
+        roles: ['WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+    ]
+  } else if (isClient) {
+    // Clients: Home, Orders, Calendar, Search (Find Developers), Profile
+    primaryNavItems = [
+      {
+        href: '/dashboard',
+        label: 'Home',
+        icon: LayoutDashboard,
+        roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/dashboard/orders',
+        label: 'Orders',
+        icon: ShoppingBag,
+        roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/dashboard/calendar',
+        label: 'Calendar',
+        icon: Calendar,
+        roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/developers',
+        label: 'Find',
+        icon: Search,
+        roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/dashboard/profile',
+        label: 'Profile',
+        icon: User,
+        roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+    ]
   }
-
-  primaryNavItems.push({
-    href: '/dashboard/calendar',
-    label: 'Calendar',
-    icon: Calendar,
-    roles: ['CLIENT', 'WORKER'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-  })
 
   const filteredNavItems = primaryNavItems.filter(
     (item) => !item.roles || item.roles.includes(user?.role as any)
-  ).slice(0, 5) // Limit to 5 items for bottom nav
+  )
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-inset-bottom">
@@ -102,7 +172,14 @@ export function BottomNav() {
       <div className="relative grid grid-cols-5 h-[68px] safe-area-inset-bottom">
         {filteredNavItems.map((item, index) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || (item.href !== '/' && item.href !== '/dashboard' && pathname?.startsWith(item.href))
+          let isActive = false
+          if (item.href === '/admin') {
+            isActive = pathname === '/admin' || pathname === '/admin/'
+          } else if (item.href === '/dashboard') {
+            isActive = pathname === '/dashboard' || (pathname?.startsWith('/dashboard') && !pathname?.startsWith('/admin'))
+          } else {
+            isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href))
+          }
           
           return (
             <Link

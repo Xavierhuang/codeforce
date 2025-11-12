@@ -8,7 +8,7 @@ export function HeaderLoading() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="CodeForce" className="h-8 w-auto" />
+            <img src="/logo.svg" alt="Skillyy" className="h-8 w-auto" />
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9" disabled>

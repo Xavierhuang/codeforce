@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatCurrency } from '@/lib/utils'
 import toast from 'react-hot-toast'
-import { User, Mail, Phone, CreditCard, ShieldCheck, Save, ExternalLink, MessageSquare } from 'lucide-react'
+import { User, Mail, Phone, ShieldCheck, Save, MessageSquare } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -27,7 +27,6 @@ export default function SettingsPage() {
   )
 
   const [isSaving, setIsSaving] = useState(false)
-  const [isConnectingStripe, setIsConnectingStripe] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,16 +47,6 @@ export default function SettingsPage() {
     }
   }, [user])
 
-  useEffect(() => {
-    // Handle Stripe redirect
-    if (searchParams.get('success') === 'true') {
-      toast.success('Stripe account connected successfully!')
-      mutate()
-    }
-    if (searchParams.get('refresh') === 'true') {
-      toast('Please complete your Stripe onboarding', { icon: 'ℹ️' })
-    }
-  }, [searchParams, mutate])
 
   const isWorker = user?.role === 'WORKER'
 
@@ -84,49 +73,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleConnectStripe = async () => {
-    if (!isWorker) return
-
-    setIsConnectingStripe(true)
-    try {
-      const response = await fetch('/api/v1/stripe/create-account', {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create Stripe account')
-      }
-
-      const data = await response.json()
-      // Redirect to Stripe onboarding
-      window.location.href = data.onboardingUrl
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to connect Stripe')
-      setIsConnectingStripe(false)
-    }
-  }
-
-  const handleStripeDashboard = async () => {
-    if (!user?.stripeAccountId) return
-
-    try {
-      const response = await fetch('/api/v1/stripe/account-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId: user.stripeAccountId }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to get Stripe dashboard link')
-      }
-
-      const data = await response.json()
-      window.open(data.url, '_blank')
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to open Stripe dashboard')
-    }
-  }
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
@@ -138,10 +84,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4 md:space-y-6">
-        <TabsList className={`w-full md:w-auto grid ${isWorker ? 'grid-cols-4' : 'grid-cols-3'} md:inline-flex`}>
+        <TabsList className={`w-full md:w-auto grid grid-cols-3 md:inline-flex`}>
           <TabsTrigger value="profile" className="text-xs md:text-sm">Profile</TabsTrigger>
           <TabsTrigger value="account" className="text-xs md:text-sm">Account</TabsTrigger>
-          {isWorker && <TabsTrigger value="payments" className="text-xs md:text-sm">Payments</TabsTrigger>}
           <TabsTrigger value="support" className="text-xs md:text-sm">Support</TabsTrigger>
         </TabsList>
 
@@ -255,34 +200,61 @@ export default function SettingsPage() {
               </div>
 
               {isWorker && (
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Verification Status</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user?.verificationStatus === 'VERIFIED' 
-                        ? 'Your profile is verified' 
-                        : user?.verificationStatus === 'PENDING'
-                        ? 'Verification pending review'
-                        : 'Not verified'}
-                    </p>
+                <>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Verification Status</p>
+                      <p className="text-sm text-muted-foreground">
+                        {user?.verificationStatus === 'VERIFIED' 
+                          ? 'Your profile is verified' 
+                          : user?.verificationStatus === 'PENDING'
+                          ? 'Verification pending review'
+                          : 'Not verified'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user?.verificationStatus === 'VERIFIED' ? (
+                        <Badge className="bg-green-500">
+                          <ShieldCheck className="w-3 h-3 mr-1" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push('/dashboard/verify')}
+                        >
+                          Verify Now
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {user?.verificationStatus === 'VERIFIED' ? (
-                      <Badge className="bg-green-500">
-                        <ShieldCheck className="w-3 h-3 mr-1" />
-                        Verified
-                      </Badge>
-                    ) : (
+
+                  {user?.walletBalance !== undefined && (
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Wallet Balance</p>
+                          <p className="text-sm text-muted-foreground">
+                            Request payouts from your wallet
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">
+                            {formatCurrency(user.walletBalance)}
+                          </p>
+                        </div>
+                      </div>
                       <Button
                         variant="outline"
-                        size="sm"
-                        onClick={() => router.push('/dashboard/verify')}
+                        className="w-full mt-4"
+                        onClick={() => router.push('/dashboard/wallet')}
                       >
-                        Verify Now
+                        View Wallet
                       </Button>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="p-4 border rounded-lg bg-destructive/5">
@@ -297,92 +269,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Payments Tab (Workers Only) */}
-        {isWorker && (
-          <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Settings</CardTitle>
-                <CardDescription>
-                  Connect your Stripe account to receive payouts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {user?.stripeAccountId ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="w-5 h-5 text-green-600" />
-                        <div>
-                          <p className="font-medium">Stripe Connected</p>
-                          <p className="text-sm text-muted-foreground">
-                            Your Stripe account is connected and ready to receive payouts
-                          </p>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-500">Connected</Badge>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={handleStripeDashboard}
-                      className="w-full"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open Stripe Dashboard
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg bg-yellow-50">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CreditCard className="w-5 h-5 text-yellow-600" />
-                        <p className="font-medium">Stripe Not Connected</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Connect your Stripe account to receive payouts from completed tasks.
-                        You&apos;ll be redirected to Stripe to complete the onboarding process.
-                      </p>
-                      <Button
-                        onClick={handleConnectStripe}
-                        disabled={isConnectingStripe}
-                        className="w-full"
-                      >
-                        {isConnectingStripe ? 'Connecting...' : 'Connect Stripe Account'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {user?.walletBalance !== undefined && (
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Wallet Balance</p>
-                        <p className="text-sm text-muted-foreground">
-                          Available for payout
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">
-                          {formatCurrency(user.walletBalance)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="w-full mt-4"
-                      onClick={() => router.push('/dashboard/wallet')}
-                    >
-                      View Wallet
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
 
         {/* Support & Help Tab */}
         <TabsContent value="support">

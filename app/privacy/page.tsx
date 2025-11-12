@@ -139,7 +139,7 @@ export default function PrivacyPolicyPage() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Service Providers</h3>
-                    <p>To operate the Platform and process Personal Information in accordance with CodeForce&apos;s instructions and on its behalf, such as:</p>
+                    <p>To operate the Platform and process Personal Information in accordance with Skillyy&apos;s instructions and on its behalf, such as:</p>
                     <ul className="list-disc pl-6 space-y-1 mt-2">
                       <li>Email origination</li>
                       <li>Identity verification and background checks as permitted under applicable laws</li>

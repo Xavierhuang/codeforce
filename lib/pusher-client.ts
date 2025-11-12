@@ -2,23 +2,53 @@
 
 import Pusher from 'pusher-js'
 
-export function getPusherClient() {
+let pusherInstance: Pusher | null = null
+
+export function getPusherClient(): Pusher | null {
   if (typeof window === 'undefined') {
     return null
   }
 
-  if (!process.env.NEXT_PUBLIC_PUSHER_KEY || !process.env.NEXT_PUBLIC_PUSHER_CLUSTER) {
+  // Check if Pusher credentials are configured
+  const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY
+  const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+
+  // Return null if credentials are missing or empty
+  if (!pusherKey || !pusherCluster || pusherKey.trim() === '' || pusherCluster.trim() === '') {
     return null
   }
 
-  return new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2',
-    authEndpoint: '/api/pusher/auth',
-    auth: {
-      headers: {
-        'Content-Type': 'application/json',
+  // Return cached instance if it exists
+  if (pusherInstance) {
+    return pusherInstance
+  }
+
+  // Create new Pusher instance with error handling
+  try {
+    pusherInstance = new Pusher(pusherKey, {
+      cluster: pusherCluster,
+      authEndpoint: '/api/pusher/auth',
+      auth: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    },
-  })
+      enabledTransports: ['ws', 'wss'],
+      disabledTransports: [],
+    })
+
+    // Handle connection errors silently
+    pusherInstance.connection.bind('error', (err: any) => {
+      // Only log if credentials are actually configured (shouldn't happen)
+      if (pusherKey && pusherCluster) {
+        console.warn('Pusher connection error:', err)
+      }
+    })
+
+    return pusherInstance
+  } catch (error) {
+    console.warn('Failed to initialize Pusher:', error)
+    return null
+  }
 }
 

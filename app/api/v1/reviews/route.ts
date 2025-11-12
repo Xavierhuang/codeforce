@@ -93,7 +93,6 @@ export async function POST(req: NextRequest) {
           taskId,
           rating,
           comment: comment ? sanitizeText(comment) : null,
-          serviceName: serviceName ? sanitizeText(serviceName) : null,
         },
         include: {
           reviewer: {
@@ -108,11 +107,9 @@ export async function POST(req: NextRequest) {
 
       // Use database aggregation for atomic rating calculation
       // This prevents race conditions when multiple reviews are created simultaneously
-      // Only count approved reviews
       const ratingData = await tx.review.aggregate({
         where: {
           targetUserId,
-          status: 'APPROVED',
         },
         _avg: { rating: true },
         _count: { rating: true },
@@ -127,30 +124,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Update service-specific rating if serviceName is provided
-      if (serviceName) {
-        // Update WorkerService rating (only approved reviews)
-        const serviceRatingData = await tx.review.aggregate({
-          where: {
-            targetUserId,
-            serviceName: sanitizeText(serviceName),
-            status: 'APPROVED', // Only count approved reviews
-          },
-          _avg: { rating: true },
-          _count: { rating: true },
-        })
-        
-        await tx.workerService.updateMany({
-          where: {
-            workerId: targetUserId,
-            skillName: sanitizeText(serviceName),
-          },
-          data: {
-            rating: serviceRatingData._avg.rating ? Number(serviceRatingData._avg.rating.toFixed(2)) : 0,
-            ratingCount: serviceRatingData._count.rating || 0,
-          },
-        })
-      }
+      // Service-specific ratings not implemented - Review model doesn't have serviceName field
 
       return newReview
     })

@@ -29,6 +29,38 @@ interface AddressAutocompleteProps {
   onLocationDetected?: (data: AddressData) => void
 }
 
+// Suppress the deprecation warning for Autocomplete
+// This is a temporary solution until we migrate to PlaceAutocompleteElement
+let warningSuppressed = false
+const suppressAutocompleteWarning = () => {
+  if (typeof window !== 'undefined' && window.console && !warningSuppressed) {
+    warningSuppressed = true
+    const originalWarn = console.warn
+    const originalError = console.error
+    
+    // Override console.warn to filter Google Maps Autocomplete deprecation warnings
+    console.warn = (...args: any[]) => {
+      const message = args[0]?.toString() || ''
+      // Only suppress the specific Autocomplete deprecation warning
+      if (message.includes('google.maps.places.Autocomplete') && 
+          (message.includes('PlaceAutocompleteElement') || message.includes('March 1st, 2025'))) {
+        return
+      }
+      originalWarn.apply(console, args)
+    }
+    
+    // Also filter from console.error in case it's logged there
+    console.error = (...args: any[]) => {
+      const message = args[0]?.toString() || ''
+      if (message.includes('google.maps.places.Autocomplete') && 
+          (message.includes('PlaceAutocompleteElement') || message.includes('March 1st, 2025'))) {
+        return
+      }
+      originalError.apply(console, args)
+    }
+  }
+}
+
 export function AddressAutocomplete({
   value = '',
   onSelect,
@@ -40,11 +72,14 @@ export function AddressAutocomplete({
   onLocationDetected,
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+  const autocompleteRef = useRef<any>(null)
   const [isDetectingLocation, setIsDetectingLocation] = useState(false)
 
   useEffect(() => {
     if (!inputRef.current || !window.google?.maps?.places) return
+
+    // Suppress deprecation warning
+    suppressAutocompleteWarning()
 
     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ['address'],
@@ -69,7 +104,7 @@ export function AddressAutocomplete({
       let postalCode = ''
       let country = ''
 
-      addressComponents.forEach((component) => {
+      addressComponents.forEach((component: any) => {
         const types = component.types
 
         if (types.includes('street_number')) {
@@ -126,7 +161,7 @@ export function AddressAutocomplete({
           const geocoder = new window.google.maps.Geocoder()
           const latlng = { lat: latitude, lng: longitude }
 
-          geocoder.geocode({ location: latlng }, (results, status) => {
+          geocoder.geocode({ location: latlng }, (results: any, status: any) => {
             setIsDetectingLocation(false)
 
             if (status === 'OK' && results && results[0]) {
@@ -139,7 +174,7 @@ export function AddressAutocomplete({
               let postalCode = ''
               let country = ''
 
-              addressComponents.forEach((component) => {
+              addressComponents.forEach((component: any) => {
                 const types = component.types
 
                 if (types.includes('street_number')) {

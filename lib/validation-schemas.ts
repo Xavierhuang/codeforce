@@ -30,7 +30,7 @@ import {
 export const SignupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().max(100).optional().or(z.literal('')),
   phone: phoneSchema,
   role: roleSchema.optional().default('CLIENT'),
 }).strict()

@@ -12,6 +12,7 @@ import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { CheckCircle2, Star, User, Clock, DollarSign, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { AvatarDisplay } from '@/components/AvatarDisplay'
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -145,17 +146,18 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
                   <div className="flex-1 space-y-4">
                     {/* Developer Info */}
                     <div className="flex items-start gap-4">
-                      {offer.worker?.avatarUrl ? (
-                        <img
-                          src={offer.worker.avatarUrl}
-                          alt={offer.worker.name || 'Developer'}
-                          className="w-16 h-16 rounded-full border-2 border-background"
+                      <div className="w-16 h-16 rounded-full border-2 border-background overflow-hidden">
+                        <AvatarDisplay
+                          src={offer.worker?.avatarUrl || undefined}
+                          alt={offer.worker?.name || 'Developer'}
+                          fallback={offer.worker?.name?.[0]?.toUpperCase() || 'D'}
+                          className="w-full h-full"
+                          cropX={offer.worker?.avatarCropX ?? undefined}
+                          cropY={offer.worker?.avatarCropY ?? undefined}
+                          cropScale={offer.worker?.avatarCropScale ?? undefined}
+                          size={64}
                         />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border-2 border-background">
-                          <User className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                      )}
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-semibold text-lg">{offer.worker?.name || 'Anonymous'}</h4>

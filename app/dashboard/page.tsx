@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { AvatarDisplay } from '@/components/AvatarDisplay'
 import { useState } from 'react'
 import { format } from 'date-fns'
 
@@ -340,29 +341,6 @@ export default function DashboardPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {!user?.stripeAccountId && (
-                <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 hover:shadow-lg transition-all duration-300">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">Set Up Payments</CardTitle>
-                        <CardDescription>
-                          Connect your Stripe account to receive payouts.
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href="/dashboard/settings">
-                      <Button variant="outline" className="w-full">Connect Stripe</Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              )}
-
               {stats.pendingPayoutAmount > 0 && (
                 <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 hover:shadow-lg transition-all duration-300">
                   <CardHeader>
@@ -446,19 +424,18 @@ export default function DashboardPage() {
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
-                              {developer.avatarUrl ? (
-                                <img
-                                  src={developer.avatarUrl}
+                              <div className="w-12 h-12 rounded-full ring-2 ring-border group-hover:ring-primary transition-all overflow-hidden">
+                                <AvatarDisplay
+                                  src={developer.avatarUrl || undefined}
                                   alt={developer.name || 'Developer'}
-                                  className="w-12 h-12 rounded-full ring-2 ring-border group-hover:ring-primary transition-all"
+                                  fallback={developer.name?.[0]?.toUpperCase() || developer.email?.[0]?.toUpperCase() || 'D'}
+                                  className="w-full h-full"
+                                  cropX={developer.avatarCropX ?? undefined}
+                                  cropY={developer.avatarCropY ?? undefined}
+                                  cropScale={developer.avatarCropScale ?? undefined}
+                                  size={48}
                                 />
-                              ) : (
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-border group-hover:ring-primary transition-all">
-                                  <span className="text-lg font-semibold">
-                                    {developer.name?.[0]?.toUpperCase() || developer.email[0].toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
+                              </div>
                               <div>
                                 <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Developer'}</CardTitle>
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">

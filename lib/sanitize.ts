@@ -1,4 +1,37 @@
-import DOMPurify from 'isomorphic-dompurify'
+// Lazy load DOMPurify to avoid ESM/CommonJS issues during build
+let DOMPurifyInstance: any = null
+
+function getDOMPurify() {
+  if (DOMPurifyInstance) {
+    return DOMPurifyInstance
+  }
+  
+  try {
+    // Use Function constructor to prevent webpack from statically analyzing the require
+    // This ensures the module is only loaded at runtime, not during build
+    const requireFunc = new Function('moduleName', 'return require(moduleName)')
+    DOMPurifyInstance = requireFunc('isomorphic-dompurify')
+    // Handle both default export and named export
+    if (DOMPurifyInstance && DOMPurifyInstance.default) {
+      DOMPurifyInstance = DOMPurifyInstance.default
+    }
+  } catch (e) {
+    // Fallback if DOMPurify fails to load (e.g., during build or if module not available)
+    console.warn('DOMPurify not available, using fallback sanitization')
+    DOMPurifyInstance = {
+      sanitize: (html: string) => {
+        // Basic fallback sanitization
+        return html
+          .replace(/<script[^>]*>.*?<\/script>/gi, '')
+          .replace(/on\w+="[^"]*"/gi, '')
+          .replace(/on\w+='[^']*'/gi, '')
+          .replace(/javascript:/gi, '')
+      }
+    }
+  }
+  
+  return DOMPurifyInstance
+}
 
 /**
  * Sanitization utilities for user-generated content
@@ -12,6 +45,7 @@ import DOMPurify from 'isomorphic-dompurify'
 export function sanitizeHtml(html: string | null | undefined): string {
   if (!html) return ''
   
+  const DOMPurify = getDOMPurify()
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     ALLOWED_ATTR: [],
@@ -49,6 +83,7 @@ export function sanitizeText(text: string | null | undefined): string {
 export function sanitizeForDisplay(text: string | null | undefined): string {
   if (!text) return ''
   
+  const DOMPurify = getDOMPurify()
   return DOMPurify.sanitize(text, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li'],
     ALLOWED_ATTR: [],

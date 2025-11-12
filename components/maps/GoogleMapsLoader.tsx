@@ -24,7 +24,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
     if (typeof window === 'undefined') return
     if (hasLoadedRef.current || hasErrorRef.current) return
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim().replace(/^["']|["']$/g, '')
 
     if (!apiKey) {
       hasErrorRef.current = true
@@ -162,7 +162,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
     script.async = true
     script.defer = true
 
-    script.onerror = (event: Event) => {
+    script.onerror = (event: Event | string) => {
       window.onerror = originalErrorHandler
       hasErrorRef.current = true
       
@@ -177,7 +177,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
               if (text.includes('InvalidKey') || response.status === 403) {
                 errorMsg += 'Invalid API key or key restrictions are blocking access. '
               } else if (text.includes('RefererNotAllowed')) {
-                errorMsg += 'API key restrictions are blocking this domain. Add localhost:3000/* to allowed referrers. '
+                errorMsg += 'API key restrictions are blocking this domain. Add skillyy.com/* and www.skillyy.com/* to allowed referrers. '
               } else if (response.status === 400) {
                 errorMsg += 'Bad request. Check API key format and ensure Maps JavaScript API is enabled. '
               }
@@ -251,7 +251,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
   }, [])
 
   if (loadError) {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim().replace(/^["']|["']$/g, '')
     const apiKeyPreview = apiKey ? `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}` : 'Not set'
     
     return (
@@ -274,7 +274,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
             <li>⚠️ <strong>Restart your dev server</strong> after adding/changing the API key (Ctrl+C then <code className="bg-muted px-1 rounded">npm run dev</code>)</li>
             <li>Enable "Maps JavaScript API" in <a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank" rel="noopener noreferrer" className="underline text-primary">Google Cloud Console</a></li>
             <li>Enable billing in Google Cloud Console (free tier available)</li>
-            <li>If API key has restrictions, add <code className="bg-muted px-1 rounded">localhost:3000/*</code> to allowed referrers</li>
+            <li>If API key has restrictions, add <code className="bg-muted px-1 rounded">skillyy.com/*</code> and <code className="bg-muted px-1 rounded">www.skillyy.com/*</code> to allowed referrers</li>
             <li>Check browser console (F12) for specific Google Maps API error messages</li>
           </ul>
           <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
@@ -283,7 +283,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
               <li>API key format should start with "AIza" (not "AlzaSy")</li>
               <li>Maps JavaScript API must be enabled (not just created)</li>
               <li>Billing account must be linked (even for free tier)</li>
-              <li>If restricted, HTTP referrers must include <code className="bg-yellow-100 px-1 rounded">localhost:3000/*</code> and <code className="bg-yellow-100 px-1 rounded">http://localhost:3000/*</code> for development</li>
+              <li>If restricted, HTTP referrers must include <code className="bg-yellow-100 px-1 rounded">skillyy.com/*</code> and <code className="bg-yellow-100 px-1 rounded">www.skillyy.com/*</code> for production</li>
               <li>Check browser console (F12 → Console tab) for the actual error message from Google</li>
             </ul>
           </div>
@@ -318,7 +318,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
 
 declare global {
   interface Window {
-    google: typeof google
+    google: any
   }
 }
 

@@ -19,9 +19,19 @@ export const idSchema = z.string().refine(
 export const emailSchema = z.string().email({ message: 'Invalid email format' }).max(255)
 
 // Phone validation (E.164 format)
-export const phoneSchema = z.string().regex(
-  /^\+[1-9]\d{1,14}$/,
-  { message: 'Phone number must be in E.164 format (e.g., +1234567890)' }
+export const phoneSchema = z.preprocess(
+  (val) => {
+    if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '')) {
+      return null
+    }
+    return typeof val === 'string' ? val.trim() : val
+  },
+  z.union([
+    z.string().regex(/^\+[1-9]\d{1,14}$/, {
+      message: 'Phone number must be in E.164 format (e.g., +1234567890)'
+    }),
+    z.null()
+  ])
 ).optional().nullable()
 
 // URL validation

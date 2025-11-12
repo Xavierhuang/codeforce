@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/AppLayout'
 import { Footer } from '@/components/Footer'
 import { useSession } from 'next-auth/react'
 import { MaintenanceCheck } from '@/components/MaintenanceCheck'
+import { PusherBeams } from '@/components/PusherBeams'
 
 function FooterWrapper({ children }: { children: React.ReactNode }) {
   const { status } = useSession()
@@ -36,6 +37,7 @@ export function Providers({ children, header }: { children: React.ReactNode; hea
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <MaintenanceCheck />
+        <PusherBeams />
         {header}
         <AppLayout>
           <FooterWrapper>

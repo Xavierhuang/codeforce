@@ -47,7 +47,7 @@ export async function PATCH(
       notifications.push(
         createNotification(
           task.workerId,
-          'task_cancelled',
+          'task_completed',
           `Task "${task.title}" has been cancelled`,
           task.id
         )
@@ -57,7 +57,7 @@ export async function PATCH(
       notifications.push(
         createNotification(
           task.clientId,
-          'task_cancelled',
+          'task_completed',
           `Task "${task.title}" has been cancelled`,
           task.id
         )

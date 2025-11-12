@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
-import { calculateAmountInCents } from '@/lib/stripe-fees'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-})
 
 // Process approved payout request (admin only) - Actually transfer the money
 export async function POST(
@@ -45,30 +39,6 @@ export async function POST(
       )
     }
 
-    let stripePayoutId: string | null = null
-
-    // Process Stripe transfer if worker has Stripe account
-    if (payoutRequest.worker.stripeAccountId) {
-      try {
-        const transfer = await stripe.transfers.create({
-          amount: calculateAmountInCents(payoutRequest.amount),
-          currency: 'usd',
-          destination: payoutRequest.worker.stripeAccountId,
-          metadata: {
-            payoutRequestId: payoutRequest.id,
-            workerId: payoutRequest.workerId,
-          },
-        })
-        stripePayoutId = transfer.id
-      } catch (stripeError: any) {
-        console.error('Stripe transfer error:', stripeError)
-        return NextResponse.json(
-          { error: 'Failed to process Stripe transfer', details: stripeError.message },
-          { status: 500 }
-        )
-      }
-    }
-
     // Update wallet balance and mark request as processed
     const result = await prisma.$transaction([
       // Deduct from wallet
@@ -87,7 +57,6 @@ export async function POST(
           status: 'PROCESSED',
           processedAt: new Date(),
           processedBy: admin.id,
-          stripePayoutId,
         },
       }),
       // Create payout record
@@ -97,7 +66,6 @@ export async function POST(
           amount: payoutRequest.amount,
           fee: 0, // No fee on manual payouts (already deducted when task completed)
           payoutRequestId: payoutRequest.id,
-          stripePayoutId,
         },
       }),
     ])

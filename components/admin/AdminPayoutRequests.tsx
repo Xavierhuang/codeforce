@@ -335,15 +335,9 @@ export function AdminPayoutRequests() {
                 <strong>Worker Balance:</strong>{' '}
                 {selectedRequest && formatCurrency(selectedRequest.worker.walletBalance)}
               </p>
-              {selectedRequest?.worker.stripeAccountId ? (
-                <p className="text-sm mt-1 text-green-600">
-                  ✓ Stripe account connected - Payment will be transferred
-                </p>
-              ) : (
-                <p className="text-sm mt-1 text-yellow-600">
-                  ⚠ No Stripe account - Manual payment required
-                </p>
-              )}
+              <p className="text-sm mt-1 text-muted-foreground">
+                Payment will be processed manually via withdrawal request
+              </p>
             </div>
             <div className="flex gap-2">
               <Button

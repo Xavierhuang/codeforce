@@ -32,7 +32,8 @@ export function createMockRequest(
     requestInit.body = typeof body === 'string' ? body : JSON.stringify(body)
   }
 
-  const request = new NextRequest(url, requestInit)
+  const { signal, ...restInit } = requestInit
+  const request = new NextRequest(url, { ...restInit, signal: signal || undefined })
 
   // Add cookies if provided
   if (Object.keys(cookies).length > 0) {
@@ -74,8 +75,7 @@ export function createAuthenticatedRequest(
 export async function cleanupTestData() {
   try {
     // Clean up in reverse order of dependencies
-    await prisma.reviewHelpfulVote.deleteMany({}).catch(() => {})
-    await prisma.reviewReport.deleteMany({}).catch(() => {})
+    // reviewHelpfulVote and reviewReport models don't exist in schema
     await prisma.review.deleteMany({}).catch(() => {})
     await prisma.supportMessage.deleteMany({}).catch(() => {})
     await prisma.supportTicket.deleteMany({}).catch(() => {})
@@ -83,7 +83,7 @@ export async function cleanupTestData() {
     await prisma.message.deleteMany({}).catch(() => {})
     await prisma.offer.deleteMany({}).catch(() => {})
     await prisma.task.deleteMany({}).catch(() => {})
-    await prisma.workerService.deleteMany({}).catch(() => {})
+    // workerService model doesn't exist - workerServices is a JSON field on User
     await prisma.userSkill.deleteMany({}).catch(() => {})
     await prisma.user.deleteMany({}).catch(() => {})
   } catch (error) {

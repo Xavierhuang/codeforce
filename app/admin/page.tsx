@@ -182,7 +182,7 @@ export default function AdminDashboardPage() {
   ]
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Admin Dashboard</h1>
         <p className="text-sm md:text-base text-muted-foreground">

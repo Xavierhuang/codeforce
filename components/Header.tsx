@@ -265,7 +265,10 @@ export function Header() {
                       Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/api/auth/signout')} className="cursor-pointer">
+                    <DropdownMenuItem onClick={async () => {
+                      const { signOut } = await import('next-auth/react')
+                      await signOut({ callbackUrl: 'https://skillyy.com/' })
+                    }} className="cursor-pointer">
                       Sign Out
                     </DropdownMenuItem>
               </DropdownMenuContent>

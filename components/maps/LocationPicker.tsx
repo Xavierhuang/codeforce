@@ -32,8 +32,8 @@ export function LocationPicker({
   showControls = true,
 }: LocationPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const markerRef = useRef<google.maps.Marker | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
   const [isDetectingLocation, setIsDetectingLocation] = useState(false)
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function LocationPicker({
 
         if (onAddressChange) {
           const geocoder = new window.google.maps.Geocoder()
-          geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
+          geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
             if (status === 'OK' && results && results[0]) {
               const place = results[0]
               const addressComponents = place.address_components || []
@@ -81,7 +81,7 @@ export function LocationPicker({
               let postalCode = ''
               let country = ''
 
-              addressComponents.forEach((component) => {
+              addressComponents.forEach((component: any) => {
                 const types = component.types
 
                 if (types.includes('street_number')) {
@@ -120,7 +120,7 @@ export function LocationPicker({
     })
 
     if (!readOnly) {
-      map.addListener('click', (e: google.maps.MapMouseEvent) => {
+      map.addListener('click', (e: any) => {
         if (e.latLng) {
           const newLat = e.latLng.lat()
           const newLng = e.latLng.lng()
@@ -129,7 +129,7 @@ export function LocationPicker({
 
           if (onAddressChange) {
             const geocoder = new window.google.maps.Geocoder()
-            geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
+            geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
               if (status === 'OK' && results && results[0]) {
                 const place = results[0]
                 const addressComponents = place.address_components || []
@@ -140,7 +140,7 @@ export function LocationPicker({
                 let postalCode = ''
                 let country = ''
 
-                addressComponents.forEach((component) => {
+                addressComponents.forEach((component: any) => {
                   const types = component.types
 
                   if (types.includes('street_number')) {
@@ -215,7 +215,7 @@ export function LocationPicker({
 
           if (onAddressChange) {
             const geocoder = new window.google.maps.Geocoder()
-            geocoder.geocode({ location: newPosition }, (results, status) => {
+            geocoder.geocode({ location: newPosition }, (results: any, status: any) => {
               setIsDetectingLocation(false)
 
               if (status === 'OK' && results && results[0]) {
@@ -228,7 +228,7 @@ export function LocationPicker({
                 let postalCode = ''
                 let country = ''
 
-                addressComponents.forEach((component) => {
+                addressComponents.forEach((component: any) => {
                   const types = component.types
 
                   if (types.includes('street_number')) {

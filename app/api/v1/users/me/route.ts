@@ -139,11 +139,11 @@ export async function PUT(req: NextRequest) {
     if (name !== undefined) updateData.name = name
     if (bio !== undefined) updateData.bio = bio
     if (phone !== undefined) updateData.phone = phone // Private - not shown on public profiles
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : null
     if (avatarCropX !== undefined) updateData.avatarCropX = avatarCropX
     if (avatarCropY !== undefined) updateData.avatarCropY = avatarCropY
     if (avatarCropScale !== undefined) updateData.avatarCropScale = avatarCropScale
-    if (bannerUrl !== undefined) updateData.bannerUrl = bannerUrl
+    if (bannerUrl !== undefined) updateData.bannerUrl = bannerUrl && bannerUrl.trim() ? bannerUrl.trim() : null
     if (website !== undefined) updateData.website = website
     if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl
     if (githubUrl !== undefined) updateData.githubUrl = githubUrl
