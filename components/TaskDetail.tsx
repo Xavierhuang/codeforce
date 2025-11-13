@@ -617,7 +617,7 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
                         </Badge>
                       )}
                     </div>
-                    <Link href={`/developers/${task.worker.slug || task.worker.id}`} className="w-full sm:w-auto">
+                    <Link href={`/profile/${task.worker.slug || task.worker.id}`} className="w-full sm:w-auto">
                       <Button variant="outline" className="w-full sm:w-auto text-sm">View Profile</Button>
                     </Link>
                   </div>

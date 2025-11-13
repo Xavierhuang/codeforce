@@ -420,7 +420,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {filteredDevelopers.map((developer: any) => (
                     <Card key={developer.id} className="border-2 hover:shadow-xl transition-all duration-300 cursor-pointer touch-manipulation group">
-                      <Link href={`/developers/${developer.slug || developer.id}`} className="block">
+                      <Link href={`/profile/${developer.slug || developer.id}`} className="block">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
@@ -544,7 +544,7 @@ export default function DashboardPage() {
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
-                                  router.push(`/developers/${developer.slug || developer.id}`)
+                                  router.push(`/profile/${developer.slug || developer.id}`)
                                 }}
                               >
                                 View Profile
@@ -715,7 +715,7 @@ export default function DashboardPage() {
                                   onClick={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
-                                    router.push(`/developers/${developer.slug || developer.id}`)
+                                    router.push(`/profile/${developer.slug || developer.id}`)
                                   }}
                                 >
                                   View Profile
@@ -729,7 +729,7 @@ export default function DashboardPage() {
                   </div>
                   {categoryDevelopers.length > 6 && (
                     <div className="text-center">
-                      <Link href={`/developers?category=${encodeURIComponent(category)}`}>
+                      <Link href={`/profile?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
                           View All {categoryDevelopers.length} Developers
                         </Button>
@@ -747,7 +747,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     {developersError?.message || 'Please try refreshing the page'}
                   </p>
-                  <Link href="/developers">
+                  <Link href="/profile">
                     <Button>Browse All Developers</Button>
                   </Link>
                 </CardContent>
@@ -757,7 +757,7 @@ export default function DashboardPage() {
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">No developers found.</p>
-                  <Link href="/developers">
+                  <Link href="/profile">
                     <Button>Browse All Developers</Button>
                   </Link>
                 </CardContent>

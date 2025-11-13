@@ -18,13 +18,15 @@ import { Badge } from '@/components/ui/badge'
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function SettingsPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: user, mutate } = useSWR(
-    session ? '/api/v1/users/me' : null,
+  const { data: user, mutate, error } = useSWR(
+    status === 'authenticated' ? '/api/v1/users/me' : null,
     fetcher
   )
+
+  const profileBaseUrl = typeof window !== 'undefined' ? `${window.location.origin}/profile/` : 'https://skillyy.com/profile/'
 
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -157,7 +159,7 @@ export default function SettingsPage() {
                   <Label htmlFor="slug">Profile URL</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-sm text-muted-foreground">
-                      {typeof window !== 'undefined' ? window.location.origin : ''}/developers/
+                      {profileBaseUrl}
                     </span>
                     <Input
                       id="slug"

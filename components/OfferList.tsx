@@ -179,7 +179,7 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
                         )}
                         {offer.worker?.slug && (
                           <Link 
-                            href={`/developers/${offer.worker.slug}`}
+                            href={`/profile/${offer.worker.slug}`}
                             className="text-sm text-primary hover:underline mt-1 inline-block"
                           >
                             View Profile →

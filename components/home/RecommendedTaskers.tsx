@@ -43,7 +43,7 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
           Taskers recommended for you
         </h2>
         <Link 
-          href="/developers"
+          href="/profile"
           className="text-primary hover:underline flex items-center gap-1 text-sm md:text-base"
         >
           See all <ChevronRight className="w-4 h-4" />
@@ -111,7 +111,7 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
                       topServices.map((service) => (
                         <Link
                           key={service.id}
-                          href={`/developers/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
+                          href={`/profile/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
                           className="px-3 py-1.5 text-xs font-medium border border-primary/30 hover:bg-primary hover:text-primary-foreground rounded transition-all"
                         >
                           {service.skillName} for {formatCurrency(service.hourlyRate)}/hr
@@ -129,9 +129,9 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
                       ))
                     )}
                   </div>
-                  <Link href={`/developers/${tasker.slug || tasker.id}`}>
+                  <Link href={`/profile/${tasker.slug || tasker.id}`}>
                     <Button variant="outline" className="w-full">
-                      View Tasker Profile
+                      View Profile
                     </Button>
                   </Link>
                 </div>

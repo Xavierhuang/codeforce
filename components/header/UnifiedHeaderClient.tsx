@@ -317,7 +317,7 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
   // Public navigation items
   const publicNavItems = [
     { href: '/auth/signup?role=WORKER', label: 'Become a Tasker' },
-    { href: '/developers', label: 'Find Developers' },
+    { href: '/profile', label: 'Find Talent' },
   ]
 
   return (

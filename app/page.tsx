@@ -99,7 +99,7 @@ export default function Home() {
                 className="w-full pl-14 pr-4 py-6 text-lg rounded-lg border-2 focus:border-primary h-16"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchQuery.trim()) {
-                    router.push(`/developers?search=${encodeURIComponent(searchQuery.trim())}`)
+                    router.push(`/profile?search=${encodeURIComponent(searchQuery.trim())}`)
                   }
                 }}
               />
@@ -110,14 +110,14 @@ export default function Home() {
               {POPULAR_CATEGORIES.map((cat) => (
                 <Link 
                   key={cat} 
-                  href={`/developers?category=${encodeURIComponent(cat)}`}
+                  href={`/profile?category=${encodeURIComponent(cat)}`}
                   className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
                 >
                   {cat}
                 </Link>
               ))}
               <Link 
-                href="/developers"
+                href="/profile"
                 className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
               >
                 See More
@@ -133,7 +133,7 @@ export default function Home() {
                   Taskers recommended for you
                 </h2>
                 <Link 
-                  href="/developers"
+                  href="/profile"
                   className="text-primary hover:underline flex items-center gap-1 text-sm md:text-base"
                 >
                   See all <ChevronRight className="w-4 h-4" />
@@ -201,7 +201,7 @@ export default function Home() {
                               topServices.map((service: any) => (
                                 <Link
                                   key={service.id}
-                                  href={`/developers/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
+                                  href={`/profile/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
                                   className="px-3 py-1.5 text-xs font-medium border border-primary/30 hover:bg-primary hover:text-primary-foreground rounded transition-all"
                                 >
                                   {service.skillName} for {formatCurrency(service.hourlyRate)}/hr
@@ -219,7 +219,7 @@ export default function Home() {
                               ))
                             )}
                           </div>
-                          <Link href={`/developers/${tasker.slug || tasker.id}`}>
+                          <Link href={`/profile/${tasker.slug || tasker.id}`}>
                             <Button variant="outline" className="w-full">
                               View Tasker Profile
                             </Button>

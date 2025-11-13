@@ -392,7 +392,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                               </div>
                             </div>
                           </div>
-                          <Link href={`/developers/${dev.slug || dev.id}`}>
+                          <Link href={`/profile/${dev.slug || dev.id}`}>
                             <Button variant="outline" className="w-full">
                               View Profile
                             </Button>
@@ -403,7 +403,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                   </div>
                   {categoryDevelopers.length > 6 && (
                     <div className="text-center">
-                      <Link href={`/developers?category=${encodeURIComponent(category)}`}>
+                      <Link href={`/profile?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
                           View All {categoryDevelopers.length} Developers
                         </Button>
@@ -418,7 +418,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">No developers found.</p>
-                  <Link href="/developers">
+                  <Link href="/profile">
                     <Button>Browse All Developers</Button>
                   </Link>
                 </CardContent>

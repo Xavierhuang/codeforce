@@ -340,8 +340,8 @@ export default function TasksPage() {
                   ? 'Try adjusting your filters to see more results.'
                   : 'No tasks available at the moment.'}
               </p>
-              <Link href="/developers">
-                <Button>Find Developers</Button>
+              <Link href="/profile">
+                <Button>Find Talent</Button>
               </Link>
             </div>
           </CardContent>

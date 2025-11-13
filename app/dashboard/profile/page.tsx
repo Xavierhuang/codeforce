@@ -66,6 +66,15 @@ export default function ProfileSetupPage() {
     preferredCommunication: '',
     typicalProjectDuration: '',
   })
+
+  const [profileBaseUrl, setProfileBaseUrl] = useState('https://skillyy.com/profile/')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setProfileBaseUrl(`${window.location.origin}/profile/`)
+    }
+  }, [])
+
   const [skills, setSkills] = useState<{ skill: string; level: string }[]>([])
   const [newSkill, setNewSkill] = useState({ skill: '', level: 'mid' })
   const [workerServices, setWorkerServices] = useState<Array<{
@@ -772,7 +781,7 @@ export default function ProfileSetupPage() {
                     <div>
                       <Label htmlFor="slug" className="text-xs text-gray-500 mb-1 block">Profile URL</Label>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">skillyy.com/</span>
+                        <span className="text-sm text-gray-500">{profileBaseUrl}</span>
                         <Input
                           id="slug"
                           name="slug"
@@ -784,7 +793,7 @@ export default function ProfileSetupPage() {
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
                         {isWorker 
-                          ? 'Your public profile URL: /developers/your-name'
+                          ? 'Your public profile URL: /profile/your-name'
                           : 'Your public profile URL: /buyers/your-company'}
                       </p>
                     </div>
