@@ -487,6 +487,7 @@ export default function DevelopersPage() {
                   const reviewCount = developer._count?.reviewsReceived || 0
                   const topServices = developer.skills?.slice(0, 3) || []
                   
+                  const displayName = developer.name || developer.slug || developer.email || 'Developer'
                   return (
                     <Card key={developer.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
@@ -512,7 +513,7 @@ export default function DevelopersPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-lg truncate">
-                                {developer.name || 'Developer'}
+                                {displayName}
                               </h3>
                               {developer.badgeTier && developer.badgeTier !== 'STARTER' && (
                                 <TaskerBadge 
