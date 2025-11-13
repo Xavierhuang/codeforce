@@ -133,7 +133,7 @@ export default function SignUpPage() {
                 <div className="flex-1 text-left min-w-0">
                   <div className="font-semibold text-base sm:text-lg">I&apos;m a Buyer</div>
                   <div className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-                    I want to hire developers and get work done
+                    I want to hire experts and get work done
                   </div>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function SignUpPage() {
                   <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="font-semibold text-base sm:text-lg">I&apos;m a Developer</div>
+                  <div className="font-semibold text-base sm:text-lg">I&apos;m an Expert</div>
                   <div className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
                     I want to offer my services and earn money
                   </div>
@@ -164,12 +164,12 @@ export default function SignUpPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>
-              {formData.role === 'WORKER' ? 'Become a Developer' : 'Create Account'}
+              {formData.role === 'WORKER' ? 'Become an Expert' : 'Create Account'}
             </CardTitle>
             <CardDescription>
-              {formData.role === 'WORKER' 
-                ? 'Join as a developer and start earning' 
-                : 'Join as a buyer and hire developers'}
+              {formData.role === 'WORKER'
+                ? 'Join as an expert and start earning' 
+                : 'Join as a buyer and hire experts'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -263,7 +263,7 @@ export default function SignUpPage() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {formData.role === 'WORKER'
-                    ? 'Required for developers to receive SMS notifications about bookings'
+                    ? 'Required for experts to receive SMS notifications about bookings'
                     : 'We\'ll use this to contact you about your tasks'}
                 </p>
               </div>
@@ -275,7 +275,7 @@ export default function SignUpPage() {
                   {formData.role === 'WORKER' ? (
                     <>
                       <Briefcase className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <span className="font-medium">Developer</span>
+                      <span className="font-medium">Expert</span>
                     </>
                   ) : (
                     <>

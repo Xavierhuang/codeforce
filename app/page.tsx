@@ -35,7 +35,7 @@ export default function Home() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   
-  // Fetch recommended taskers
+  // Fetch recommended experts
   const { data: recommendedTaskers } = useSWR(
     '/api/v1/search/developers?limit=6',
     fetcher
@@ -53,12 +53,12 @@ export default function Home() {
     window.location.href = '/auth/signup?role=CLIENT'
   }
 
-  const handleBecomeDeveloper = (e?: React.MouseEvent) => {
+  const handleBecomeExpert = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
-    console.log('Become Developer clicked - navigating to signup')
+    console.log('Become Expert clicked - navigating to signup')
     window.location.href = '/auth/signup?role=WORKER'
   }
 
@@ -71,14 +71,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto py-12 md:py-20" suppressHydrationWarning>
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-center mb-4 md:mb-6 leading-tight px-2">
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Hire skilled developers</span>
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Hire skilled experts</span>
             <br />
             <span className="text-foreground">for anything on your to-do list.</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-base md:text-xl text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto px-4">
-            Search for skilled developers, browse their profiles, and book directly. 
+            Search for skilled experts, browse their profiles, and book directly. 
             No task posting needed—just find, book, and get your work done.
           </p>
 
@@ -125,12 +125,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Taskers Recommended for You */}
+          {/* Experts Recommended for You */}
           {recommendedTaskers && recommendedTaskers.length > 0 && (
             <section className="max-w-7xl mx-auto mb-16" suppressHydrationWarning>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold">
-                  Taskers recommended for you
+                  Experts recommended for you
                 </h2>
                 <Link 
                   href="/profile"
@@ -160,7 +160,7 @@ export default function Home() {
                           {tasker.avatarUrl ? (
                             <img
                               src={tasker.avatarUrl}
-                              alt={tasker.name || 'Tasker'}
+                              alt={tasker.name || 'Expert'}
                               className="w-16 h-16 rounded-full object-cover"
                             />
                           ) : (
@@ -171,7 +171,7 @@ export default function Home() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-lg truncate">
-                                {tasker.name || 'Tasker'}
+                                {tasker.name || 'Expert'}
                               </h3>
                               {tasker.badgeTier && tasker.badgeTier !== 'STARTER' && (
                                 <TaskerBadge 
@@ -221,7 +221,7 @@ export default function Home() {
                           </div>
                           <Link href={`/profile/${tasker.slug || tasker.id}`}>
                             <Button variant="outline" className="w-full">
-                              View Tasker Profile
+                              View Expert Profile
                             </Button>
                           </Link>
                         </div>
@@ -248,7 +248,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Search & Browse</h3>
                 <p className="text-muted-foreground">
-                  Search for developers by skills, expertise, or category. Browse verified profiles with ratings and reviews.
+                  Search for experts by skills, expertise, or category. Browse verified profiles with ratings and reviews.
                 </p>
               </div>
               <div className="text-center">
@@ -257,7 +257,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Book Directly</h3>
                 <p className="text-muted-foreground">
-                  Select a developer and fill out a simple form describing your needs. Book instantly with secure payment.
+                  Select an expert and fill out a simple form describing your needs. Book instantly with secure payment.
                 </p>
               </div>
               <div className="text-center">
@@ -266,7 +266,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Get It Done</h3>
                 <p className="text-muted-foreground">
-                  Communicate directly with your developer, track progress, and release payment only when satisfied.
+                  Communicate directly with your expert, track progress, and release payment only when satisfied.
                 </p>
               </div>
             </div>
@@ -277,7 +277,7 @@ export default function Home() {
         <section className="py-20 text-center" suppressHydrationWarning>
           <h2 className="text-4xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join Skillyy as a buyer or developer
+            Join Skillyy as a buyer or expert
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center" suppressHydrationWarning>
             <Button 
@@ -292,13 +292,13 @@ export default function Home() {
               Become a Buyer
             </Button>
             <Button 
-              onClick={handleBecomeDeveloper}
+              onClick={handleBecomeExpert}
               size="lg" 
               variant="outline" 
               className="px-8 touch-manipulation"
               type="button"
             >
-              Become a Developer
+              Become an Expert
             </Button>
           </div>
         </section>

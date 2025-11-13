@@ -40,7 +40,7 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
     <section className="max-w-7xl mx-auto mb-16">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl md:text-3xl font-bold">
-          Taskers recommended for you
+          Experts recommended for you
         </h2>
         <Link 
           href="/profile"
@@ -70,18 +70,18 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
                   {tasker.avatarUrl ? (
                     <img
                       src={tasker.avatarUrl}
-                      alt={tasker.name || 'Tasker'}
+                      alt={tasker.name || 'Expert'}
                       className="w-16 h-16 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-xl font-semibold">
-                      {tasker.name?.charAt(0).toUpperCase() || 'T'}
+                      {tasker.name?.charAt(0).toUpperCase() || 'E'}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg truncate">
-                        {tasker.name || 'Tasker'}
+                        {tasker.name || 'Expert'}
                       </h3>
                       {tasker.badgeTier && tasker.badgeTier !== 'STARTER' && (
                         <TaskerBadge 
@@ -131,7 +131,7 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
                   </div>
                   <Link href={`/profile/${tasker.slug || tasker.id}`}>
                     <Button variant="outline" className="w-full">
-                      View Profile
+                      View Expert Profile
                     </Button>
                   </Link>
                 </div>

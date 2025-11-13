@@ -341,7 +341,7 @@ export default function TasksPage() {
                   : 'No tasks available at the moment.'}
               </p>
               <Link href="/profile">
-                <Button>Find Talent</Button>
+                <Button>Find Experts</Button>
               </Link>
             </div>
           </CardContent>

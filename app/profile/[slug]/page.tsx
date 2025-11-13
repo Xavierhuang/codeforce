@@ -35,7 +35,7 @@ export default function ProfilePage() {
   )
 
   const isBuyer = user?.role === 'CLIENT' || (session?.user as any)?.role === 'CLIENT'
-  const displayName = useMemo(() => developer?.name || developer?.slug || developer?.email || 'Profile', [developer])
+  const displayName = useMemo(() => developer?.name || developer?.slug || developer?.email || 'Expert', [developer])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,7 +81,7 @@ export default function ProfilePage() {
                 <AvatarDisplay
                   src={developer.avatarUrl || undefined}
                   alt={displayName}
-                  fallback={displayName[0]?.toUpperCase() || 'P'}
+                  fallback={displayName[0]?.toUpperCase() || 'E'}
                   className="w-full h-full"
                   cropX={developer.avatarCropX ?? undefined}
                   cropY={developer.avatarCropY ?? undefined}
@@ -157,7 +157,7 @@ export default function ProfilePage() {
                       onClick={() => router.push(`/book/${developer.slug || developer.id}`)}
                     >
                       <Mail className="w-4 h-4 mr-2" />
-                      Contact Talent
+                      Contact Expert
                     </Button>
                   )}
 

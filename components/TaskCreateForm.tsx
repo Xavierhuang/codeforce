@@ -79,7 +79,7 @@ export const TaskCreateForm: React.FC = () => {
       <CardHeader>
         <CardTitle>Post a New Task</CardTitle>
         <CardDescription>
-          Describe what you need help with. Developers will submit offers.
+          Describe what you need help with. Experts will submit offers.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -179,7 +179,7 @@ export const TaskCreateForm: React.FC = () => {
               className="mt-1"
             />
             <p className="text-sm text-muted-foreground mt-1">
-              Leave blank to receive offers from developers
+              Leave blank to receive offers from experts
             </p>
           </div>
 

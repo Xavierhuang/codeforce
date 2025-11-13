@@ -17,15 +17,15 @@ export default function HelpPage() {
       questions: [
         {
           q: 'How do I create an account?',
-          a: 'Click "Get Started" in the top navigation, choose your role (Buyer or Developer), and fill out the signup form with your name, email, and password.'
+          a: 'Click "Get Started" in the top navigation, choose your role (Buyer or Expert), and fill out the signup form with your name, email, and password.'
         },
         {
-          q: 'What\'s the difference between a Buyer and Developer account?',
-          a: 'Buyers use Skillyy to find and hire developers for their projects. Developers offer their services and get paid for completing tasks.'
+          q: 'What\'s the difference between a Buyer and Expert account?',
+          a: 'Buyers use Skillyy to find and hire experts for their projects. Experts offer their services and get paid for completing tasks.'
         },
         {
           q: 'Do I need to verify my account?',
-          a: 'Developers must complete verification (including ID verification) to receive bookings. Buyers can start using the platform immediately after signup.'
+          a: 'Experts must complete verification (including ID verification) to receive bookings. Buyers can start using the platform immediately after signup.'
         }
       ]
     },
@@ -34,12 +34,12 @@ export default function HelpPage() {
       icon: Search,
       questions: [
         {
-          q: 'How do I find a developer?',
-          a: 'Use the search bar on the home page or browse developers by category. You can filter by skills, ratings, and availability.'
+          q: 'How do I find an expert?',
+          a: 'Use the search bar on the home page or browse experts by category. You can filter by skills, ratings, and availability.'
         },
         {
-          q: 'How do I book a developer?',
-          a: 'Click on a developer\'s profile, then click "Book Now". Fill out the booking form with your project details and submit payment.'
+          q: 'How do I book an expert?',
+          a: 'Click on an expert\'s profile, then click "Book Now". Fill out the booking form with your project details and submit payment.'
         },
         {
           q: 'How are payments processed?',
@@ -47,12 +47,12 @@ export default function HelpPage() {
         },
         {
           q: 'What if I\'m not satisfied with the work?',
-          a: 'Contact the developer directly through the platform messaging system to discuss revisions. If issues persist, contact our support team.'
+          a: 'Contact the expert directly through the platform messaging system to discuss revisions. If issues persist, contact our support team.'
         }
       ]
     },
     {
-      title: 'For Developers',
+      title: 'For Experts',
       icon: FileText,
       questions: [
         {

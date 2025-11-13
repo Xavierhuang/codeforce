@@ -193,7 +193,7 @@ export default function VerifyPage() {
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Developer Verification</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Expert Verification</h1>
         <p className="text-sm md:text-base text-muted-foreground">
           Complete your profile to get verified and start receiving task invitations
         </p>

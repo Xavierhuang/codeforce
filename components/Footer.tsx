@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 export function Footer() {
   const router = useRouter()
 
-  const handleBecomeDeveloper = () => {
+  const handleBecomeExpert = () => {
     router.push('/auth/signup?role=WORKER')
   }
 
@@ -20,11 +20,11 @@ export function Footer() {
               <li><Link href="/about" className="hover:text-foreground">About Us</Link></li>
               <li>
                 <button 
-                  onClick={handleBecomeDeveloper} 
+                  onClick={handleBecomeExpert} 
                   type="button" 
                   className="hover:text-foreground text-left w-full"
                 >
-                  Become a Developer
+                  Become an Expert
                 </button>
               </li>
               <li><Link href="/careers" className="hover:text-foreground">Careers</Link></li>
@@ -56,7 +56,7 @@ export function Footer() {
         </div>
         <div className="border-t pt-8 text-center text-sm text-muted-foreground" suppressHydrationWarning>
           <p>&copy; {new Date().getFullYear()} Skillyy, Inc. All rights reserved.</p>
-          <p className="mt-2">Connecting clients with skilled technical professionals including developers, editors, designers, and social media managers.</p>
+          <p className="mt-2">Connecting clients with skilled technical professionals including experts, editors, designers, and social media managers.</p>
         </div>
       </div>
     </footer>

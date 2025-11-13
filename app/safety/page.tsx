@@ -34,9 +34,9 @@ export default function SafetyPage() {
               <div className="flex items-start gap-4 mb-6">
                 <CheckCircle className="h-8 w-8 text-green-600 flex-shrink-0 mt-1" />
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">Developer Verification</h2>
+                  <h2 className="text-2xl font-bold mb-2">Expert Verification</h2>
                   <p className="text-muted-foreground">
-                    All developers on Skillyy must complete our verification process, which includes:
+                    All experts on Skillyy must complete our verification process, which includes:
                   </p>
                   <ul className="list-disc pl-6 mt-4 space-y-2">
                     <li>Identity verification with government-issued ID</li>
@@ -90,7 +90,7 @@ export default function SafetyPage() {
                   </h3>
                   <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                     <li>Always communicate through the Skillyy platform</li>
-                    <li>Review developer profiles, ratings, and past work before booking</li>
+                    <li>Review expert profiles, ratings, and past work before booking</li>
                     <li>Be clear about your project requirements and expectations</li>
                     <li>Never share personal payment information outside the platform</li>
                     <li>Report any suspicious behavior immediately</li>
@@ -99,7 +99,7 @@ export default function SafetyPage() {
                 <div>
                   <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
                     <Shield className="h-5 w-5 text-primary" />
-                    For Developers
+                    For Experts
                   </h3>
                   <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                     <li>Complete your verification to build trust</li>

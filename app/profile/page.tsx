@@ -165,7 +165,7 @@ export default function ProfilesPage() {
               <Search className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
               <input
                 type="text"
-                placeholder="Search talent..."
+                placeholder="Search experts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2 md:py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl text-gray-900 placeholder:text-gray-400 text-sm md:text-[14px] font-medium focus:outline-none focus:bg-white focus:border-[#94FE0C] transition-all"
@@ -296,7 +296,7 @@ export default function ProfilesPage() {
               <div className="bg-black rounded-3xl p-8 mb-6 relative overflow-hidden">
                 <div className="relative z-10">
                   <h2 className="text-xl md:text-2xl font-bold text-white leading-tight mb-5">
-                    Find top talent with Skillyy
+                    Find top experts with Skillyy
                   </h2>
                   <button className="px-4 md:px-5 py-2 md:py-3 text-sm md:text-[14px] font-semibold text-[#1A1A1A] bg-[#94FE0C] rounded-xl md:rounded-2xl border-none cursor-pointer hover:bg-[#7FE00A] transition-all">
                     Learn more
@@ -391,7 +391,7 @@ export default function ProfilesPage() {
           <div className={sidebarCollapsed ? 'lg:col-span-2' : ''}>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <h1 className="text-xl md:text-2xl font-bold text-[#1A1A1A]">Recommended Talent</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-[#1A1A1A]">Recommended Experts</h1>
                 {sortedDevelopers && sortedDevelopers.length > 0 && (
                   <span className="px-2 md:px-3 py-1 text-sm md:text-base font-semibold text-[#1A1A1A] bg-[#FAFAFA] rounded-full">
                     {sortedDevelopers.length}
@@ -458,7 +458,7 @@ export default function ProfilesPage() {
                   const rating = developer.rating || 0
                   const reviewCount = developer._count?.reviewsReceived || 0
                   const topServices = developer.skills?.slice(0, 3) || []
-                  const displayName = developer.name || developer.slug || developer.email || 'Developer'
+                  const displayName = developer.name || developer.slug || developer.email || 'Expert'
 
                   return (
                     <Card key={developer.id} className="hover:shadow-lg transition-shadow">

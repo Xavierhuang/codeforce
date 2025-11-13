@@ -46,7 +46,7 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
   const acceptingOfferId = externalAcceptingOfferId !== undefined ? externalAcceptingOfferId : internalAcceptingOfferId
 
   const handleAcceptOffer = async (offerId: string) => {
-    if (!confirm('Are you sure you want to accept this offer? This will create a payment and assign the task to the developer.')) {
+    if (!confirm('Are you sure you want to accept this offer? This will create a payment and assign the task to the expert.')) {
       return
     }
 
@@ -70,7 +70,7 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
         throw new Error(error.error || 'Failed to accept offer')
       }
 
-      toast.success('Offer accepted! Task assigned to developer.')
+      toast.success('Offer accepted! Task assigned to expert.')
       mutate()
       window.location.reload()
     } catch (error: any) {
@@ -144,13 +144,13 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row md:items-start gap-6">
                   <div className="flex-1 space-y-4">
-                    {/* Developer Info */}
+                    {/* Expert Info */}
                     <div className="flex items-start gap-4">
                       <div className="w-16 h-16 rounded-full border-2 border-background overflow-hidden">
                         <AvatarDisplay
                           src={offer.worker?.avatarUrl || undefined}
-                          alt={offer.worker?.name || 'Developer'}
-                          fallback={offer.worker?.name?.[0]?.toUpperCase() || 'D'}
+                          alt={offer.worker?.name || 'Expert'}
+                          fallback={offer.worker?.name?.[0]?.toUpperCase() || 'E'}
                           className="w-full h-full"
                           cropX={offer.worker?.avatarCropX ?? undefined}
                           cropY={offer.worker?.avatarCropY ?? undefined}
@@ -280,7 +280,7 @@ export function OfferList({ taskId, isClient, onAcceptOffer, acceptingOfferId: e
                     {offer.worker?.avatarUrl && (
                       <img
                         src={offer.worker.avatarUrl}
-                        alt={offer.worker.name || 'Developer'}
+                        alt={offer.worker.name || 'Expert'}
                         className="w-12 h-12 rounded-full"
                       />
                     )}

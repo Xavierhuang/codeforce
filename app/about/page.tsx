@@ -30,7 +30,7 @@ export default function AboutPage() {
             <CardContent className="pt-6">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">Our Mission</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Skillyy is revolutionizing how businesses connect with technical talent. We&apos;ve built a platform that makes it easy to find, hire, and work with skilled developers, designers, and technical professionals. Whether you need a quick bug fix, a full-stack application, or ongoing technical support, Skillyy connects you with verified professionals ready to get the job done.
+                Skillyy is revolutionizing how businesses connect with technical experts. We&apos;ve built a platform that makes it easy to find, hire, and work with skilled experts, designers, and technical professionals. Whether you need a quick bug fix, a full-stack application, or ongoing technical support, Skillyy connects you with verified professionals ready to get the job done.
               </p>
             </CardContent>
           </Card>
@@ -47,7 +47,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Trust & Safety</h3>
                     <p className="text-sm text-muted-foreground">
-                      We verify all developers and provide secure payment processing to ensure safe transactions.
+                      We verify all experts and provide secure payment processing to ensure safe transactions.
                     </p>
                   </div>
                 </div>
@@ -80,7 +80,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Transparency</h3>
                     <p className="text-sm text-muted-foreground">
-                      Clear pricing, honest reviews, and open communication between clients and developers.
+                      Clear pricing, honest reviews, and open communication between clients and experts.
                     </p>
                   </div>
                 </div>
@@ -100,7 +100,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Search & Browse</h3>
                     <p className="text-muted-foreground">
-                      Browse verified developer profiles, filter by skills, ratings, and availability. Find the perfect match for your project.
+                      Browse verified expert profiles, filter by skills, ratings, and availability. Find the perfect match for your project.
                     </p>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Book Directly</h3>
                     <p className="text-muted-foreground">
-                      Select a developer and fill out a simple booking form. Secure payment is held in escrow until work is completed.
+                      Select an expert and fill out a simple booking form. Secure payment is held in escrow until work is completed.
                     </p>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Get It Done</h3>
                     <p className="text-muted-foreground">
-                      Communicate directly with your developer, track progress, and release payment only when you&apos;re satisfied with the work.
+                      Communicate directly with your expert, track progress, and release payment only when you&apos;re satisfied with the work.
                     </p>
                   </div>
                 </div>
@@ -134,14 +134,14 @@ export default function AboutPage() {
           <div className="text-center space-y-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold">Ready to Get Started?</h2>
             <p className="text-muted-foreground">
-              Join thousands of clients and developers using Skillyy
+              Join thousands of clients and experts using Skillyy
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/signup?role=CLIENT">
                 <Button size="lg">Become a Buyer</Button>
               </Link>
               <Link href="/auth/signup?role=WORKER">
-                <Button size="lg" variant="outline">Become a Developer</Button>
+                <Button size="lg" variant="outline">Become an Expert</Button>
               </Link>
             </div>
           </div>

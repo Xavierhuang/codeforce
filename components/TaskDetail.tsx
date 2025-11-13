@@ -211,7 +211,7 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
         })
         setShowPaymentModal(true)
       } else {
-        toast.success('Offer accepted! Task assigned to developer.')
+        toast.success('Offer accepted! Task assigned to expert.')
         mutate()
       }
     } catch (error: any) {
@@ -320,7 +320,7 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
               <span className="text-sm md:text-base">
                 You have {pendingOffers.length} pending {pendingOffers.length === 1 ? 'offer' : 'offers'} for this task. 
-                Review them to select the best developer for your project.
+                Review them to select the best expert for your project.
               </span>
               <Button 
                 onClick={() => setActiveTab('offers')}
@@ -590,12 +590,12 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             {task?.worker && (
               <Card className="bg-muted/50">
                 <CardContent className="pt-4 md:pt-6">
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assigned Developer</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Assigned Expert</h4>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     {task.worker.avatarUrl ? (
                       <img
                         src={task.worker.avatarUrl}
-                        alt={task.worker.name || 'Developer'}
+                        alt={task.worker.name || 'Expert'}
                         className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-background flex-shrink-0"
                       />
                     ) : (

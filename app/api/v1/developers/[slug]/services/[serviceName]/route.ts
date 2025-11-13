@@ -9,7 +9,7 @@ export async function GET(
     const { slug, serviceName } = params
     const decodedServiceName = decodeURIComponent(serviceName)
 
-    // First get the developer
+    // First get the expert
     const developer = await prisma.user.findUnique({
       where: {
         slug: slug,
@@ -20,7 +20,7 @@ export async function GET(
 
     if (!developer) {
       return NextResponse.json(
-        { error: 'Developer not found' },
+        { error: 'Expert not found' },
         { status: 404 }
       )
     }
@@ -38,7 +38,7 @@ export async function GET(
       )
     }
 
-    // Get reviews for this developer (serviceName field doesn't exist on Review model)
+    // Get reviews for this expert (serviceName field doesn't exist on Review model)
     const reviews = await prisma.review.findMany({
       where: {
         targetUserId: developer.id,

@@ -122,7 +122,7 @@ export function BottomNav() {
       },
     ]
   } else if (isClient) {
-    // Clients: Home, Orders, Calendar, Search (Find Developers), Profile
+    // Clients: Home, Orders, Calendar, Search (Find Experts), Profile
     primaryNavItems = [
       {
         href: '/dashboard',
@@ -144,7 +144,7 @@ export function BottomNav() {
       },
       {
         href: '/profile',
-        label: 'Find',
+        label: 'Experts',
         icon: Search,
         roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },

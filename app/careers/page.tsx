@@ -8,7 +8,7 @@ import { Briefcase, MapPin, Clock, ArrowRight } from 'lucide-react'
 export default function CareersPage() {
   const openPositions = [
     {
-      title: 'Senior Full-Stack Developer',
+      title: 'Senior Full-Stack Expert',
       department: 'Engineering',
       location: 'Remote',
       type: 'Full-time',
@@ -66,7 +66,7 @@ export default function CareersPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Impact</h3>
                   <p className="text-sm text-muted-foreground">
-                    Help thousands of businesses and developers connect and succeed.
+                    Help thousands of businesses and experts connect and succeed.
                   </p>
                 </div>
                 <div>

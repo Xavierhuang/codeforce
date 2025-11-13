@@ -62,7 +62,7 @@ export default function DashboardPage() {
     fetcher
   )
 
-  // For clients: fetch developers by category
+  // For clients: fetch experts by category
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
 
@@ -71,9 +71,9 @@ export default function DashboardPage() {
     fetcher
   )
 
-  // Filter developers by category and search
+  // Filter experts by category and search
   const filteredDevelopers = developers?.filter((dev: any) => {
-    // If no category selected, show all developers
+    // If no category selected, show all experts
     const categoryMatch = !selectedCategory || 
       dev.skills?.some((skill: any) => 
         skill.skill.toLowerCase().includes(selectedCategory.toLowerCase())
@@ -90,7 +90,7 @@ export default function DashboardPage() {
     return categoryMatch && searchMatch
   }) || []
 
-  // Group developers by category for display
+  // Group experts by category for display
   const developersByCategory: Record<string, any[]> = {}
   CATEGORIES.forEach(category => {
     developersByCategory[category] = developers?.filter((dev: any) => {
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                   <Input
                     type="text"
-                    placeholder="Search developers by name, skills, or expertise..."
+                    placeholder="Search experts by name, skills, or expertise..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Available Workers</h2>
                   <span className="text-sm text-muted-foreground">
-                    {filteredDevelopers.length} developer{filteredDevelopers.length !== 1 ? 's' : ''} found
+                    {filteredDevelopers.length} expert{filteredDevelopers.length !== 1 ? 's' : ''} found
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -427,8 +427,8 @@ export default function DashboardPage() {
                               <div className="w-12 h-12 rounded-full ring-2 ring-border group-hover:ring-primary transition-all overflow-hidden">
                                 <AvatarDisplay
                                   src={developer.avatarUrl || undefined}
-                                  alt={developer.name || 'Developer'}
-                                  fallback={developer.name?.[0]?.toUpperCase() || developer.email?.[0]?.toUpperCase() || 'D'}
+                                  alt={developer.name || 'Expert'}
+                                  fallback={developer.name?.[0]?.toUpperCase() || developer.email?.[0]?.toUpperCase() || 'E'}
                                   className="w-full h-full"
                                   cropX={developer.avatarCropX ?? undefined}
                                   cropY={developer.avatarCropY ?? undefined}
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                                 />
                               </div>
                               <div>
-                                <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Developer'}</CardTitle>
+                                <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Expert'}</CardTitle>
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                   <span>
@@ -561,9 +561,9 @@ export default function DashboardPage() {
 
             {/* No Results Message */}
             {filteredDevelopers.length === 0 && (searchQuery || selectedCategory) && developers && developers.length > 0 && (
-              <Card className="border-2">
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">No developers found matching your search.</p>
+              <Card className="mt-6">
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground mb-4">No experts found matching your search.</p>
                   <Button variant="outline" onClick={() => {
                     setSearchQuery('')
                     setSelectedCategory('')
@@ -574,7 +574,7 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {/* Developers Grid by Category */}
+            {/* Experts Grid by Category */}
             {CATEGORIES.map((category) => {
               const categoryDevelopers = developersByCategory[category] || []
               if (categoryDevelopers.length === 0) return null
@@ -584,7 +584,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold">{category}</h2>
                     <span className="text-sm text-muted-foreground">
-                      {categoryDevelopers.length} developer{categoryDevelopers.length !== 1 ? 's' : ''}
+                      {categoryDevelopers.length} expert{categoryDevelopers.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -597,7 +597,7 @@ export default function DashboardPage() {
                                 {developer.avatarUrl ? (
                                   <img
                                     src={developer.avatarUrl}
-                                    alt={developer.name || 'Developer'}
+                                    alt={developer.name || 'Expert'}
                                     className="w-12 h-12 rounded-full ring-2 ring-border group-hover:ring-primary transition-all"
                                   />
                                 ) : (
@@ -608,7 +608,7 @@ export default function DashboardPage() {
                                   </div>
                                 )}
                                 <div>
-                                  <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Developer'}</CardTitle>
+                                  <CardTitle className="text-lg group-hover:text-primary transition-colors">{developer.name || 'Expert'}</CardTitle>
                                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                     <span>
@@ -731,7 +731,7 @@ export default function DashboardPage() {
                     <div className="text-center">
                       <Link href={`/profile?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
-                          View All {categoryDevelopers.length} Developers
+                          View All {categoryDevelopers.length} Experts
                         </Button>
                       </Link>
                     </div>
@@ -741,24 +741,24 @@ export default function DashboardPage() {
             })}
 
             {developersError && (
-              <Card className="border-2">
-                <CardContent className="py-12 text-center">
-                  <p className="text-red-600 mb-2">Error loading developers</p>
+              <Card className="mt-6">
+                <CardContent className="p-6">
+                  <p className="text-red-600 mb-2">Error loading experts</p>
                   <p className="text-sm text-muted-foreground mb-4">
                     {developersError?.message || 'Please try refreshing the page'}
                   </p>
                   <Link href="/profile">
-                    <Button>Browse All Developers</Button>
+                    <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>
               </Card>
             )}
             {!developersError && (!developers || developers.length === 0) && (
-              <Card className="border-2">
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">No developers found.</p>
+              <Card className="mt-6">
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground mb-4">No experts found.</p>
                   <Link href="/profile">
-                    <Button>Browse All Developers</Button>
+                    <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>
               </Card>

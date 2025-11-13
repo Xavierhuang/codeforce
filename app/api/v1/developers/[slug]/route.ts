@@ -12,7 +12,7 @@ export async function GET(
       where: {
         slug: slug,
         role: 'WORKER', // Only workers have public profiles
-        verificationStatus: 'VERIFIED', // Only show verified developers
+        verificationStatus: 'VERIFIED', // Only show verified experts
       },
       select: {
         id: true,
@@ -73,14 +73,14 @@ export async function GET(
 
     if (!developer) {
       return NextResponse.json(
-        { error: 'Developer not found' },
+        { error: 'Expert not found' },
         { status: 404 }
       )
     }
 
     return NextResponse.json(developer)
   } catch (error) {
-    console.error('Error fetching developer profile:', error)
+    console.error('Error fetching expert profile:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -10,7 +10,7 @@ export function HomeActions() {
     window.location.href = '/auth/signup?role=CLIENT'
   }
 
-  const handleBecomeDeveloper = (e?: React.MouseEvent) => {
+  const handleBecomeExpert = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
@@ -32,13 +32,13 @@ export function HomeActions() {
         Become a Buyer
       </Button>
       <Button 
-        onClick={handleBecomeDeveloper}
+        onClick={handleBecomeExpert}
         size="lg" 
         variant="outline" 
         className="px-8 touch-manipulation"
         type="button"
       >
-        Become a Developer
+        Become an Expert
       </Button>
     </div>
   )

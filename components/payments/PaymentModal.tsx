@@ -136,7 +136,7 @@ export function PaymentModal({ open, onOpenChange, clientSecret, fees, taskTitle
         <DialogHeader>
           <DialogTitle>Complete Payment</DialogTitle>
           <DialogDescription>
-            Pay for "{taskTitle}" to assign the task to the developer
+            Pay for "{taskTitle}" to assign the task to the expert
           </DialogDescription>
         </DialogHeader>
         

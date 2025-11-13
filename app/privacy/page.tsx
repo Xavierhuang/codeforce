@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
                 <p className="mb-4">In this Privacy Policy:</p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
                   <li>Skillyy, Inc. is referred to as &quot;Skillyy,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us.&quot;</li>
-                  <li>Users of the Platform (Clients and Developers) as &quot;You.&quot;</li>
+                  <li>Users of the Platform (Clients and Experts) as &quot;You.&quot;</li>
                   <li>The &quot;Platform&quot; refers to Skillyy&apos;s websites and mobile applications.</li>
                   <li>&quot;Terms of Service&quot; refers to the applicable legal terms you agree to when you use our products or services.</li>
                   <li>&quot;Personal Information&quot; is information that can directly or indirectly identify, or can reasonably identify, an individual, to the extent regulated under applicable privacy laws.</li>
@@ -71,7 +71,7 @@ export default function PrivacyPolicyPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold mb-2">Professional Information</h3>
-                    <p>If you are a Developer, we collect information about your skills, experience level, portfolio, availability, rates, and completed tasks.</p>
+                    <p>If you are an Expert, we collect information about your skills, experience level, portfolio, availability, rates, and completed tasks.</p>
                   </div>
 
                   <div>

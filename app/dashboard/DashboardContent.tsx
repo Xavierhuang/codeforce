@@ -75,7 +75,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Bug Fix')
 
-  // Filter developers by category and search
+  // Filter experts by category and search
   const filteredDevelopers = developers.filter((dev: any) => {
     const categoryMatch = !selectedCategory || 
       dev.skills?.some((skill: any) => 
@@ -93,7 +93,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
     return categoryMatch && searchMatch
   })
 
-  // Group developers by category for display
+  // Group experts by category for display
   const developersByCategory: Record<string, any[]> = {}
   CATEGORIES.forEach(category => {
     developersByCategory[category] = developers.filter((dev: any) => {
@@ -334,7 +334,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                   <Input
                     type="text"
-                    placeholder="Search developers by name, skills, or expertise..."
+                    placeholder="Search experts by name, skills, or expertise..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -361,7 +361,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
               </CardContent>
             </Card>
 
-            {/* Developers by Category */}
+            {/* Experts by Category */}
             {Object.entries(developersByCategory).map(([category, categoryDevelopers]) => {
               if (categoryDevelopers.length === 0) return null
               
@@ -376,7 +376,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                             {dev.avatarUrl ? (
                               <img
                                 src={dev.avatarUrl}
-                                alt={dev.name || 'Developer'}
+                                alt={dev.name || 'Expert'}
                                 className="w-16 h-16 rounded-full object-cover"
                               />
                             ) : (
@@ -385,7 +385,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-lg truncate">{dev.name || 'Developer'}</h3>
+                              <h3 className="font-semibold text-lg truncate">{dev.name || 'Expert'}</h3>
                               <div className="flex items-center gap-1 text-sm">
                                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                 <span className="font-semibold">{dev.rating?.toFixed(1) || '0.0'}</span>
@@ -405,7 +405,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                     <div className="text-center">
                       <Link href={`/profile?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
-                          View All {categoryDevelopers.length} Developers
+                          View All {categoryDevelopers.length} Experts
                         </Button>
                       </Link>
                     </div>
@@ -417,9 +417,9 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
             {(!developers || developers.length === 0) && (
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">No developers found.</p>
+                  <p className="text-muted-foreground mb-4">No experts found.</p>
                   <Link href="/profile">
-                    <Button>Browse All Developers</Button>
+                    <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>
               </Card>

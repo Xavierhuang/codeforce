@@ -34,7 +34,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
                 <p className="mb-4">
-                  Skillyy is an online marketplace that connects clients seeking development services with verified developers. We facilitate the connection but are not a party to any agreement between clients and developers.
+                  Skillyy is an online marketplace that connects clients seeking development services with verified experts. We facilitate the connection but are not a party to any agreement between clients and experts.
                 </p>
               </section>
 
@@ -55,9 +55,9 @@ export default function TermsOfServicePage() {
 
               {/* Section 4 */}
               <section>
-                <h2 className="text-2xl font-semibold mb-4">4. Developer Verification</h2>
+                <h2 className="text-2xl font-semibold mb-4">4. Expert Verification</h2>
                 <p>
-                  Developers must complete our verification process, including identity verification. Skillyy reserves the right to verify, reject, or revoke verification at any time. Verification does not guarantee quality or performance.
+                  Experts must complete our verification process, including identity verification. Skillyy reserves the right to verify, reject, or revoke verification at any time. Verification does not guarantee quality or performance.
                 </p>
               </section>
 
@@ -69,10 +69,10 @@ export default function TermsOfServicePage() {
                   <ul className="list-disc pl-6 space-y-1">
                     <li>You may post tasks describing development work needed</li>
                     <li>You are responsible for accurately describing your requirements</li>
-                    <li>You may accept or decline offers from developers</li>
+                    <li>You may accept or decline offers from experts</li>
                     <li>Once an offer is accepted, you agree to pay the agreed amount</li>
                   </ul>
-                  <p className="mt-4"><strong>Developers:</strong></p>
+                  <p className="mt-4"><strong>Experts:</strong></p>
                   <ul className="list-disc pl-6 space-y-1">
                     <li>You may submit offers on posted tasks</li>
                     <li>You are responsible for delivering work as described in your offer</li>
@@ -94,7 +94,7 @@ export default function TermsOfServicePage() {
                     <li>Skillyy charges a platform fee of 15% on all transactions</li>
                     <li>Stripe processing fees apply (approximately 2.9% + $0.30)</li>
                     <li>Refunds are processed according to our cancellation policy</li>
-                    <li>Developers must set up a Stripe Connect account to receive payments</li>
+                    <li>Experts must set up a Stripe Connect account to receive payments</li>
                   </ul>
                 </div>
               </section>
@@ -117,7 +117,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">8. Intellectual Property</h2>
                 <p>
-                  Work completed through the Platform belongs to the client who commissioned it, unless otherwise agreed in writing. Developers retain the right to showcase completed work in their portfolio.
+                  Work completed through the Platform belongs to the client who commissioned it, unless otherwise agreed in writing. Experts retain the right to showcase completed work in their portfolio.
                 </p>
               </section>
 
@@ -140,7 +140,7 @@ export default function TermsOfServicePage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">10. Dispute Resolution</h2>
                 <p>
-                  In case of disputes between clients and developers, Skillyy may provide mediation services. However, we are not obligated to resolve disputes. Users are encouraged to resolve issues directly. If mediation is needed, contact support.
+                  In case of disputes between clients and experts, Skillyy may provide mediation services. However, we are not obligated to resolve disputes. Users are encouraged to resolve issues directly. If mediation is needed, contact support.
                 </p>
               </section>
 
