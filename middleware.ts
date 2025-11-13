@@ -26,6 +26,10 @@ export async function middleware(request: NextRequest) {
   
   const response = NextResponse.next()
 
+  if (pathname.startsWith('/_next/')) {
+    return response
+  }
+
   // Security headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
@@ -56,7 +60,7 @@ export async function middleware(request: NextRequest) {
   // Permissions Policy
   response.headers.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+    'camera=(), microphone=(), geolocation=*, interest-cohort=()'
   )
 
   return response

@@ -146,92 +146,156 @@ export function AddressAutocomplete({
   }, [onSelect])
 
   const detectUserLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser')
-      return
-    }
+    const run = async () => {
+      if (!navigator.geolocation) {
+        toast.error('Geolocation is not supported by your browser')
+        return
+      }
 
-    setIsDetectingLocation(true)
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      const fallbackToApproximateLocation = async () => {
         try {
-          const { latitude, longitude } = position.coords
+          const response = await fetch('https://ipapi.co/json/')
+          if (!response.ok) {
+            throw new Error('Approximate location lookup failed (ipapi.co unavailable).')
+          }
 
-          const geocoder = new window.google.maps.Geocoder()
-          const latlng = { lat: latitude, lng: longitude }
+          const data = await response.json()
+          const latitude = parseFloat(data.latitude)
+          const longitude = parseFloat(data.longitude)
 
-          geocoder.geocode({ location: latlng }, (results: any, status: any) => {
-            setIsDetectingLocation(false)
+          if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+            throw new Error('Approximate location lookup returned invalid coordinates.')
+          }
 
-            if (status === 'OK' && results && results[0]) {
-              const place = results[0]
-              const addressComponents = place.address_components || []
-              let streetNumber = ''
-              let route = ''
-              let city = ''
-              let state = ''
-              let postalCode = ''
-              let country = ''
+          const addressData: AddressData = {
+            address: data.city ? `${data.city}${data.region ? ', ' + data.region : ''}` : data.country_name || 'Approximate location',
+            city: data.city || '',
+            state: data.region || data.region_code || '',
+            postalCode: data.postal || '',
+            country: data.country_code || '',
+            lat: latitude,
+            lng: longitude,
+            formattedAddress: data.city
+              ? `${data.city}${data.region ? ', ' + data.region : ''}${data.country_name ? ', ' + data.country_name : ''}`
+              : data.country_name || 'Approximate location',
+          }
 
-              addressComponents.forEach((component: any) => {
-                const types = component.types
+          if (inputRef.current) {
+            inputRef.current.value = addressData.formattedAddress
+          }
 
-                if (types.includes('street_number')) {
-                  streetNumber = component.long_name
-                } else if (types.includes('route')) {
-                  route = component.long_name
-                } else if (types.includes('locality') || types.includes('postal_town')) {
-                  city = component.long_name
-                } else if (types.includes('administrative_area_level_1')) {
-                  state = component.short_name
-                } else if (types.includes('postal_code')) {
-                  postalCode = component.long_name
-                } else if (types.includes('country')) {
-                  country = component.short_name
-                }
-              })
-
-              const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
-
-              const addressData: AddressData = {
-                address: fullAddress,
-                city: city || '',
-                state: state || '',
-                postalCode: postalCode || '',
-                country: country || '',
-                lat: latitude,
-                lng: longitude,
-                formattedAddress: place.formatted_address || fullAddress,
-              }
-
-              if (inputRef.current) {
-                inputRef.current.value = place.formatted_address || fullAddress
-              }
-
-              onSelect(addressData)
-              if (onLocationDetected) {
-                onLocationDetected(addressData)
-              }
-              toast.success('Location detected successfully')
-            } else {
-              toast.error('Could not determine address from location')
-            }
-          })
-        } catch (error) {
+          onSelect(addressData)
+          if (onLocationDetected) {
+            onLocationDetected(addressData)
+          }
+          toast.success('Approximate location detected (based on IP).')
+        } catch (fallbackError: any) {
+          toast.error(fallbackError?.message || 'Unable to determine approximate location.')
+        } finally {
           setIsDetectingLocation(false)
-          toast.error('Failed to detect location')
-        }
-      },
-      (error) => {
-        setIsDetectingLocation(false)
-        if (error.code === error.PERMISSION_DENIED) {
-          toast.error('Location access denied. Please enable location permissions.')
-        } else {
-          toast.error('Failed to detect location')
         }
       }
-    )
+
+      if (navigator.permissions?.query) {
+        try {
+          const status = await navigator.permissions.query({ name: 'geolocation' })
+          if (status.state === 'denied') {
+            toast.error('Location permission is blocked. Please enable it in your browser settings and refresh the page.')
+            await fallbackToApproximateLocation()
+            return
+          }
+        } catch (permissionError) {
+          console.warn('Unable to query geolocation permission (AddressAutocomplete):', permissionError)
+        }
+      }
+
+      setIsDetectingLocation(true)
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords
+
+            const geocoder = new window.google.maps.Geocoder()
+            const latlng = { lat: latitude, lng: longitude }
+
+            geocoder.geocode({ location: latlng }, (results: any, status: any) => {
+              setIsDetectingLocation(false)
+
+              if (status === 'OK' && results && results[0]) {
+                const place = results[0]
+                const addressComponents = place.address_components || []
+                let streetNumber = ''
+                let route = ''
+                let city = ''
+                let state = ''
+                let postalCode = ''
+                let country = ''
+
+                addressComponents.forEach((component: any) => {
+                  const types = component.types
+
+                  if (types.includes('street_number')) {
+                    streetNumber = component.long_name
+                  } else if (types.includes('route')) {
+                    route = component.long_name
+                  } else if (types.includes('locality') || types.includes('postal_town')) {
+                    city = component.long_name
+                  } else if (types.includes('administrative_area_level_1')) {
+                    state = component.short_name
+                  } else if (types.includes('postal_code')) {
+                    postalCode = component.long_name
+                  } else if (types.includes('country')) {
+                    country = component.short_name
+                  }
+                })
+
+                const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
+
+                const addressData: AddressData = {
+                  address: fullAddress,
+                  city: city || '',
+                  state: state || '',
+                  postalCode: postalCode || '',
+                  country: country || '',
+                  lat: latitude,
+                  lng: longitude,
+                  formattedAddress: place.formatted_address || fullAddress,
+                }
+
+                if (inputRef.current) {
+                  inputRef.current.value = place.formatted_address || fullAddress
+                }
+
+                onSelect(addressData)
+                if (onLocationDetected) {
+                  onLocationDetected(addressData)
+                }
+                toast.success('Location detected successfully')
+              } else {
+                toast.error('Could not determine address from location')
+              }
+            })
+          } catch (error) {
+            setIsDetectingLocation(false)
+            toast.error('Failed to detect location')
+          }
+        },
+        async (error) => {
+          setIsDetectingLocation(false)
+          console.error('Geolocation error (AddressAutocomplete):', error)
+          if (error.code === error.PERMISSION_DENIED) {
+            toast.error('Location access denied. Please enable location permissions in your browser settings.')
+            await fallbackToApproximateLocation()
+          } else {
+            toast.error(error.message || 'Failed to detect location')
+            await fallbackToApproximateLocation()
+          }
+        }
+      )
+    }
+
+    run()
   }
 
   return (
