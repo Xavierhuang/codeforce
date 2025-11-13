@@ -18,6 +18,7 @@ import {
   DollarSign,
   Settings,
   AlertTriangle,
+  AlertCircle,
   Bell,
   User,
   Menu,
@@ -119,6 +120,7 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
   const reports = supportTickets?.filter((t: any) => 
     t.category === 'REPORT_USER' || t.category === 'REPORT_TASK'
   ) || []
+  const openReports = reports.filter((r: any) => r.status === 'OPEN')
 
   // Pusher for real-time notifications
   const pusherRef = useRef<any>(null)
@@ -247,33 +249,33 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
         roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },
       {
-        href: '/admin/verifications',
-        label: 'Verifications',
-        icon: ShieldCheck,
+        href: '/admin/tasks',
+        label: 'Operations',
+        icon: ClipboardList,
         badge: pendingVerifications,
         badgeColor: 'bg-red-500',
         roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },
       {
-        href: '/admin/tasks',
-        label: 'Tasks',
-        icon: ClipboardList,
-        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
-      },
-      {
-        href: '/admin/payouts',
-        label: 'Payouts',
+        href: '/admin/revenue',
+        label: 'Finance',
         icon: DollarSign,
         badge: pendingPayouts,
         badgeColor: 'bg-yellow-500',
         roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },
       {
-        href: '/admin/reports',
-        label: 'Reports',
+        href: '/admin/support',
+        label: 'Support',
         icon: AlertTriangle,
-        badge: reports?.filter((r: any) => r.status === 'OPEN').length || 0,
-        badgeColor: 'bg-red-500',
+        badge: (openTickets || 0) + (openReports?.length || 0),
+        badgeColor: 'bg-orange-500',
+        roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
+      },
+      {
+        href: '/admin/settings',
+        label: 'Settings',
+        icon: Settings,
         roles: ['ADMIN'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       }
     )
@@ -283,13 +285,31 @@ export function UnifiedHeaderClient({ user: initialUser, initialNotifications, a
     (item) => !item.roles || item.roles.includes(user?.role as any)
   )
 
+  const financeRoutes = ['/admin/revenue', '/admin/transactions', '/admin/payment-logs', '/admin/payouts']
+  const operationsRoutes = ['/admin/tasks', '/admin/verifications', '/admin/compliance']
+  const supportRoutes = ['/admin/support', '/admin/disputes', '/admin/reports']
+
   const isActive = (href: string) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard' || (pathname?.startsWith('/dashboard') && !pathname?.startsWith('/admin'))
-    } else if (href === '/admin') {
-      return pathname === '/admin' || pathname === '/admin/'
-    } else if (href === '/admin/stats') {
-      return pathname === '/admin/stats'
+    }
+    if (href === '/admin') {
+      return pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/stats'
+    }
+    if (href === '/admin/users') {
+      return pathname?.startsWith('/admin/users')
+    }
+    if (href === '/admin/tasks') {
+      return operationsRoutes.some((route) => pathname?.startsWith(route))
+    }
+    if (href === '/admin/revenue') {
+      return financeRoutes.some((route) => pathname?.startsWith(route))
+    }
+    if (href === '/admin/support') {
+      return supportRoutes.some((route) => pathname?.startsWith(route))
+    }
+    if (href === '/admin/settings') {
+      return pathname?.startsWith('/admin/settings')
     }
     return pathname === href || (href !== '/' && pathname?.startsWith(href))
   }

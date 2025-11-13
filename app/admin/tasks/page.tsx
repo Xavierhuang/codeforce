@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import toast from 'react-hot-toast'
-import { Search, Eye, Edit, Trash2, CheckCircle, XCircle, AlertTriangle, MessageSquare, Filter } from 'lucide-react'
+import { Search, Eye, Edit, Trash2, CheckCircle, XCircle, AlertTriangle, MessageSquare, Filter, ExternalLink, DollarSign, User, Calendar, ShieldCheck, ClipboardList } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { formatCurrency } from '@/lib/utils'
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -194,6 +195,66 @@ export default function AdminTasksPage() {
         </p>
       </div>
 
+      {/* Operations Navigation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Link href="/admin/verifications">
+          <Card className="transition-all hover:border-primary/40 hover:shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                Worker Verifications
+              </CardTitle>
+              <CardDescription>
+                Review and approve pending verification requests from workers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Access the verification queue to approve or reject submissions.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/compliance">
+          <Card className="transition-all hover:border-primary/40 hover:shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                Compliance Center
+              </CardTitle>
+              <CardDescription>
+                Monitor compliance tasks, document reviews, and risk alerts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Keep platform operations compliant and secure.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/stats">
+          <Card className="transition-all hover:border-primary/40 hover:shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ClipboardList className="w-4 h-4 text-sky-500" />
+                Task Analytics
+              </CardTitle>
+              <CardDescription>
+                View platform-wide task analytics, trends, and performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Understand task volumes, completion rates, and more.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -213,7 +274,7 @@ export default function AdminTasksPage() {
             </div>
             <div>
               <Label className="text-xs md:text-sm">Status</Label>
-              <Select value={statusFilter || undefined} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
+              <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger className="mt-1 text-sm">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -258,15 +319,39 @@ export default function AdminTasksPage() {
                         {task.description}
                       </p>
                       <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground">
-                        <span>Client: {task.client?.name || 'Unknown'}</span>
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {task.client?.name || 'Unknown'}
+                        </span>
                         {task.worker && (
-                          <span>Worker: {task.worker.name || 'Unknown'}</span>
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {task.worker.name || 'Unknown'}
+                          </span>
                         )}
-                        {task.price && <span>${task.price}</span>}
-                        <span>{format(new Date(task.createdAt), 'MMM d, yyyy')}</span>
+                        {task.price && (
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            {formatCurrency(task.price)}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(task.createdAt), 'MMM d, yyyy')}
+                        </span>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2 flex-shrink-0">
+                      <Link href={`/tasks/${task.id}`} target="_blank">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          View Page
+                        </Button>
+                      </Link>
                       <Button
                         size="sm"
                         variant="outline"
@@ -277,7 +362,7 @@ export default function AdminTasksPage() {
                         className="text-xs"
                       >
                         <Eye className="w-3 h-3 mr-1" />
-                        View
+                        Details
                       </Button>
                       <Button
                         size="sm"

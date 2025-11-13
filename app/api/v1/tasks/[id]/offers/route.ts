@@ -51,6 +51,14 @@ export async function POST(
     
     const taskId = paramValidation.data.id
 
+    // Validate 8-hour minimum for hourly offers
+    if (hourly && estimatedDurationMins && estimatedDurationMins < 480) {
+      return NextResponse.json(
+        { error: 'Hourly offers require a minimum of 8 hours (480 minutes) estimation' },
+        { status: 400 }
+      )
+    }
+
     const task = await prisma.task.findUnique({
       where: { id: taskId },
     })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -16,11 +16,12 @@ import { PaymentModal } from '@/components/payments/PaymentModal'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
-import { Play, CheckCircle, X, MessageSquare, DollarSign, FileText, MapPin, Clock, User, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Play, CheckCircle, X, MessageSquare, DollarSign, FileText, MapPin, Clock, User, AlertCircle, CheckCircle2, Star, Tag, Wifi } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ClockInOutButton } from '@/components/ClockInOutButton'
 import { BuyerInfoCard } from '@/components/BuyerInfoCard'
+import { TaskAssignmentFileUpload } from '@/components/TaskAssignmentFileUpload'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -52,12 +53,13 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
   )
 
   // Check if user has already reviewed
-  const { data: existingReview } = useSWR(
+  const { data: reviewData } = useSWR(
     task?.status === 'COMPLETED' && session?.user?.id
       ? `/api/v1/reviews?taskId=${task.id}&reviewerId=${session.user.id}`
       : null,
     fetcher
   )
+  const existingReview = reviewData?.reviews?.length > 0 ? reviewData.reviews[0] : null
 
   // Fetch user data to check role
   const { data: user } = useSWR(
@@ -65,8 +67,17 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
     fetcher
   )
 
+  // Determine user role
   const isClient = session?.user?.id === task?.clientId
   const isWorker = session?.user?.id === task?.workerId
+
+  // Fetch assignment files
+  const { data: assignmentFilesData, mutate: mutateFiles } = useSWR(
+    task?.id && (isWorker || isClient) ? `/api/v1/tasks/${task.id}/assignment-files` : null,
+    fetcher
+  )
+  const assignmentFiles = assignmentFilesData?.files || []
+
   const userRole = user?.role || session?.user?.role
   const isWorkerRole = userRole === 'WORKER'
   const isClientRole = userRole === 'CLIENT'
@@ -325,32 +336,36 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
       )}
 
       {/* Header Card */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-lg border-2 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b pb-4">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                <CardTitle className="text-xl md:text-3xl lg:text-4xl break-words">{task?.title}</CardTitle>
-                <StatusBadge status={task?.status} />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                <CardTitle className="text-2xl md:text-3xl lg:text-4xl break-words font-bold">{task?.title}</CardTitle>
+                <StatusBadge status={task?.status} className="text-sm md:text-base" />
               </div>
-              <div className="text-sm md:text-base text-muted-foreground">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="flex flex-wrap items-center gap-4 text-sm md:text-base text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-words font-medium">{task?.client?.name || 'Anonymous'}</span>
+                </span>
+                {task?.createdAt && (
                   <span className="flex items-center gap-2">
-                    <User className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
-                    <span className="break-words">{task?.client?.name || 'Anonymous'}</span>
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    Created {format(new Date(task.createdAt), 'MMM d, yyyy')}
                   </span>
-                  {task?.createdAt && (
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
-                      {format(new Date(task.createdAt), 'MMM d, yyyy')}
-                    </span>
-                  )}
-                </div>
+                )}
+                {task?.completedAt && (
+                  <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    Completed {format(new Date(task.completedAt), 'MMM d, yyyy')}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {/* Primary Action Buttons */}
           {(actionButtons.primary || (actionButtons.secondary && actionButtons.secondary.length > 0)) && (
             <div className="mb-6">
@@ -362,28 +377,51 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
           )}
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 p-3 md:p-4 bg-muted/30 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
             {task?.price && (
-              <div>
-                <div className="text-xs md:text-sm text-muted-foreground mb-1">Budget</div>
-                <div className="text-lg md:text-2xl font-bold text-primary">{formatCurrency(task.price)}</div>
-              </div>
+              <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <div className="text-xs md:text-sm text-muted-foreground font-medium">Budget</div>
+                  </div>
+                  <div className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(task.price)}</div>
+                </CardContent>
+              </Card>
             )}
-            <div>
-              <div className="text-xs md:text-sm text-muted-foreground mb-1">Category</div>
-              <div className="font-semibold text-sm md:text-base">{task?.category}</div>
-            </div>
-            <div>
-              <div className="text-xs md:text-sm text-muted-foreground mb-1">Type</div>
-              <div className="font-semibold flex items-center gap-1 text-sm md:text-base">
-                {task?.type === 'IN_PERSON' && <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
-                {task?.type === 'VIRTUAL' ? 'Virtual' : 'In-Person'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs md:text-sm text-muted-foreground mb-1">Offers</div>
-              <div className="font-semibold text-sm md:text-base">{task?._count?.offers || 0}</div>
-            </div>
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div className="text-xs md:text-sm text-muted-foreground font-medium">Category</div>
+                </div>
+                <div className="font-semibold text-sm md:text-base">{task?.category}</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {task?.type === 'IN_PERSON' ? (
+                    <MapPin className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  ) : (
+                    <Wifi className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  )}
+                  <div className="text-xs md:text-sm text-muted-foreground font-medium">Type</div>
+                </div>
+                <div className="font-semibold text-sm md:text-base">
+                  {task?.type === 'VIRTUAL' ? 'Virtual' : 'In-Person'}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10 border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  <div className="text-xs md:text-sm text-muted-foreground font-medium">Offers</div>
+                </div>
+                <div className="font-semibold text-lg md:text-xl">{task?._count?.offers || 0}</div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Time Tracking - Clock In/Out Button (for workers) */}
@@ -391,6 +429,88 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
             <div className="mb-6">
               <ClockInOutButton task={task} onUpdate={mutate} />
             </div>
+          )}
+
+          {/* Assignment Files Upload (for workers when ASSIGNED or IN_PROGRESS) */}
+          {isWorker && task && (task.status === 'ASSIGNED' || task.status === 'IN_PROGRESS') && (
+            <Card className="mb-6 border-2">
+              <CardHeader>
+                <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Assignment Files
+                </CardTitle>
+                <CardDescription>
+                  Upload files, documents, or resources related to this task
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TaskAssignmentFileUpload
+                  taskId={task.id}
+                  existingFiles={assignmentFiles}
+                  onFilesUploaded={() => {
+                    mutateFiles()
+                    mutate()
+                  }}
+                  disabled={task.status === 'COMPLETED' || task.status === 'CANCELLED'}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Display Assignment Files (for clients and workers) */}
+          {assignmentFiles.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Task Files ({assignmentFiles.length})
+                </CardTitle>
+                <CardDescription>
+                  Files uploaded by the worker for this task
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {assignmentFiles.map((file: any) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{file.filename}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {file.mimeType} • {Math.round(file.size / 1024)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(file.url, '_blank')}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const link = document.createElement('a')
+                            link.href = file.url
+                            link.download = file.filename
+                            link.click()
+                          }}
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Buyer Info Card (for workers) */}
@@ -603,26 +723,46 @@ export function TaskDetail({ task: initialTask }: TaskDetailProps) {
 
       {/* Review Form */}
       {showReviewForm && targetUserId && (
-        <ReviewForm
-          taskId={task.id}
-          targetUserId={targetUserId}
-          targetUserName={targetUserName || 'User'}
-          onSuccess={() => {
-            setShowReviewForm(false)
-            mutate()
-          }}
-          onCancel={() => setShowReviewForm(false)}
-        />
+        <div id="review-form">
+          <ReviewForm
+            taskId={task.id}
+            targetUserId={targetUserId}
+            targetUserName={targetUserName || 'User'}
+            onSuccess={() => {
+              setShowReviewForm(false)
+              mutate()
+              toast.success('Thank you for your review!')
+            }}
+            onCancel={() => setShowReviewForm(false)}
+          />
+        </div>
       )}
 
+      {/* Review Prompt - Show prominently for completed tasks */}
       {task?.status === 'COMPLETED' && canReview && !showReviewForm && (
-        <Card>
+        <Card id="review" className="border-2 border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">
-                Share your experience with {targetUserName || 'the other party'}
-              </p>
-              <Button onClick={() => setShowReviewForm(true)} size="lg">
+            <div className="text-center space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {isClient ? 'Rate Your Worker' : 'Rate Your Buyer'}
+                </h3>
+                <p className="text-muted-foreground">
+                  Share your experience with {targetUserName || 'the other party'} to help others make informed decisions
+                </p>
+              </div>
+              <Button 
+                onClick={() => {
+                  setShowReviewForm(true)
+                  // Scroll to review form
+                  setTimeout(() => {
+                    document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }, 100)
+                }} 
+                size="lg"
+                className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900"
+              >
+                <Star className="w-5 h-5 mr-2 fill-current" />
                 Leave a Review
               </Button>
             </div>

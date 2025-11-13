@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
 import { calculateFees, calculateAmountInCents } from '@/lib/stripe-fees'
-import { Star, Wifi, Building2, Clock, MapPin, Calendar, Edit, Check, Tag } from 'lucide-react'
+import { Star, Wifi, Building2, Clock, MapPin, Calendar, Edit, Check, Tag, AlertCircle, Info, FileText, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
 import {
@@ -33,6 +33,7 @@ interface BookingFormData {
   taskDetails: string
   category: string
   relevantSkills: string[] // Skills that match the worker's expertise
+  weeklyHourLimit?: number // Optional weekly hour limit for hourly work
   address?: string
   unit?: string
   city?: string
@@ -58,9 +59,11 @@ export default function BookWorkerPage() {
     taskDetails: '',
     category: '',
     relevantSkills: [],
+    weeklyHourLimit: undefined,
   })
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [isCreatingBooking, setIsCreatingBooking] = useState(false)
+  const [serverFees, setServerFees] = useState<any>(null) // Store fees from server
 
   // Determine default task type when worker data loads
   useEffect(() => {
@@ -109,7 +112,8 @@ export default function BookWorkerPage() {
   }
 
   const baseAmount = worker.hourlyRate * formData.durationHours
-  const fees = calculateFees(baseAmount)
+  // Use server fees if available, otherwise calculate client-side (for preview only)
+  const fees = serverFees || calculateFees(baseAmount)
   const canProceed: boolean = Boolean(
     formData.scheduledAt &&
     formData.durationHours > 0 &&
@@ -130,6 +134,13 @@ export default function BookWorkerPage() {
 
     setIsCreatingBooking(true)
     try {
+      console.log('[PAYMENT] Creating booking request:', {
+        workerId: worker.id,
+        baseAmount,
+        durationHours: formData.durationHours,
+        taskType: formData.taskType,
+      })
+
       const response = await fetch('/api/v1/book/worker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,13 +153,25 @@ export default function BookWorkerPage() {
 
       if (!response.ok) {
         const error = await response.json()
+        console.error('[PAYMENT] Booking creation failed:', error)
         throw new Error(error.error || 'Failed to create booking')
       }
 
       const data = await response.json()
+      console.log('[PAYMENT] Booking created successfully:', {
+        paymentIntentId: data.paymentIntentId,
+        clientSecret: data.clientSecret ? '***' : null,
+        fees: data.fees,
+        displayedTotal: data.fees?.totalAmount,
+        paymentIntentAmount: data.fees?.totalAmount ? Math.round(data.fees.totalAmount * 100) : null,
+      })
+
+      // IMPORTANT: Use fees from server to ensure consistency
+      setServerFees(data.fees)
       setClientSecret(data.clientSecret)
       setStep(2)
     } catch (error: any) {
+      console.error('[PAYMENT] Error creating booking:', error)
       toast.error(error.message || 'Failed to create booking')
     } finally {
       setIsCreatingBooking(false)
@@ -156,7 +179,36 @@ export default function BookWorkerPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
+      {/* Progress Stepper */}
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-center justify-center max-w-2xl mx-auto">
+          <div className="flex items-center flex-1">
+            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
+              step >= 1 ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30 text-muted-foreground'
+            }`}>
+              {step > 1 ? <Check className="w-5 h-5" /> : <span className="font-semibold">1</span>}
+            </div>
+            <div className={`flex-1 h-1 mx-2 transition-all ${
+              step >= 2 ? 'bg-primary' : 'bg-muted-foreground/30'
+            }`} />
+            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
+              step >= 2 ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30 text-muted-foreground'
+            }`}>
+              {step > 2 ? <Check className="w-5 h-5" /> : <span className="font-semibold">2</span>}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-between max-w-2xl mx-auto mt-2">
+          <span className={`text-xs md:text-sm font-medium ${step >= 1 ? 'text-foreground' : 'text-muted-foreground'}`}>
+            Task Details
+          </span>
+          <span className={`text-xs md:text-sm font-medium ${step >= 2 ? 'text-foreground' : 'text-muted-foreground'}`}>
+            Payment
+          </span>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2">
@@ -174,7 +226,7 @@ export default function BookWorkerPage() {
               formData={formData}
               worker={worker}
               baseAmount={baseAmount}
-              fees={fees}
+              fees={serverFees || fees}
               clientSecret={clientSecret}
               onBack={() => setStep(1)}
             />
@@ -205,40 +257,126 @@ function Step1Form({
   isLoading: boolean
   canProceed: boolean
 }) {
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const validateField = (field: string, value: any) => {
+    const errors: Record<string, string> = {}
+    
+    switch (field) {
+      case 'scheduledAt':
+        if (!value) {
+          errors.scheduledAt = 'Please select a date and time'
+        } else if (new Date(value) < new Date()) {
+          errors.scheduledAt = 'Please select a future date and time'
+        }
+        break
+      case 'durationHours':
+        if (!value || value <= 0) {
+          errors.durationHours = 'Duration must be greater than 0'
+        } else if (value < 0.5) {
+          errors.durationHours = 'Minimum duration is 0.5 hours'
+        }
+        break
+      case 'taskDetails':
+        if (!value || value.trim().length < 10) {
+          errors.taskDetails = 'Please provide at least 10 characters of task details'
+        }
+        break
+      case 'category':
+        if (!value) {
+          errors.category = 'Please select a category'
+        }
+        break
+      case 'address':
+        if (formData.taskType === 'IN_PERSON' && (!value || value.trim().length === 0)) {
+          errors.address = 'Address is required for on-site tasks'
+        }
+        break
+      case 'city':
+        if (formData.taskType === 'IN_PERSON' && (!value || value.trim().length === 0)) {
+          errors.city = 'City is required for on-site tasks'
+        }
+        break
+      case 'postalCode':
+        if (formData.taskType === 'IN_PERSON' && (!value || value.trim().length === 0)) {
+          errors.postalCode = 'Postal code is required for on-site tasks'
+        }
+        break
+    }
+    
+    setValidationErrors(prev => ({ ...prev, ...errors }))
+    return Object.keys(errors).length === 0
+  }
+
+  const handleFieldChange = (field: keyof BookingFormData, value: any) => {
+    setFormData({ ...formData, [field]: value })
+    // Clear error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+    // Validate field
+    validateField(field, value)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Task Details</CardTitle>
+    <Card className="shadow-lg border-2">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+        <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
+          <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+          Task Details
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          Fill in the details below to book {worker?.name || 'this specialist'}
+        </p>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 md:space-y-8 pt-6">
         {/* Task Type Toggle */}
         <div>
-          <Label className="text-sm md:text-base font-semibold mb-3 block">
-            Is this a remote task or on-site?
+          <Label className="text-sm md:text-base font-semibold mb-3 block flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            Task Type *
           </Label>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             {(!worker?.serviceType || worker.serviceType === 'VIRTUAL' || worker.serviceType === 'BOTH') && (
               <Button
                 type="button"
                 variant={formData.taskType === 'VIRTUAL' ? 'default' : 'outline'}
-                onClick={() => setFormData({ ...formData, taskType: 'VIRTUAL' })}
-                className="flex-1 text-sm md:text-base"
+                onClick={() => handleFieldChange('taskType', 'VIRTUAL')}
+                className={`flex-1 h-12 md:h-14 text-sm md:text-base transition-all ${
+                  formData.taskType === 'VIRTUAL' 
+                    ? 'shadow-md scale-[1.02]' 
+                    : 'hover:scale-[1.01]'
+                }`}
                 disabled={worker?.serviceType === 'IN_PERSON'}
               >
-                <Wifi className="w-3 h-3 md:w-4 md:h-4 mr-2" />
-                Remote
+                <Wifi className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-semibold">Remote</div>
+                  <div className="text-xs opacity-80">Work from anywhere</div>
+                </div>
               </Button>
             )}
             {(worker?.serviceType === 'IN_PERSON' || worker?.serviceType === 'BOTH') && (
               <Button
                 type="button"
                 variant={formData.taskType === 'IN_PERSON' ? 'default' : 'outline'}
-                onClick={() => setFormData({ ...formData, taskType: 'IN_PERSON' })}
-                className="flex-1 text-sm md:text-base"
+                onClick={() => handleFieldChange('taskType', 'IN_PERSON')}
+                className={`flex-1 h-12 md:h-14 text-sm md:text-base transition-all ${
+                  formData.taskType === 'IN_PERSON' 
+                    ? 'shadow-md scale-[1.02]' 
+                    : 'hover:scale-[1.01]'
+                }`}
                 disabled={!worker || worker.serviceType === 'VIRTUAL'}
               >
-                <Building2 className="w-3 h-3 md:w-4 md:h-4 mr-2" />
-                On-site
+                <Building2 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-semibold">On-site</div>
+                  <div className="text-xs opacity-80">In-person service</div>
+                </div>
               </Button>
             )}
           </div>
@@ -246,48 +384,76 @@ function Step1Form({
 
         {/* Address Fields (only for on-site) */}
         {formData.taskType === 'IN_PERSON' && (
-          <div className="space-y-3 md:space-y-4 p-3 md:p-4 border rounded-lg bg-muted/50">
-            <Label className="text-sm md:text-base font-semibold">Your Task Location</Label>
+          <div className="space-y-4 p-4 md:p-6 border-2 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              <Label className="text-base md:text-lg font-semibold">Task Location</Label>
+            </div>
             <div>
-              <Label htmlFor="address">Street Address *</Label>
+              <Label htmlFor="address" className="text-sm font-medium">
+                Street Address *
+              </Label>
               <Input
                 id="address"
                 value={formData.address || ''}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) => handleFieldChange('address', e.target.value)}
+                onBlur={() => validateField('address', formData.address)}
                 placeholder="123 Main St"
-                className="mt-1"
+                className={`mt-2 ${validationErrors.address ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               />
+              {validationErrors.address && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {validationErrors.address}
+                </p>
+              )}
             </div>
             <div>
-              <Label htmlFor="unit">Unit or Apt # (Optional)</Label>
+              <Label htmlFor="unit" className="text-sm font-medium">
+                Unit or Apt # <span className="text-muted-foreground">(Optional)</span>
+              </Label>
               <Input
                 id="unit"
                 value={formData.unit || ''}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                onChange={(e) => handleFieldChange('unit', e.target.value)}
                 placeholder="Apt 4B"
-                className="mt-1"
+                className="mt-2"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="city">City *</Label>
+                <Label htmlFor="city" className="text-sm font-medium">City *</Label>
                 <Input
                   id="city"
                   value={formData.city || ''}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  onChange={(e) => handleFieldChange('city', e.target.value)}
+                  onBlur={() => validateField('city', formData.city)}
                   placeholder="New York"
-                  className="mt-1"
+                  className={`mt-2 ${validationErrors.city ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 />
+                {validationErrors.city && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {validationErrors.city}
+                  </p>
+                )}
               </div>
               <div>
-                <Label htmlFor="postalCode">Postal Code *</Label>
+                <Label htmlFor="postalCode" className="text-sm font-medium">Postal Code *</Label>
                 <Input
                   id="postalCode"
                   value={formData.postalCode || ''}
-                  onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                  onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                  onBlur={() => validateField('postalCode', formData.postalCode)}
                   placeholder="10001"
-                  className="mt-1"
+                  className={`mt-2 ${validationErrors.postalCode ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 />
+                {validationErrors.postalCode && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {validationErrors.postalCode}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -295,15 +461,23 @@ function Step1Form({
 
         {/* Category Selection */}
         <div>
-          <Label htmlFor="category" className="text-sm md:text-base">Category *</Label>
-          <p className="text-xs text-muted-foreground mb-2">
+          <Label htmlFor="category" className="text-sm md:text-base font-semibold flex items-center gap-2 mb-2">
+            <Tag className="w-4 h-4" />
+            Category *
+          </Label>
+          <p className="text-xs text-muted-foreground mb-3">
             Select the category that best matches your needs
           </p>
           <select
             id="category"
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(e) => handleFieldChange('category', e.target.value)}
+            onBlur={() => validateField('category', formData.category)}
+            className={`flex h-11 w-full rounded-lg border-2 bg-background px-4 py-2 text-sm font-medium transition-all ${
+              validationErrors.category 
+                ? 'border-red-500 focus-visible:ring-red-500' 
+                : 'border-input focus-visible:ring-ring focus-visible:border-primary'
+            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
             required
           >
             <option value="">Select a category...</option>
@@ -317,6 +491,12 @@ function Step1Form({
             <option value="Code Review">Code Review</option>
             <option value="Other">Other</option>
           </select>
+          {validationErrors.category && (
+            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {validationErrors.category}
+            </p>
+          )}
         </div>
 
         {/* Relevant Skills - Show worker's skills for matching */}
@@ -351,53 +531,149 @@ function Step1Form({
 
         {/* Task Date & Time */}
         <div>
-          <Label htmlFor="scheduledAt" className="text-sm md:text-base">Task Date & Time *</Label>
+          <Label htmlFor="scheduledAt" className="text-sm md:text-base font-semibold flex items-center gap-2 mb-2">
+            <Calendar className="w-4 h-4" />
+            Task Date & Time *
+          </Label>
           <Input
             id="scheduledAt"
             type="datetime-local"
             value={formData.scheduledAt}
-            onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-            className="mt-1 text-sm md:text-base"
+            onChange={(e) => handleFieldChange('scheduledAt', e.target.value)}
+            onBlur={() => validateField('scheduledAt', formData.scheduledAt)}
+            className={`mt-2 h-11 text-sm md:text-base ${
+              validationErrors.scheduledAt ? 'border-red-500 focus-visible:ring-red-500' : ''
+            }`}
             required
           />
+          {validationErrors.scheduledAt && (
+            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {validationErrors.scheduledAt}
+            </p>
+          )}
         </div>
 
         {/* Task Duration */}
         <div>
-          <Label htmlFor="durationHours" className="text-sm md:text-base">Task Duration (hours) *</Label>
-          <Input
-            id="durationHours"
-            type="number"
-            min="0.5"
-            step="0.5"
-            value={formData.durationHours}
-            onChange={(e) => setFormData({ ...formData, durationHours: parseFloat(e.target.value) || 0 })}
-            className="mt-1 text-sm md:text-base"
-            required
-          />
+          <Label htmlFor="durationHours" className="text-sm md:text-base font-semibold flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4" />
+            Task Duration (hours) *
+          </Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="durationHours"
+              type="number"
+              min="0.5"
+              step="0.5"
+              value={formData.durationHours}
+              onChange={(e) => handleFieldChange('durationHours', parseFloat(e.target.value) || 0)}
+              onBlur={() => validateField('durationHours', formData.durationHours)}
+              className={`mt-2 h-11 text-sm md:text-base flex-1 ${
+                validationErrors.durationHours ? 'border-red-500 focus-visible:ring-red-500' : ''
+              }`}
+              required
+            />
+            <div className="mt-2 text-sm text-muted-foreground">
+              = {formatCurrency(worker?.hourlyRate * formData.durationHours || 0)}
+            </div>
+          </div>
+          {validationErrors.durationHours && (
+            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {validationErrors.durationHours}
+            </p>
+          )}
+        </div>
+
+        {/* Weekly Hour Limit (Optional) */}
+        <div>
+          <div className="flex items-start gap-2 mb-2">
+            <Label htmlFor="weeklyHourLimit" className="text-sm md:text-base font-semibold flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              Weekly Hour Limit <span className="text-muted-foreground font-normal">(Optional)</span>
+            </Label>
+          </div>
+          <div className="space-y-2">
+            <Input
+              id="weeklyHourLimit"
+              type="number"
+              min="1"
+              step="1"
+              value={formData.weeklyHourLimit || ''}
+              onChange={(e) => handleFieldChange('weeklyHourLimit', e.target.value ? parseInt(e.target.value) : undefined)}
+              placeholder="e.g., 20 hours per week"
+              className="mt-2 h-11 text-sm md:text-base"
+            />
+            <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Set a weekly limit to help manage expectations. The worker will report hours weekly, and you can adjust this limit after booking.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Task Details */}
         <div>
-          <Label htmlFor="taskDetails" className="text-sm md:text-base">Task Details *</Label>
+          <Label htmlFor="taskDetails" className="text-sm md:text-base font-semibold flex items-center gap-2 mb-2">
+            <FileText className="w-4 h-4" />
+            Task Details *
+          </Label>
           <Textarea
             id="taskDetails"
             value={formData.taskDetails}
-            onChange={(e) => setFormData({ ...formData, taskDetails: e.target.value })}
-            placeholder="Tell us the details of your task..."
-            className="mt-1 min-h-[100px] md:min-h-[120px] text-sm md:text-base"
+            onChange={(e) => handleFieldChange('taskDetails', e.target.value)}
+            onBlur={() => validateField('taskDetails', formData.taskDetails)}
+            placeholder="Describe your task in detail. Include requirements, deliverables, timeline expectations, and any specific skills needed..."
+            className={`mt-2 min-h-[120px] md:min-h-[150px] text-sm md:text-base resize-y ${
+              validationErrors.taskDetails ? 'border-red-500 focus-visible:ring-red-500' : ''
+            }`}
             required
           />
+          <div className="flex items-center justify-between mt-1">
+            {validationErrors.taskDetails ? (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {validationErrors.taskDetails}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {formData.taskDetails.length}/500 characters
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Minimum 10 characters required
+            </p>
+          </div>
         </div>
 
-        <Button
-          onClick={onSubmit}
-          disabled={!canProceed || isLoading}
-          className="w-full text-sm md:text-base"
-          size="lg"
-        >
-          {isLoading ? 'Creating Booking...' : 'Continue to Payment'}
-        </Button>
+        {/* Continue Button */}
+        <div className="pt-4 border-t">
+          <Button
+            onClick={onSubmit}
+            disabled={!canProceed || isLoading}
+            className="w-full h-12 md:h-14 text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            size="lg"
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Creating Booking...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                Continue to Payment
+                <Check className="w-5 h-5" />
+              </div>
+            )}
+          </Button>
+          {!canProceed && (
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Please fill in all required fields to continue
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
@@ -418,115 +694,306 @@ function Step2Confirm({
   clientSecret: string | null
   onBack: () => void
 }) {
-  if (!clientSecret) {
+  const [currentClientSecret, setCurrentClientSecret] = useState<string | null>(clientSecret)
+  const [isRecreating, setIsRecreating] = useState(false)
+
+  // Update client secret when it changes
+  useEffect(() => {
+    setCurrentClientSecret(clientSecret)
+  }, [clientSecret])
+
+  const handleRecreatePaymentIntent = async () => {
+    setIsRecreating(true)
+    try {
+      const response = await fetch('/api/v1/book/worker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workerId: worker.id,
+          ...formData,
+          baseAmount,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to recreate payment')
+      }
+
+      const data = await response.json()
+      setCurrentClientSecret(data.clientSecret)
+      toast.success('Payment form refreshed. Please try again.')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to recreate payment')
+    } finally {
+      setIsRecreating(false)
+    }
+  }
+
+  if (!currentClientSecret) {
     return <div>Loading payment form...</div>
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-lg border-2">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-lg md:text-xl">Confirm & Pay</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onBack} className="w-full sm:w-auto text-xs md:text-sm">
+          <div>
+            <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
+              <Check className="w-5 h-5 md:w-6 md:h-6" />
+              Confirm & Pay
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Review your booking details and complete payment
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={onBack} className="w-full sm:w-auto text-xs md:text-sm">
             <Edit className="w-3 h-3 md:w-4 md:h-4 mr-2" />
             Edit Details
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 md:space-y-6">
+      <CardContent className="space-y-4 md:space-y-6 pt-6">
         {/* Task Summary */}
-        <div className="space-y-2 p-3 md:p-4 border rounded-lg">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={formData.taskType === 'VIRTUAL' ? 'outline' : 'default'} className="text-xs">
+        <div className="space-y-4 p-4 md:p-6 border-2 rounded-xl bg-gradient-to-br from-muted/30 to-muted/10">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <Badge variant={formData.taskType === 'VIRTUAL' ? 'outline' : 'default'} className="text-xs px-3 py-1">
               {formData.taskType === 'VIRTUAL' ? <Wifi className="w-3 h-3 mr-1" /> : <Building2 className="w-3 h-3 mr-1" />}
               {formData.taskType === 'VIRTUAL' ? 'Remote' : 'On-site'}
             </Badge>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs md:text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
-              <span>{new Date(formData.scheduledAt).toLocaleString()}</span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs md:text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <span>{formData.durationHours} {formData.durationHours === 1 ? 'hour' : 'hours'}</span>
-          </div>
-          {formData.taskType === 'IN_PERSON' && formData.address && (
-            <div className="flex items-start gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4 mt-0.5" />
-              <span>
-                {formData.address}
-                {formData.unit && `, ${formData.unit}`}
-                {formData.city && `, ${formData.city}`}
-                {formData.postalCode && ` ${formData.postalCode}`}
-              </span>
-            </div>
-          )}
-          <div className="mt-2 pt-2 border-t">
-            <p className="text-sm font-medium">Category:</p>
-            <Badge variant="secondary" className="mt-1">
+            <Badge variant="secondary" className="text-xs px-3 py-1">
+              <Tag className="w-3 h-3 mr-1" />
               {formData.category}
             </Badge>
-            {formData.relevantSkills.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm font-medium mb-1">Relevant Skills:</p>
-                <div className="flex flex-wrap gap-1">
-                  {formData.relevantSkills.map((skill) => (
-                    <Badge key={skill} variant="outline" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-5 h-5 text-primary" />
               </div>
-            )}
-            <p className="text-sm font-medium mt-3">Task Details:</p>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.taskDetails}</p>
+              <div>
+                <p className="text-xs text-muted-foreground">Scheduled</p>
+                <p className="text-sm font-semibold">{new Date(formData.scheduledAt).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">{new Date(formData.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Duration</p>
+                <p className="text-sm font-semibold">{formData.durationHours} {formData.durationHours === 1 ? 'hour' : 'hours'}</p>
+                {formData.weeklyHourLimit && (
+                  <p className="text-xs text-muted-foreground">Weekly limit: {formData.weeklyHourLimit}h</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {formData.taskType === 'IN_PERSON' && formData.address && (
+            <div className="flex items-start gap-3 p-3 bg-background/50 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <MapPin className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Location</p>
+                <p className="text-sm font-medium">
+                  {formData.address}
+                  {formData.unit && `, ${formData.unit}`}
+                  {formData.city && `, ${formData.city}`}
+                  {formData.postalCode && ` ${formData.postalCode}`}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {formData.relevantSkills.length > 0 && (
+            <div className="pt-3 border-t">
+              <p className="text-xs text-muted-foreground mb-2">Relevant Skills:</p>
+              <div className="flex flex-wrap gap-2">
+                {formData.relevantSkills.map((skill) => (
+                  <Badge key={skill} variant="outline" className="text-xs">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="pt-3 border-t">
+            <p className="text-xs text-muted-foreground mb-2 font-semibold">Task Description:</p>
+            <p className="text-sm text-foreground whitespace-pre-wrap bg-background/50 p-3 rounded-lg">{formData.taskDetails}</p>
           </div>
         </div>
 
         {/* Price Breakdown */}
-        <div className="space-y-2 p-3 md:p-4 border rounded-lg">
-          <div className="flex justify-between text-xs md:text-sm">
-            <span className="break-words">Hourly Rate × {formData.durationHours} hours</span>
-            <span className="ml-2 flex-shrink-0">{formatCurrency(baseAmount)}</span>
-          </div>
-          <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
-            <span>Trust & Support Fee (15%)</span>
-            <span className="ml-2 flex-shrink-0">{formatCurrency(fees.trustAndSupportFee)}</span>
-          </div>
-          <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
-            <span>Processing Fee</span>
-            <span className="ml-2 flex-shrink-0">{formatCurrency(fees.stripeFee)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-base md:text-lg pt-2 border-t">
-            <span>Total</span>
-            <span className="text-primary ml-2 flex-shrink-0">{formatCurrency(fees.totalAmount)}</span>
+        <div className="space-y-3 p-4 md:p-6 border-2 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10">
+          <h3 className="text-base md:text-lg font-semibold flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+            Payment Summary
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Base Amount</span>
+              <span className="font-medium">{formatCurrency(baseAmount)}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                {formatCurrency(worker?.hourlyRate || 0)}/hr × {formData.durationHours} hrs
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm pt-2 border-t border-green-200 dark:border-green-800">
+              <span className="text-muted-foreground">Trust & Support Fee (15%)</span>
+              <span className="font-medium">{formatCurrency(fees.trustAndSupportFee)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Processing Fee</span>
+              <span className="font-medium">{formatCurrency(fees.stripeFee)}</span>
+            </div>
+            <div className="flex justify-between items-center font-bold text-lg md:text-xl pt-3 border-t-2 border-green-300 dark:border-green-700">
+              <span>Total Amount</span>
+              <span className="text-green-600 dark:text-green-400">{formatCurrency(fees.totalAmount)}</span>
+            </div>
           </div>
         </div>
 
         {/* Payment Form */}
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <PaymentForm clientSecret={clientSecret} fees={fees} />
-        </Elements>
+        {currentClientSecret && (
+          <Elements 
+            key={currentClientSecret} 
+            stripe={stripePromise} 
+            options={{ 
+              clientSecret: currentClientSecret,
+              appearance: {
+                theme: 'stripe',
+                variables: {
+                  colorPrimary: '#10b981',
+                  colorBackground: 'transparent',
+                  colorText: 'hsl(var(--foreground))',
+                  colorDanger: '#ef4444',
+                  fontFamily: 'system-ui, sans-serif',
+                  spacingUnit: '4px',
+                  borderRadius: '8px',
+                },
+              },
+            }}
+          >
+            <PaymentForm 
+              clientSecret={currentClientSecret} 
+              fees={fees}
+              onRecreatePaymentIntent={handleRecreatePaymentIntent}
+              isRecreating={isRecreating}
+            />
+          </Elements>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-function PaymentForm({ clientSecret, fees }: { clientSecret: string; fees: any }) {
+function PaymentForm({ 
+  clientSecret, 
+  fees,
+  onRecreatePaymentIntent,
+  isRecreating 
+}: { 
+  clientSecret: string
+  fees: any
+  onRecreatePaymentIntent?: () => void
+  isRecreating?: boolean
+}) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isReady, setIsReady] = useState(false)
+
+  // Handle PaymentElement ready state
+  useEffect(() => {
+    if (!elements) return
+
+    const paymentElement = elements.getElement('payment')
+    if (paymentElement) {
+      paymentElement.on('ready', () => {
+        setIsReady(true)
+        setError(null)
+      })
+      paymentElement.on('change', (event: any) => {
+        if (event.error) {
+          setError(event.error.message)
+        } else {
+          setError(null)
+        }
+      })
+      
+      // Fallback: if ready event doesn't fire within 3 seconds, assume it's ready
+      const timeout = setTimeout(() => {
+        setIsReady(true)
+      }, 3000)
+      
+      return () => clearTimeout(timeout)
+    } else {
+      // If element not found, try again after a short delay
+      const retryTimeout = setTimeout(() => {
+        const retryElement = elements.getElement('payment')
+        if (retryElement) {
+          retryElement.on('ready', () => {
+            setIsReady(true)
+            setError(null)
+          })
+          setIsReady(true) // Assume ready if element exists
+        }
+      }, 1000)
+      
+      return () => clearTimeout(retryTimeout)
+    }
+  }, [elements])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!stripe || !elements) return
+    
+    if (!stripe || !elements) {
+      setError('Payment system not ready. Please refresh the page.')
+      return
+    }
+
+    if (isProcessing) {
+      return // Prevent double submission
+    }
 
     setIsProcessing(true)
+    setError(null)
+
+    // Extract payment intent ID from client secret for logging
+    const paymentIntentId = clientSecret?.split('_secret_')[0] || 'unknown'
+
     try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
+      console.log('[PAYMENT] Starting payment submission:', {
+        paymentIntentId,
+        expectedAmount: fees.totalAmount,
+        expectedAmountCents: Math.round(fees.totalAmount * 100),
+        timestamp: new Date().toISOString(),
+      })
+
+      // Submit the form first to validate
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        console.error('[PAYMENT] Form validation error:', submitError)
+        setError(submitError.message || 'Please check your payment details')
+        setIsProcessing(false)
+        return
+      }
+
+      console.log('[PAYMENT] Form validated, confirming payment...')
+
+      // Confirm payment
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/dashboard/orders?success=true`,
@@ -534,23 +1001,176 @@ function PaymentForm({ clientSecret, fees }: { clientSecret: string; fees: any }
         redirect: 'if_required',
       })
 
-      if (error) {
-        toast.error(error.message || 'Payment failed')
-      } else if (paymentIntent?.status === 'succeeded') {
-        toast.success('Payment successful! Task created.')
-        router.push('/dashboard/orders?success=true')
+      if (confirmError) {
+        console.error('[PAYMENT] Payment confirmation error:', {
+          code: confirmError.code,
+          type: confirmError.type,
+          message: confirmError.message,
+          paymentIntentId,
+          timestamp: new Date().toISOString(),
+        })
+
+        // Check for specific error codes that indicate payment intent issues
+        const errorCode = confirmError.code || ''
+        const errorType = confirmError.type || ''
+        
+        // If payment intent is invalid or already used, suggest recreating
+        if (
+          errorCode === 'payment_intent_unexpected_state' ||
+          errorCode === 'resource_missing' ||
+          errorType === 'invalid_request_error' ||
+          confirmError.message?.includes('No such payment_intent') ||
+          confirmError.message?.includes('already been confirmed')
+        ) {
+          setError('Payment session expired. Please refresh the payment form and try again.')
+          toast.error('Payment session expired. Please refresh and try again.')
+          if (onRecreatePaymentIntent) {
+            // Auto-recreate after a short delay
+            setTimeout(() => {
+              onRecreatePaymentIntent()
+            }, 2000)
+          }
+        } else {
+          setError(confirmError.message || 'Payment failed. Please try another payment method.')
+          toast.error(confirmError.message || 'Payment failed')
+        }
+      } else if (paymentIntent) {
+        // Log payment result
+        console.log('[PAYMENT] Payment confirmed:', {
+          paymentIntentId: paymentIntent.id,
+          status: paymentIntent.status,
+          amount: paymentIntent.amount,
+          expectedAmount: Math.round(fees.totalAmount * 100),
+          amountMatch: paymentIntent.amount === Math.round(fees.totalAmount * 100),
+          currency: paymentIntent.currency,
+          captureMethod: paymentIntent.capture_method,
+          timestamp: new Date().toISOString(),
+        })
+
+        // Verify amount matches
+        const expectedAmountCents = Math.round(fees.totalAmount * 100)
+        if (paymentIntent.amount !== expectedAmountCents) {
+          console.error('[PAYMENT] CRITICAL: AMOUNT MISMATCH!', {
+            expected: expectedAmountCents,
+            actual: paymentIntent.amount,
+            difference: paymentIntent.amount - expectedAmountCents,
+            paymentIntentId: paymentIntent.id,
+            displayedTotal: fees.totalAmount,
+            actualTotal: paymentIntent.amount / 100,
+          })
+          // Still proceed, but log the discrepancy
+        }
+
+        if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
+          // Payment succeeded or authorized (manual capture)
+          console.log('[PAYMENT] Payment successful, redirecting...')
+          toast.success('Payment authorized! Task will be created shortly.')
+          router.push('/dashboard/orders?success=true')
+        } else if (paymentIntent.status === 'requires_action') {
+          // Payment requires additional authentication
+          console.log('[PAYMENT] Payment requires action')
+          setError('Please complete the authentication step')
+        } else {
+          console.warn('[PAYMENT] Unexpected payment status:', paymentIntent.status)
+          setError(`Payment status: ${paymentIntent.status}. Please wait...`)
+        }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Payment failed')
+      const errorMessage = error.message || 'A processing error occurred. Please try again.'
+      console.error('[PAYMENT] Payment submission exception:', {
+        error: errorMessage,
+        stack: error.stack,
+        paymentIntentId,
+        timestamp: new Date().toISOString(),
+      })
+      setError(errorMessage)
+      toast.error(errorMessage)
+      
+      // If it's a network or API error, suggest recreating payment intent
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
+        if (onRecreatePaymentIntent) {
+          setTimeout(() => {
+            onRecreatePaymentIntent()
+          }, 2000)
+        }
+      }
     } finally {
       setIsProcessing(false)
     }
   }
 
+  // Detect mobile device
+  const [isMobile, setIsMobile] = useState(false)
+  const [stripeLoaded, setStripeLoaded] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Check if Stripe is loaded
+  useEffect(() => {
+    if (typeof window !== 'undefined' && stripe) {
+      setStripeLoaded(true)
+    }
+  }, [stripe])
+
+  if (!stripeLoaded) {
+    return (
+      <div className="border rounded-lg p-4 min-h-[300px] flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading payment system...</div>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      <Button type="submit" disabled={!stripe || isProcessing} className="w-full" size="lg">
+      <div className="border rounded-lg p-3 md:p-4 min-h-[300px] w-full">
+        <div style={{ minHeight: '300px', width: '100%' }}>
+          <PaymentElement 
+            options={{
+              layout: isMobile ? 'accordion' : 'tabs',
+              defaultValues: {
+                billingDetails: {
+                  address: {
+                    country: 'US',
+                  },
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
+      
+      {error && (
+        <div className="space-y-2">
+          <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            {error}
+          </div>
+          {onRecreatePaymentIntent && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRecreatePaymentIntent}
+              disabled={isRecreating}
+              className="w-full"
+            >
+              {isRecreating ? 'Refreshing...' : 'Refresh Payment Form'}
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Button 
+        type="submit" 
+        disabled={!stripe || !isReady || isProcessing || isRecreating} 
+        className="w-full" 
+        size="lg"
+      >
         {isProcessing ? 'Processing...' : `Pay ${formatCurrency(fees.totalAmount)}`}
       </Button>
     </form>

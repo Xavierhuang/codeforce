@@ -49,3 +49,5 @@ After running `prisma db push`, verify the changes:
 2. Check the terminal - no more Prisma validation errors
 3. The API endpoint `/api/v1/search/developers` should return 200 OK
 
+
+

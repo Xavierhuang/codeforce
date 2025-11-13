@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
 import { getPlatformSettings } from '@/lib/settings'
+import { logPaymentEvent } from '@/lib/payment-logger'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       taskDetails,
       category,
       relevantSkills,
+      weeklyHourLimit,
       address,
       unit,
       city,
@@ -121,10 +123,35 @@ export async function POST(req: NextRequest) {
     // Calculate fees with database settings
     const feeConfig = await getFeeConfigFromSettings()
     const fees = calculateFees(baseAmount, feeConfig)
+    const amountInCents = calculateAmountInCents(fees.totalAmount)
+
+    // Extensive payment logging
+    console.log('[PAYMENT] Creating PaymentIntent:', {
+      buyerId: user.id,
+      workerId: worker.id,
+      baseAmount,
+      feeConfig: {
+        platformFeeRate: feeConfig.platformFeeRate,
+        trustAndSupportFeeRate: feeConfig.trustAndSupportFeeRate,
+        stripeFeeRate: feeConfig.stripeFeeRate,
+        stripeFeeFixed: feeConfig.stripeFeeFixed,
+      },
+      fees: {
+        baseAmount: fees.baseAmount,
+        platformFee: fees.platformFee,
+        trustAndSupportFee: fees.trustAndSupportFee,
+        stripeFee: fees.stripeFee,
+        totalAmount: fees.totalAmount,
+        workerPayout: fees.workerPayout,
+      },
+      amountInCents,
+      amountInDollars: amountInCents / 100,
+      timestamp: new Date().toISOString(),
+    })
 
     // Create PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: calculateAmountInCents(fees.totalAmount),
+      amount: amountInCents,
       currency: 'usd',
       payment_method_types: ['card'],
       metadata: {
@@ -136,7 +163,9 @@ export async function POST(req: NextRequest) {
         relevantSkills: relevantSkills?.join(',') || '',
         scheduledAt,
         durationHours: durationHours.toString(),
+        weeklyHourLimit: weeklyHourLimit?.toString() || '',
         baseAmount: baseAmount.toString(),
+        totalAmount: fees.totalAmount.toString(), // Store total amount in metadata for verification
         taskDetails: taskDetails,
         address: address || '',
         unit: unit || '',
@@ -146,9 +175,55 @@ export async function POST(req: NextRequest) {
       capture_method: 'manual', // Hold funds until completion
     })
 
-    // Store booking details temporarily (will be used by webhook)
-    // We could use Redis or database, but for now we'll pass everything in metadata
-    // The webhook will create the task when payment succeeds
+    console.log('[PAYMENT] PaymentIntent created:', {
+      paymentIntentId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      amountReceived: paymentIntent.amount_received,
+      status: paymentIntent.status,
+      expectedAmount: amountInCents,
+      amountMatch: paymentIntent.amount === amountInCents,
+      currency: paymentIntent.currency,
+      captureMethod: paymentIntent.capture_method,
+      clientSecret: paymentIntent.client_secret ? '***' : null,
+    })
+
+    // Verify amount matches
+    if (paymentIntent.amount !== amountInCents) {
+      await logPaymentEvent({
+        paymentIntentId: paymentIntent.id,
+        eventType: 'amount_mismatch',
+        level: 'CRITICAL',
+        message: `PaymentIntent amount mismatch - expected ${amountInCents}, got ${paymentIntent.amount}`,
+        source: 'server',
+        details: {
+          expected: amountInCents,
+          actual: paymentIntent.amount,
+          difference: paymentIntent.amount - amountInCents,
+          baseAmount,
+          fees,
+        },
+      })
+      console.error('[PAYMENT] CRITICAL: PaymentIntent amount mismatch!', {
+        expected: amountInCents,
+        actual: paymentIntent.amount,
+        difference: paymentIntent.amount - amountInCents,
+        paymentIntentId: paymentIntent.id,
+      })
+    } else {
+      await logPaymentEvent({
+        paymentIntentId: paymentIntent.id,
+        eventType: 'payment_intent_created',
+        level: 'INFO',
+        message: `PaymentIntent created successfully - amount verified`,
+        source: 'server',
+        details: {
+          amount: paymentIntent.amount,
+          baseAmount,
+          fees,
+          captureMethod: 'manual',
+        },
+      })
+    }
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,

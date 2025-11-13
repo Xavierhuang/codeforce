@@ -76,6 +76,9 @@ model User {
   supportMessages    SupportMessage[]
   assignedTickets    SupportTicket[] @relation("assignedTickets") // Tickets assigned to this admin
   blogPosts          BlogPost[]       @relation("BlogPosts") // Blog posts authored by this user
+  buyerTransactions  Transaction[]    @relation("buyerTransactions")
+  workerTransactions Transaction[]    @relation("workerTransactions")
+  timeReports        TimeReport[] // Time reports submitted by worker
 }
 
 model UserSkill {
@@ -119,10 +122,16 @@ model Task {
   disputeId          String?
   paymentIntentId    String?    // Stripe PaymentIntent ID
   stripeChargeId     String?    // Stripe Charge ID
+  transactions       Transaction[] // Transactions for this task
   // Time tracking
   clockInTime        DateTime?  // When worker clocked in
   clockOutTime       DateTime?  // When worker clocked out
   totalTimeMinutes   Int?       // Total tracked time in minutes
+  // Weekly reporting (for hourly work)
+  weeklyHourLimit    Int?       // Optional weekly hour limit (in hours)
+  estimatedTotalHours Int?      // Estimated total hours for project (minimum 8 for hourly)
+  timeReports        TimeReport[] // Weekly time reports
+  weeklyPayments     WeeklyPayment[] // Weekly payment records
 }
 
 model Offer {
@@ -166,6 +175,8 @@ model Attachment {
   task      Task?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   messageId String?
   message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  timeReportId String? // Link to time report if attached to weekly report
+  timeReport TimeReport? @relation(fields: [timeReportId], references: [id], onDelete: Cascade)
 }
 
 model Review {
@@ -177,7 +188,67 @@ model Review {
   rating       Int
   comment      String?
   taskId       String?
+  isMidProjectReview Boolean @default(false) // True if review during IN_PROGRESS task
+  weeksWorked  Int?    // Number of weeks worked when review was submitted
+  totalHoursWorked Float? // Total hours worked when review was submitted
   createdAt    DateTime @default(now())
+}
+
+model TimeReport {
+  id                String   @id @default(cuid())
+  taskId            String
+  task              Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workerId          String
+  worker            User     @relation(fields: [workerId], references: [id])
+  weekStartDate     DateTime // Monday of the week (UTC)
+  weekEndDate       DateTime // Sunday 23:59 UTC of the week
+  hoursWorked       Float    // Hours worked (can include minutes as decimals, e.g., 2.5 = 2h 30m)
+  briefDescription  String   // Brief description of work completed
+  detailedDescription String? // Detailed description
+  attachments       Attachment[] // Files attached to time report
+  status            TimeReportStatus @default(PENDING) // PENDING, APPROVED, DISPUTED, REJECTED
+  submittedAt       DateTime @default(now())
+  approvedAt        DateTime?
+  approvedBy        String?  // Buyer ID who approved
+  paymentProcessed  Boolean  @default(false)
+  paymentProcessedAt DateTime?
+  weeklyPayment     WeeklyPayment? // Link to weekly payment record
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([taskId, weekStartDate]) // One report per task per week
+  @@index([taskId])
+  @@index([workerId])
+  @@index([weekStartDate])
+  @@index([status])
+}
+
+model WeeklyPayment {
+  id                String   @id @default(cuid())
+  taskId            String
+  task              Task     @relation(fields: [taskId], references: [id])
+  timeReportId      String   @unique
+  timeReport        TimeReport @relation(fields: [timeReportId], references: [id])
+  weekStartDate     DateTime
+  weekEndDate       DateTime
+  hoursWorked       Float
+  hourlyRate        Float
+  baseAmount        Float    // hoursWorked * hourlyRate
+  platformFee       Float
+  stripeFee         Float
+  totalAmount        Float    // Amount charged to buyer
+  workerPayout      Float    // Amount paid to worker
+  paymentIntentId   String?  // Stripe PaymentIntent ID
+  transactionId     String?  // Link to Transaction record
+  transaction       Transaction? @relation(fields: [transactionId], references: [id])
+  status            WeeklyPaymentStatus @default(PENDING)
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([weekStartDate])
+  @@index([status])
 }
 
 model Payout {
@@ -229,6 +300,58 @@ model WebhookEvent {
   @@index([type])
 }
 
+model Transaction {
+  id                String   @id @default(cuid())
+  paymentIntentId   String   @unique
+  stripeChargeId    String?
+  buyerId           String
+  buyer             User     @relation("buyerTransactions", fields: [buyerId], references: [id])
+  workerId          String?
+  worker            User?    @relation("workerTransactions", fields: [workerId], references: [id])
+  taskId            String?
+  task              Task?    @relation(fields: [taskId], references: [id])
+  amount            Float    // Total amount paid by buyer
+  baseAmount        Float    // Base task amount (before fees)
+  platformFee       Float    // Platform fee (15%)
+  stripeFee         Float    // Stripe processing fee
+  workerPayout      Float?   // Amount worker receives (set when task completed)
+  status            TransactionStatus @default(PENDING) // PENDING, AUTHORIZED, CAPTURED, FAILED, REFUNDED
+  captureMethod     String   // 'automatic' or 'manual'
+  metadata          Json?    // Additional metadata
+  receiptSent       Boolean  @default(false)
+  receiptSentAt     DateTime?
+  paymentLogs       PaymentLog[] // Payment event logs
+  weeklyPayments    WeeklyPayment[] // Weekly payments linked to this transaction
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([buyerId])
+  @@index([workerId])
+  @@index([taskId])
+  @@index([paymentIntentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentLog {
+  id                String   @id @default(cuid())
+  transactionId     String?
+  transaction       Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  paymentIntentId   String   // Stripe PaymentIntent ID
+  eventType         String   // 'payment_intent_created', 'payment_authorized', 'payment_captured', 'payment_failed', 'webhook_received', etc.
+  level             PaymentLogLevel @default(INFO) // INFO, WARNING, ERROR, CRITICAL
+  message           String
+  details           Json?    // Additional details (amounts, status, errors, etc.)
+  source            String   // 'client', 'server', 'webhook', 'task_completion'
+  createdAt         DateTime @default(now())
+
+  @@index([paymentIntentId])
+  @@index([transactionId])
+  @@index([eventType])
+  @@index([level])
+  @@index([createdAt])
+}
+
 enum Role {
   CLIENT
   WORKER
@@ -256,6 +379,21 @@ enum ServiceType {
   VIRTUAL
   IN_PERSON
   BOTH      // Worker offers both remote and on-site services
+}
+
+enum TransactionStatus {
+  PENDING     // Payment intent created but not yet authorized
+  AUTHORIZED  // Payment authorized (for manual capture)
+  CAPTURED    // Payment captured/succeeded
+  FAILED      // Payment failed
+  REFUNDED    // Payment refunded
+}
+
+enum PaymentLogLevel {
+  INFO       // Normal operation
+  WARNING    // Potential issue
+  ERROR      // Error occurred
+  CRITICAL   // Critical issue requiring attention
 }
 
 enum VerificationStatus {
@@ -310,6 +448,20 @@ enum PayoutRequestStatus {
   APPROVED
   REJECTED
   PROCESSED
+}
+
+enum TimeReportStatus {
+  PENDING    // Submitted, awaiting buyer approval
+  APPROVED   // Buyer approved, ready for payment
+  DISPUTED   // Buyer disputed the hours
+  REJECTED   // Buyer rejected the hours
+}
+
+enum WeeklyPaymentStatus {
+  PENDING      // Time report approved, payment pending
+  PROCESSING   // Payment being processed
+  COMPLETED    // Payment completed
+  FAILED       // Payment failed
 }
 
 model Notification {

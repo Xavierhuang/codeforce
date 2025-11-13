@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { User, ChevronDown, ChevronUp, Building2, Mail, Phone, MapPin, Briefcase, DollarSign, Calendar, MessageSquare } from 'lucide-react'
+import { User, ChevronDown, ChevronUp, Building2, MapPin, Briefcase, DollarSign, Calendar, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -73,12 +73,7 @@ export function BuyerInfoCard({ buyer, task, onContact }: BuyerInfoCardProps) {
           )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-base md:text-lg break-words">{buyer.name || 'Buyer'}</p>
-            {buyer.email && (
-              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground mt-1">
-                <Mail className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{buyer.email}</span>
-              </div>
-            )}
+            {/* Email hidden for privacy - workers should contact through platform messages */}
             {buyer.rating && buyer.ratingCount && (
               <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground mt-1">
                 <span>⭐ {buyer.rating.toFixed(1)}</span>
@@ -148,15 +143,7 @@ export function BuyerInfoCard({ buyer, task, onContact }: BuyerInfoCardProps) {
                 </div>
               </div>
             )}
-            {buyer.phone && (
-              <div className="flex items-start gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="text-xs text-muted-foreground">Phone</div>
-                  <div className="text-sm font-medium">{buyer.phone}</div>
-                </div>
-              </div>
-            )}
+            {/* Phone hidden for privacy - workers should contact through platform messages */}
             {task?.price && (
               <div className="flex items-start gap-2">
                 <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />

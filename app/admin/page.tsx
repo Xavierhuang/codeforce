@@ -68,6 +68,12 @@ export default function AdminDashboardPage() {
     fetcher
   )
 
+  // Fetch disputes
+  const { data: disputesData } = useSWR(
+    status === 'authenticated' ? '/api/v1/disputes/time-reports' : null,
+    fetcher
+  )
+
   useEffect(() => {
     if (mounted && status === 'unauthenticated') {
       router.push('/auth/signin')
@@ -102,6 +108,7 @@ export default function AdminDashboardPage() {
   const reports = supportTickets?.filter((t: any) => 
     (t.category === 'REPORT_USER' || t.category === 'REPORT_TASK') && t.status === 'OPEN'
   ).length || 0
+  const pendingDisputes = disputesData?.disputes?.filter((d: any) => d.status === 'DISPUTED').length || 0
 
   const quickLinks = [
     {
@@ -139,6 +146,15 @@ export default function AdminDashboardPage() {
       badge: reports,
       badgeColor: 'bg-orange-500',
       color: 'text-orange-600',
+    },
+    {
+      title: 'Time Report Disputes',
+      description: `${pendingDisputes} dispute${pendingDisputes !== 1 ? 's' : ''} awaiting resolution`,
+      href: '/admin/disputes',
+      icon: AlertTriangle,
+      badge: pendingDisputes,
+      badgeColor: 'bg-red-500',
+      color: 'text-red-600',
     },
   ]
 
@@ -178,6 +194,12 @@ export default function AdminDashboardPage() {
       description: 'Manage blog content',
       href: '/admin/blog',
       icon: FileText,
+    },
+    {
+      title: 'Manage Disputes',
+      description: 'Resolve time report disputes',
+      href: '/admin/disputes',
+      icon: AlertTriangle,
     },
   ]
 

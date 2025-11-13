@@ -113,7 +113,7 @@ export function MobileNav() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild onClick={() => setOpen(true)}>
-        <Button variant="ghost" size="icon" className="md:hidden touch-manipulation">
+        <Button variant="ghost" size="icon" className="hidden sm:flex lg:hidden touch-manipulation">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>

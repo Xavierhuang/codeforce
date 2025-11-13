@@ -24,6 +24,10 @@ export type NotificationType =
   | 'review_reminder'
   | 'payment_received'
   | 'payout_processed'
+  | 'time_report_submitted'
+  | 'time_report_approved'
+  | 'time_report_rejected'
+  | 'time_report_disputed'
 
 /**
  * Get notification title based on type
@@ -47,6 +51,10 @@ function getNotificationTitle(type: NotificationType): string {
     review_reminder: 'Review Reminder',
     payment_received: 'Payment Received',
     payout_processed: 'Payout Processed',
+    time_report_submitted: 'Time Report Submitted',
+    time_report_approved: 'Time Report Approved',
+    time_report_rejected: 'Time Report Rejected',
+    time_report_disputed: 'Time Report Disputed',
   }
   return titles[type] || 'Notification'
 }

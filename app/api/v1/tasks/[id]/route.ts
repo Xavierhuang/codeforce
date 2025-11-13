@@ -41,9 +41,9 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true,
+            // Don't include email/phone - workers shouldn't see buyer contact info
+            // Email/phone can be accessed through task messages if needed
             avatarUrl: true,
-            phone: true,
             rating: true,
             ratingCount: true,
             company: true,

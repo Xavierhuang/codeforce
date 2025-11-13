@@ -29,17 +29,83 @@ export async function POST(req: NextRequest) {
     // Verify the task exists and user was involved
     const task = await prisma.task.findUnique({
       where: { id: taskId },
+      include: {
+        timeReports: {
+          where: {
+            status: 'APPROVED',
+          },
+          select: {
+            weekStartDate: true,
+            hoursWorked: true,
+          },
+        },
+      },
     })
 
     if (!task) {
       throw Errors.notFound('Task')
     }
 
-    // CRITICAL: Only allow reviews for completed tasks
-    if (task.status !== 'COMPLETED') {
+    // Check if this is a mid-project review (IN_PROGRESS task)
+    const isMidProjectReview = task.status === 'IN_PROGRESS'
+    
+    if (isMidProjectReview) {
+      // Calculate eligibility for mid-project review
+      // Requirements: 4 weeks + 10 hours minimum
+      const approvedReports = task.timeReports || []
+      
+      if (approvedReports.length === 0) {
+        return NextResponse.json(
+          { 
+            error: 'Mid-project reviews require at least 4 weeks and 10 hours of approved work',
+            weeksWorked: 0,
+            totalHoursWorked: 0,
+          },
+          { status: 400 }
+        )
+      }
+
+      // Calculate unique weeks worked
+      const uniqueWeeks = new Set(
+        approvedReports.map(r => r.weekStartDate.toISOString().split('T')[0])
+      ).size
+
+      // Calculate total hours worked
+      const totalHours = approvedReports.reduce((sum, r) => sum + r.hoursWorked, 0)
+
+      // Check eligibility: minimum 4 weeks AND 10 hours
+      if (uniqueWeeks < 4 || totalHours < 10) {
+        return NextResponse.json(
+          { 
+            error: 'Mid-project reviews require at least 4 weeks and 10 hours of approved work',
+            weeksWorked: uniqueWeeks,
+            totalHoursWorked: totalHours,
+            requiredWeeks: 4,
+            requiredHours: 10,
+          },
+          { status: 400 }
+        )
+      }
+
+      // Check if mid-project review already exists for this task
+      const existingMidProjectReview = await prisma.review.findFirst({
+        where: {
+          taskId,
+          isMidProjectReview: true,
+        },
+      })
+
+      if (existingMidProjectReview) {
+        return NextResponse.json(
+          { error: 'A mid-project review has already been submitted for this task' },
+          { status: 400 }
+        )
+      }
+    } else if (task.status !== 'COMPLETED') {
+      // For non-IN_PROGRESS tasks, only allow reviews for completed tasks
       return NextResponse.json(
         { 
-          error: 'Reviews can only be submitted for completed tasks',
+          error: 'Reviews can only be submitted for completed tasks or in-progress tasks with sufficient work',
           taskStatus: task.status,
         },
         { status: 400 }
@@ -67,20 +133,36 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check if review already exists
-    const existingReview = await prisma.review.findFirst({
-      where: {
-        reviewerId: user.id,
-        targetUserId,
-        taskId,
-      },
-    })
+    // Check if review already exists (for non-mid-project reviews)
+    if (!isMidProjectReview) {
+      const existingReview = await prisma.review.findFirst({
+        where: {
+          reviewerId: user.id,
+          targetUserId,
+          taskId,
+        },
+      })
 
-    if (existingReview) {
-      return NextResponse.json(
-        { error: 'You have already reviewed this user for this task' },
-        { status: 400 }
-      )
+      if (existingReview) {
+        return NextResponse.json(
+          { error: 'You have already reviewed this user for this task' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Calculate weeks and hours for mid-project reviews
+    let weeksWorked: number | null = null
+    let totalHoursWorked: number | null = null
+    
+    if (isMidProjectReview) {
+      const approvedReports = task.timeReports || []
+      const uniqueWeeks = new Set(
+        approvedReports.map(r => r.weekStartDate.toISOString().split('T')[0])
+      ).size
+      const totalHours = approvedReports.reduce((sum, r) => sum + r.hoursWorked, 0)
+      weeksWorked = uniqueWeeks
+      totalHoursWorked = totalHours
     }
 
     // Create review and update rating atomically in a transaction
@@ -93,6 +175,9 @@ export async function POST(req: NextRequest) {
           taskId,
           rating,
           comment: comment ? sanitizeText(comment) : null,
+          isMidProjectReview,
+          weeksWorked,
+          totalHoursWorked,
         },
         include: {
           reviewer: {

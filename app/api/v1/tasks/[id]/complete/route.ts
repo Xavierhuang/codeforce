@@ -51,49 +51,106 @@ export async function POST(
       },
     })
 
-    // Process payment release if PaymentIntent exists
+    // Process wallet update when task is completed
+    // Note: Payment is already captured automatically when payment succeeded (in webhook)
+    // We just need to update the worker's wallet here
     if (task.paymentIntentId) {
       try {
-        // Capture the payment (releases from hold)
+        const { logPaymentEvent } = await import('@/lib/payment-logger')
+        
+        // Check payment status (should already be captured)
         const paymentIntent = await stripe.paymentIntents.retrieve(
           task.paymentIntentId
         )
 
-        if (paymentIntent.status === 'requires_capture') {
-          await stripe.paymentIntents.capture(task.paymentIntentId)
+        await logPaymentEvent({
+          paymentIntentId: task.paymentIntentId!,
+          eventType: 'task_completed',
+          level: 'INFO',
+          message: `Task completed - processing wallet update`,
+          source: 'task_completion',
+          details: {
+            taskId: task.id,
+            workerId: worker.id,
+            paymentStatus: paymentIntent.status,
+          },
+        })
 
-          // Calculate payout amounts using centralized function with database settings
-          // Worker gets: baseAmount - platformFee (platform covers Stripe fees)
-          // Trust & Support fee is NOT deducted from worker (it's a buyer fee)
-          const baseAmount = task.price || 0
-          const feeConfig = await getFeeConfigFromSettings()
-          const fees = calculateFees(baseAmount, feeConfig)
+        // Calculate payout amounts using centralized function with database settings
+        // Worker gets: baseAmount - platformFee (platform covers Stripe fees)
+        // Trust & Support fee is NOT deducted from worker (it's a buyer fee)
+        const baseAmount = task.price || 0
+        const feeConfig = await getFeeConfigFromSettings()
+        const fees = calculateFees(baseAmount, feeConfig)
 
-          // Add earnings to worker's wallet instead of automatic transfer
-          await prisma.$transaction([
-            // Update worker's wallet balance
-            prisma.user.update({
-              where: { id: worker.id },
-              data: {
-                walletBalance: {
-                  increment: fees.workerPayout,
-                },
+        // Add earnings to worker's wallet and update transaction status
+        await prisma.$transaction(async (tx) => {
+          // Update worker's wallet balance
+          await tx.user.update({
+            where: { id: worker.id },
+            data: {
+              walletBalance: {
+                increment: fees.workerPayout,
               },
-            }),
-            // Record payout for tracking
-            prisma.payout.create({
+            },
+          })
+
+          // Record payout for tracking
+          await tx.payout.create({
+            data: {
+              workerId: worker.id,
+              amount: fees.workerPayout,
+              fee: fees.platformFee,
+              taskId: task.id,
+            },
+          })
+
+          // Update transaction to set worker payout (payment already captured)
+          const transaction = await tx.transaction.findUnique({
+            where: { paymentIntentId: task.paymentIntentId! },
+          })
+
+          if (transaction) {
+            await tx.transaction.update({
+              where: { paymentIntentId: task.paymentIntentId! },
               data: {
+                workerPayout: fees.workerPayout,
+                stripeChargeId: paymentIntent.latest_charge as string | undefined,
+                updatedAt: new Date(),
+              },
+            })
+
+            await logPaymentEvent({
+              paymentIntentId: task.paymentIntentId!,
+              eventType: 'wallet_updated',
+              level: 'INFO',
+              message: `Worker wallet updated with payout: ${fees.workerPayout}`,
+              source: 'task_completion',
+              transactionId: transaction.id,
+              details: {
                 workerId: worker.id,
-                amount: fees.workerPayout,
-                fee: fees.platformFee,
-                taskId: task.id,
+                workerPayout: fees.workerPayout,
+                platformFee: fees.platformFee,
+                baseAmount,
               },
-            }),
-          ])
-        }
-      } catch (stripeError: any) {
-        console.error('Stripe capture error:', stripeError)
-        // Task is marked complete, but payment needs manual review
+            })
+          }
+        })
+      } catch (error: any) {
+        const { logPaymentEvent } = await import('@/lib/payment-logger')
+        await logPaymentEvent({
+          paymentIntentId: task.paymentIntentId!,
+          eventType: 'wallet_update_failed',
+          level: 'ERROR',
+          message: `Failed to update wallet: ${error.message}`,
+          source: 'task_completion',
+          details: {
+            taskId: task.id,
+            error: error.message,
+          },
+        })
+        console.error('Error updating wallet:', error)
+        // Task is marked complete, but wallet update failed - needs manual review
       }
     }
 

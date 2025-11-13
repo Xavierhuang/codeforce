@@ -14,8 +14,21 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await requireAuth()
-    const body = await req.json()
-    const { socket_id, channel_name } = body
+
+    const contentType = req.headers.get('content-type') || ''
+    let socket_id: string | null = null
+    let channel_name: string | null = null
+
+    if (contentType.includes('application/json')) {
+      const body = await req.json()
+      socket_id = body?.socket_id ?? null
+      channel_name = body?.channel_name ?? null
+    } else {
+      const rawBody = await req.text()
+      const params = new URLSearchParams(rawBody)
+      socket_id = params.get('socket_id')
+      channel_name = params.get('channel_name')
+    }
 
     if (!socket_id || !channel_name) {
       return NextResponse.json(

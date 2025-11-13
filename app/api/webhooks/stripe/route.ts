@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-import { createNotification, checkAndSendOfflineNotification } from '@/lib/notifications'
-import { triggerMessageEvent } from '@/lib/pusher'
+import { handleOfferPurchase, handleDirectBooking } from '@/lib/payment-handlers'
+import { logPaymentEvent } from '@/lib/payment-logger'
+import { calculateFees, getFeeConfigFromSettings } from '@/lib/stripe-fees'
+import { checkAndApplyPaymentProtection } from '@/lib/payment-protection'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -43,23 +45,131 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Log all webhook events for debugging
+    console.log(`[WEBHOOK] Received event: ${event.type}, ID: ${event.id}`)
+
     // Handle payment_intent.succeeded - Auto-create task for offer purchases
+    // IMPORTANT: For manual capture, this fires when payment is AUTHORIZED (status: requires_capture)
+    // NOT when it's captured. We need to handle both cases.
     if (event.type === 'payment_intent.succeeded') {
+      let paymentIntent = event.data.object as Stripe.PaymentIntent
+      const metadata = paymentIntent.metadata
+
+      console.log(`[WEBHOOK] payment_intent.succeeded - Status: ${paymentIntent.status}, PaymentIntent: ${paymentIntent.id}`)
+      console.log(`[WEBHOOK] Metadata:`, JSON.stringify(metadata, null, 2))
+
+      // Log payment authorization
+      const { logPaymentEvent } = await import('@/lib/payment-logger')
+      await logPaymentEvent({
+        paymentIntentId: paymentIntent.id,
+        eventType: 'payment_authorized',
+        level: 'INFO',
+        message: `Payment authorized - status: ${paymentIntent.status}`,
+        source: 'webhook',
+        details: {
+          status: paymentIntent.status,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          captureMethod: paymentIntent.capture_method,
+        },
+      })
+
+      // For manual capture, status will be 'requires_capture' when authorized
+      // For automatic capture, status will be 'succeeded'
+      const isAuthorized = paymentIntent.status === 'requires_capture' || paymentIntent.status === 'succeeded'
+
+      if (isAuthorized) {
+        // AUTOMATIC CAPTURE: If payment is authorized but not captured, capture it immediately
+        if (paymentIntent.status === 'requires_capture') {
+          try {
+            await logPaymentEvent({
+              paymentIntentId: paymentIntent.id,
+              eventType: 'capture_attempted',
+              level: 'INFO',
+              message: `Automatic capture initiated immediately after payment authorization`,
+              source: 'webhook',
+              details: {
+                status: paymentIntent.status,
+                amount: paymentIntent.amount,
+              },
+            })
+
+            // Capture the payment immediately
+            const capturedPayment = await stripe.paymentIntents.capture(paymentIntent.id)
+            
+            await logPaymentEvent({
+              paymentIntentId: paymentIntent.id,
+              eventType: 'payment_captured',
+              level: 'INFO',
+              message: `Payment automatically captured successfully`,
+              source: 'webhook',
+              details: {
+                amount: capturedPayment.amount,
+                amountReceived: capturedPayment.amount_received,
+                status: capturedPayment.status,
+                chargeId: capturedPayment.latest_charge,
+              },
+            })
+
+            // Update paymentIntent reference to use captured version
+            paymentIntent = capturedPayment
+          } catch (captureError: any) {
+            await logPaymentEvent({
+              paymentIntentId: paymentIntent.id,
+              eventType: 'capture_failed',
+              level: 'ERROR',
+              message: `Automatic capture failed: ${captureError.message}`,
+              source: 'webhook',
+              details: {
+                error: captureError.message,
+                errorCode: captureError.code,
+                errorType: captureError.type,
+              },
+            })
+            console.error(`[WEBHOOK] Failed to capture payment ${paymentIntent.id}:`, captureError)
+            // Continue processing even if capture fails - payment is still authorized
+          }
+        }
+
+        // Check if this is an offer purchase
+        if (metadata.type === 'offer_purchase' && metadata.offerId) {
+          console.log(`[WEBHOOK] Processing offer purchase: ${metadata.offerId}`)
+          await handleOfferPurchase(paymentIntent, metadata)
+        }
+        // Handle direct booking
+        else if (metadata.type === 'direct_booking') {
+          console.log(`[WEBHOOK] Processing direct booking for worker: ${metadata.workerId}`)
+          await handleDirectBooking(paymentIntent, metadata)
+        }
+        // Handle existing task offer acceptance flow
+        else if (metadata.taskId && metadata.offerId) {
+          console.log(`[WEBHOOK] Task already exists: ${metadata.taskId}, updating transaction`)
+          // Task already exists, just update transaction status
+          await updateTransactionStatus(paymentIntent.id, 'CAPTURED')
+        }
+      }
+    }
+
+    // Handle payment_intent.amount_capturable_updated - For manual capture
+    // This fires when a payment is authorized and ready to be captured
+    if (event.type === 'payment_intent.amount_capturable_updated') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent
       const metadata = paymentIntent.metadata
 
-      // Check if this is an offer purchase
-      if (metadata.type === 'offer_purchase' && metadata.offerId) {
-        await handleOfferPurchase(paymentIntent, metadata)
-      }
-      // Handle direct booking
-      else if (metadata.type === 'direct_booking') {
-        await handleDirectBooking(paymentIntent, metadata)
-      }
-      // Handle existing task offer acceptance flow
-      else if (metadata.taskId && metadata.offerId) {
-        // Task already exists, just mark payment as succeeded
-        // This is handled by the existing accept-offer flow
+      console.log(`[WEBHOOK] payment_intent.amount_capturable_updated - Status: ${paymentIntent.status}`)
+
+      // Only process if status is requires_capture (authorized but not captured)
+      if (paymentIntent.status === 'requires_capture') {
+        // Check if this is an offer purchase
+        if (metadata.type === 'offer_purchase' && metadata.offerId) {
+          console.log(`[WEBHOOK] Processing offer purchase (amount_capturable_updated): ${metadata.offerId}`)
+          await handleOfferPurchase(paymentIntent, metadata)
+        }
+        // Handle direct booking
+        else if (metadata.type === 'direct_booking') {
+          console.log(`[WEBHOOK] Processing direct booking (amount_capturable_updated) for worker: ${metadata.workerId}`)
+          await handleDirectBooking(paymentIntent, metadata)
+        }
       }
     }
 
@@ -68,225 +178,133 @@ export async function POST(req: NextRequest) {
       const paymentIntent = event.data.object as Stripe.PaymentIntent
       const metadata = paymentIntent.metadata
 
+      console.log(`[WEBHOOK] payment_intent.payment_failed - PaymentIntent: ${paymentIntent.id}`)
+
+      // Check if this is a weekly payment (eligible for payment protection)
+      if (metadata.type === 'weekly_payment' && metadata.weeklyPaymentId) {
+        console.log(`[WEBHOOK] Weekly payment failed, checking payment protection eligibility`)
+        
+        // Apply payment protection (platform covers worker payment)
+        const protectionApplied = await checkAndApplyPaymentProtection(metadata.weeklyPaymentId)
+        
+        if (protectionApplied) {
+          console.log(`[WEBHOOK] Payment protection applied for weekly payment ${metadata.weeklyPaymentId}`)
+          await logPaymentEvent({
+            level: 'INFO',
+            eventType: 'payment_protection_applied',
+            paymentIntentId: paymentIntent.id,
+            taskId: metadata.taskId,
+            buyerId: metadata.buyerId,
+            workerId: metadata.workerId,
+            message: 'Payment protection applied via webhook after payment failure',
+            source: 'webhook',
+          })
+        } else {
+          // Update transaction status to FAILED
+          await updateTransactionStatus(paymentIntent.id, 'FAILED')
+        }
+      } else {
+        // Regular payment failure (not weekly payment)
+        await updateTransactionStatus(paymentIntent.id, 'FAILED')
+      }
+
       if (metadata.buyerId) {
+        const { createNotification } = await import('@/lib/notifications')
         await createNotification(
           metadata.buyerId,
           'payment_received',
-          'Your payment failed. Please try again.',
+          metadata.type === 'weekly_payment' 
+            ? 'Your weekly payment failed. Platform has covered the worker payment. Please update your payment method.'
+            : 'Your payment failed. Please try again.',
           metadata.taskId
         )
       }
     }
 
+    // Note: Stripe doesn't have a separate 'payment_intent.requires_payment_method' event
+    // This is handled via payment_intent.payment_failed when payment method is required
+
     return NextResponse.json({ received: true })
   } catch (error: any) {
-    console.error('Webhook handler error:', error)
+    console.error('[WEBHOOK] Handler error:', error)
+    console.error('[WEBHOOK] Error stack:', error.stack)
     return NextResponse.json(
-      { error: 'Webhook handler failed' },
+      { error: 'Webhook handler failed', details: error.message },
       { status: 500 }
     )
   }
 }
 
+// Handler functions are imported from @/lib/payment-handlers
+
 /**
- * Handle offer purchase: Auto-create task and assign to worker
+ * Create or update transaction record
  */
-async function handleOfferPurchase(
+async function createOrUpdateTransaction(
   paymentIntent: Stripe.PaymentIntent,
-  metadata: Record<string, string>
+  metadata: Record<string, string>,
+  taskId?: string
 ) {
-  const { offerId, buyerId, workerId, taskId } = metadata
-
-  // Get offer and related data
-  const offer = await prisma.offer.findUnique({
-    where: { id: offerId },
-    include: {
-      worker: true,
-      task: true,
-    },
-  })
-
-  if (!offer) {
-    console.error('Offer not found:', offerId)
-    return
-  }
-
-  // Get buyer
-  const buyer = await prisma.user.findUnique({
-    where: { id: buyerId },
-    select: { id: true, name: true, email: true, phone: true },
-  })
-
-  if (!buyer) {
-    console.error('Buyer not found:', buyerId)
-    return
-  }
-
-  // Create task from offer
-  const task = await prisma.$transaction(async (tx) => {
-    // Update offer status
-    await tx.offer.update({
-      where: { id: offerId },
-      data: { status: 'ACCEPTED' },
-    })
-
-    // Create new task
-    const newTask = await tx.task.create({
-      data: {
-        title: offer.task.title || `Task from ${offer.worker.name}`,
-        description: offer.message || offer.task.description || '',
-        clientId: buyerId,
-        workerId: workerId,
-        offerId: offerId,
-        category: offer.task.category || 'General',
-        type: offer.task.type || 'VIRTUAL',
-        status: 'ASSIGNED', // Auto-assigned, no manual acceptance needed
-        price: offer.price,
-        estimatedDurationMins: offer.estimatedDurationMins,
-        paymentIntentId: paymentIntent.id,
-      },
-      include: {
-        client: true,
-        worker: true,
-      },
-    })
-
-    return newTask
-  })
-
-  // Create notifications
-  await Promise.all([
-    // Notify worker
-    createNotification(
-      workerId,
-      'task_created',
-      `New task "${task.title}" has been assigned to you`,
-      task.id
-    ),
-    // Notify buyer
-    createNotification(
-      buyerId,
-      'offer_accepted',
-      `Your purchase was successful. Task "${task.title}" has been created`,
-      task.id
-    ),
-  ])
-
-  // Check if worker is offline and send SMS
-  if (offer.worker.phone) {
-    await checkAndSendOfflineNotification(
-      workerId,
-      offer.worker.name || 'Worker',
-      offer.worker.phone,
-      `you have a new task "${task.title}" on Skilly.com`,
-      task.id
-    )
-  }
-
-  // Emit Pusher event for real-time updates
   try {
-    await triggerMessageEvent(`task-${task.id}`, {
-      type: 'task_created',
-      taskId: task.id,
-      message: 'Task created and assigned',
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: { paymentIntentId: paymentIntent.id },
     })
-  } catch (error) {
-    console.error('Failed to trigger Pusher event:', error)
+
+    if (existingTransaction) {
+      // Update existing transaction - payment is captured immediately
+      await prisma.transaction.update({
+        where: { paymentIntentId: paymentIntent.id },
+        data: { 
+          status: 'CAPTURED',
+          captureMethod: 'automatic',
+          updatedAt: new Date() 
+        },
+      })
+      console.log(`[WEBHOOK] Updated transaction ${existingTransaction.id} to CAPTURED`)
+    } else {
+      // Create new transaction
+      const baseAmount = parseFloat(metadata.baseAmount || '0')
+      const feeConfig = await getFeeConfigFromSettings()
+      const fees = calculateFees(baseAmount, feeConfig)
+      // Payment is captured immediately after authorization
+      await prisma.transaction.create({
+        data: {
+          paymentIntentId: paymentIntent.id,
+          buyerId: metadata.buyerId || metadata.clientId || '',
+          workerId: metadata.workerId || undefined,
+          taskId: taskId || undefined,
+          amount: fees.totalAmount,
+          baseAmount: baseAmount,
+          platformFee: fees.platformFee,
+          stripeFee: fees.stripeFee,
+          status: 'CAPTURED', // Captured immediately in webhook
+          captureMethod: 'automatic', // Automatic capture via webhook
+          metadata: metadata as any,
+        },
+      })
+      console.log(`[WEBHOOK] Created transaction for payment ${paymentIntent.id}`)
+    }
+  } catch (error: any) {
+    console.error(`[WEBHOOK] Error creating/updating transaction:`, error)
   }
 }
 
 /**
- * Handle direct booking: Auto-create task from booking details
+ * Update transaction status
  */
-async function handleDirectBooking(
-  paymentIntent: Stripe.PaymentIntent,
-  metadata: Record<string, string>
-) {
-  const { buyerId, workerId, taskType, category, scheduledAt, durationHours, baseAmount, taskDetails, address, unit, city, postalCode } = metadata
-
-  // Get buyer and worker
-  const [buyer, worker] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: buyerId },
-      select: { id: true, name: true, email: true, phone: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: workerId },
-      select: { id: true, name: true, email: true, phone: true },
-    }),
-  ])
-
-  if (!buyer || !worker) {
-    console.error('Buyer or worker not found')
-    return
-  }
-
-  // Build address string for on-site tasks
-  let fullAddress = null
-  if (taskType === 'IN_PERSON' && address) {
-    fullAddress = [address, unit, city, postalCode].filter(Boolean).join(', ')
-  }
-
-  // Create task
-  const task = await prisma.task.create({
-    data: {
-      title: `Task with ${worker.name || 'Worker'}`,
-      description: taskDetails || 'Direct booking task',
-      clientId: buyerId,
-      workerId: workerId,
-      category: category || 'General',
-      type: taskType === 'IN_PERSON' ? 'IN_PERSON' : 'VIRTUAL',
-      status: 'ASSIGNED', // Auto-assigned, no manual acceptance needed
-      price: parseFloat(baseAmount),
-      estimatedDurationMins: Math.round(parseFloat(durationHours) * 60),
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      address: fullAddress,
-      paymentIntentId: paymentIntent.id,
-    },
-    include: {
-      client: true,
-      worker: true,
-    },
-  })
-
-  // Create notifications
-  await Promise.all([
-    // Notify worker
-    createNotification(
-      workerId,
-      'task_created',
-      `New task "${task.title}" has been assigned to you`,
-      task.id
-    ),
-    // Notify buyer
-    createNotification(
-      buyerId,
-      'offer_accepted',
-      `Your booking was successful. Task "${task.title}" has been created`,
-      task.id
-    ),
-  ])
-
-  // Check if worker is offline and send SMS
-  if (worker.phone) {
-    await checkAndSendOfflineNotification(
-      workerId,
-      worker.name || 'Worker',
-      worker.phone,
-      `you have a new task "${task.title}" on Skilly.com`,
-      task.id
-    )
-  }
-
-  // Emit Pusher event for real-time updates
+async function updateTransactionStatus(paymentIntentId: string, status: 'AUTHORIZED' | 'CAPTURED' | 'FAILED' | 'REFUNDED') {
   try {
-    await triggerMessageEvent(`task-${task.id}`, {
-      type: 'task_created',
-      taskId: task.id,
-      message: 'Task created and assigned',
+    await prisma.transaction.update({
+      where: { paymentIntentId },
+      data: { 
+        status, 
+        captureMethod: status === 'CAPTURED' ? 'automatic' : undefined,
+        updatedAt: new Date() 
+      },
     })
-  } catch (error) {
-    console.error('Failed to trigger Pusher event:', error)
+    console.log(`[WEBHOOK] Updated transaction ${paymentIntentId} to status ${status}`)
+  } catch (error: any) {
+    console.error(`[WEBHOOK] Error updating transaction status:`, error)
   }
 }
 

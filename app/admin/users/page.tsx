@@ -33,7 +33,6 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('')
   const [verificationFilter, setVerificationFilter] = useState<string>('')
   const [selectedUser, setSelectedUser] = useState<any>(null)
-  const [showUserDetails, setShowUserDetails] = useState(false)
   const [showSuspendDialog, setShowSuspendDialog] = useState(false)
   const [suspendReason, setSuspendReason] = useState('')
   const [suspendDuration, setSuspendDuration] = useState<string>('')
@@ -168,35 +167,37 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Users</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          User Management
+        </h1>
         <p className="text-sm md:text-base text-muted-foreground">
-          Manage all platform users ({filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'})
+          View and manage all platform users. Click on any user card to view their complete profile and activity.
         </p>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search" className="text-xs md:text-sm">Search</Label>
-              <div className="relative mt-1">
+              <Label htmlFor="search" className="text-sm font-medium mb-2 block">Search Users</Label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="search"
                   placeholder="Search by name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 text-sm"
+                  className="pl-9 h-10"
                 />
               </div>
             </div>
             <div>
-              <Label className="text-xs md:text-sm">Role</Label>
+              <Label className="text-sm font-medium mb-2 block">Role</Label>
               <Select value={roleFilter || undefined} onValueChange={(value) => setRoleFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="mt-1 text-sm">
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
@@ -208,9 +209,9 @@ export default function AdminUsersPage() {
               </Select>
             </div>
             <div>
-              <Label className="text-xs md:text-sm">Verification</Label>
+              <Label className="text-sm font-medium mb-2 block">Verification</Label>
               <Select value={verificationFilter || undefined} onValueChange={(value) => setVerificationFilter(value === 'all' ? '' : value)}>
-                <SelectTrigger className="mt-1 text-sm">
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,12 +227,16 @@ export default function AdminUsersPage() {
       </Card>
 
       {/* Users List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base md:text-lg">All Users</CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            {usersError ? 'Error loading users' : `${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} found`}
-          </CardDescription>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl md:text-2xl font-bold">All Users</CardTitle>
+              <CardDescription className="text-sm mt-1">
+                {usersError ? 'Error loading users' : `${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} found`}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {usersError ? (
@@ -244,12 +249,26 @@ export default function AdminUsersPage() {
               {filteredUsers.map((userItem: any) => (
                 <div
                   key={userItem.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 md:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 md:p-5 border rounded-xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer bg-card"
+                  onClick={() => router.push(`/admin/users/${userItem.id}`)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm md:text-base truncate">{userItem.name || 'No name'}</p>
-                      <Badge variant={userItem.role === 'ADMIN' ? 'default' : 'secondary'} className="text-xs">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-semibold text-primary">
+                          {userItem.name?.charAt(0)?.toUpperCase() || userItem.email?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-base md:text-lg truncate group-hover:text-primary transition-colors">
+                            {userItem.name || 'No name'}
+                          </p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {userItem.email}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={userItem.role === 'ADMIN' ? 'default' : 'secondary'} className="text-xs shrink-0">
                         {userItem.role}
                       </Badge>
                       {userItem.role === 'WORKER' && (
@@ -261,45 +280,53 @@ export default function AdminUsersPage() {
                               ? 'destructive'
                               : 'outline'
                           }
-                          className="text-xs"
+                          className="text-xs shrink-0"
                         >
                           {userItem.verificationStatus}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground truncate">{userItem.email}</p>
                     {userItem.phone && (
-                      <p className="text-xs text-muted-foreground">{userItem.phone}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                        <Phone className="w-3 h-3" />
+                        {userItem.phone}
+                      </p>
                     )}
-                    <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+                    <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
                         Joined {format(new Date(userItem.createdAt), 'MMM d, yyyy')}
                       </span>
                       {userItem._count && (
                         <>
                           {userItem._count.tasksPosted > 0 && (
-                            <span>Tasks: {userItem._count.tasksPosted}</span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="font-medium text-foreground">{userItem._count.tasksPosted}</span>
+                              <span>Tasks</span>
+                            </span>
                           )}
                           {userItem._count.reviewsReceived > 0 && (
-                            <span>Reviews: {userItem._count.reviewsReceived}</span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="font-medium text-foreground">{userItem._count.reviewsReceived}</span>
+                              <span>Reviews</span>
+                            </span>
                           )}
                         </>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedUser(userItem)
-                        setShowUserDetails(true)
+                      variant="default"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/admin/users/${userItem.id}`)
                       }}
                       className="text-xs"
                     >
-                      <Eye className="w-3 h-3 mr-1" />
-                      View
+                      <Eye className="w-3 h-3 mr-1.5" />
+                      View Profile
                     </Button>
                     {userItem.role === 'WORKER' && userItem.verificationStatus === 'VERIFIED' && (
                       <Button
@@ -349,159 +376,6 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* User Details Dialog */}
-      <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>
-              Complete user information and activity
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4 py-4">
-              {/* Basic Info */}
-              <div>
-                <h3 className="font-semibold text-sm mb-2">Basic Information</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Name:</span>
-                    <span className="font-medium">{selectedUser.name || 'Not provided'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email:</span>
-                    <span className="font-medium">{selectedUser.email}</span>
-                  </div>
-                  {selectedUser.phone && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Phone:</span>
-                      <span className="font-medium">{selectedUser.phone}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Role:</span>
-                    <Badge variant={selectedUser.role === 'ADMIN' ? 'default' : 'secondary'}>
-                      {selectedUser.role}
-                    </Badge>
-                  </div>
-                  {selectedUser.role === 'WORKER' && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Verification:</span>
-                      <Badge
-                        variant={
-                          selectedUser.verificationStatus === 'VERIFIED'
-                            ? 'default'
-                            : selectedUser.verificationStatus === 'REJECTED'
-                            ? 'destructive'
-                            : 'outline'
-                        }
-                      >
-                        {selectedUser.verificationStatus}
-                      </Badge>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Joined:</span>
-                    <span className="font-medium">{format(new Date(selectedUser.createdAt), 'MMM d, yyyy')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bio */}
-              {selectedUser.bio && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">Bio</h3>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg break-words">
-                    {selectedUser.bio}
-                  </p>
-                </div>
-              )}
-
-              {/* Activity Stats */}
-              {selectedUser._count && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">Activity</h3>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Tasks Posted:</span>
-                      <p className="font-medium">{selectedUser._count.tasksPosted || 0}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Tasks Assigned:</span>
-                      <p className="font-medium">{selectedUser._count.tasksAssigned || 0}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Reviews:</span>
-                      <p className="font-medium">{selectedUser._count.reviewsReceived || 0}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Worker-specific info */}
-              {selectedUser.role === 'WORKER' && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">Worker Information</h3>
-                  <div className="space-y-2 text-sm">
-                    {selectedUser.hourlyRate && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Hourly Rate:</span>
-                        <span className="font-medium">${selectedUser.hourlyRate}</span>
-                      </div>
-                    )}
-                    {selectedUser.walletBalance !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Wallet Balance:</span>
-                        <span className="font-medium">${selectedUser.walletBalance.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {selectedUser.serviceType && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Service Type:</span>
-                        <span className="font-medium">{selectedUser.serviceType.replace('_', ' ')}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Actions */}
-              <div className="pt-4 border-t">
-                <h3 className="font-semibold text-sm mb-2">Quick Actions</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      router.push(`/admin/support?userId=${selectedUser.id}`)
-                      setShowUserDetails(false)
-                    }}
-                    className="text-xs"
-                  >
-                    <MessageSquare className="w-3 h-3 mr-1" />
-                    View Support Tickets
-                  </Button>
-                  {selectedUser.role === 'WORKER' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        router.push(`/admin/payouts?userId=${selectedUser.id}`)
-                        setShowUserDetails(false)
-                      }}
-                      className="text-xs"
-                    >
-                      <DollarSign className="w-3 h-3 mr-1" />
-                      View Payouts
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Suspend User Dialog */}
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>

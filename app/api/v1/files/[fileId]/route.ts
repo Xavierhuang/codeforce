@@ -24,7 +24,7 @@ export async function GET(
     }
 
     // Validate type
-    const allowedTypes = ['id_document', 'avatar', 'banner', 'attachment']
+    const allowedTypes = ['id_document', 'avatar', 'banner', 'attachment', 'assignment']
     if (!allowedTypes.includes(type)) {
       return NextResponse.json(
         { error: 'Invalid file type' },
@@ -32,7 +32,7 @@ export async function GET(
       )
     }
 
-    // Security: Require authentication for sensitive files (id_document, attachment)
+    // Security: Require authentication for sensitive files (id_document, attachment, assignment)
     // Allow public access for avatar and banner (needed for public profiles)
     const publicTypes = ['avatar', 'banner']
     const requiresAuth = !publicTypes.includes(type)
@@ -48,8 +48,8 @@ export async function GET(
     }
     
     // Try common extensions for the file type
-    const possibleExtensions = type === 'id_document' || type === 'attachment' 
-      ? ['pdf', 'jpg', 'jpeg', 'png', 'webp']
+    const possibleExtensions = type === 'id_document' || type === 'attachment' || type === 'assignment'
+      ? ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv']
       : ['jpg', 'jpeg', 'png', 'webp']
 
     let filepath: string | null = null
@@ -82,6 +82,12 @@ export async function GET(
       'png': 'image/png',
       'webp': 'image/webp',
       'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'txt': 'text/plain',
+      'csv': 'text/csv',
     }
 
     const mimeType = mimeTypes[foundExtension] || 'application/octet-stream'

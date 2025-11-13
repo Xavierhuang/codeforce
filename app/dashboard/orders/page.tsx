@@ -156,9 +156,17 @@ export default function BuyerOrdersPage() {
                     <Link href={`/tasks/${task.id}`}>
                       <Button variant="outline" className="w-full">
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        Open Chat
+                        {task.status === 'COMPLETED' ? 'View Details' : 'Open Chat'}
                       </Button>
                     </Link>
+                    {task.status === 'COMPLETED' && task.worker && (
+                      <Link href={`/tasks/${task.id}#review`}>
+                        <Button className="w-full bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900">
+                          <Star className="w-4 h-4 mr-2 fill-current" />
+                          Rate Worker
+                        </Button>
+                      </Link>
+                    )}
                     {task.status !== 'CANCELLED' && task.status !== 'COMPLETED' && (
                       <Button
                         variant="destructive"

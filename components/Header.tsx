@@ -118,16 +118,23 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-area-inset-top">
       <div className="container mx-auto px-4">
         <div className="flex h-14 md:h-16 items-center justify-between">
-          {/* Mobile Menu Button and Logo */}
-          <div className="md:hidden flex items-center gap-3">
-            <MobileNav />
+          {/* Mobile Logo - Only on mobile */}
+          <div className="sm:hidden flex items-center gap-3">
             <Link href="/" className="flex items-center touch-manipulation">
               <img src="/favicon.svg" alt="Skillyy" className="h-9 w-9 rounded" />
             </Link>
           </div>
           
-          {/* Desktop Logo - Hidden on mobile */}
-          <div className="hidden md:flex items-center">
+          {/* Tablet Menu Button and Logo */}
+          <div className="hidden sm:flex lg:hidden items-center gap-3">
+            <MobileNav />
+            <Link href="/" className="flex items-center touch-manipulation">
+              <img src="/logo.svg" alt="Skillyy" className="h-8 w-auto" />
+            </Link>
+          </div>
+          
+          {/* Desktop Logo - Hidden on mobile and tablet */}
+          <div className="hidden lg:flex items-center">
             <Link href="/" className="flex items-center touch-manipulation">
               <img src="/logo.svg" alt="Skillyy" className="h-8 w-auto" />
             </Link>
@@ -279,4 +286,6 @@ export function Header() {
     </header>
   )
 }
+
+
 

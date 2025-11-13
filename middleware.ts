@@ -38,15 +38,15 @@ export async function middleware(request: NextRequest) {
   // Allow self, Stripe, Pusher, Google Maps, and common CDNs
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://maps.googleapis.com https://*.gstatic.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://js.pusher.com https://maps.googleapis.com https://*.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' https://api.stripe.com https://*.pusher.com https://*.pusherapp.com wss://*.pusher.com wss://*.pusherapp.com https://maps.googleapis.com https://*.googleapis.com",
-    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+    "connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.pusher.com https://*.pusherapp.com wss://*.pusher.com wss://*.pusherapp.com https://maps.googleapis.com https://*.googleapis.com",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://*.stripe.com",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://checkout.stripe.com",
     "frame-ancestors 'self'",
     "upgrade-insecure-requests",
   ].join('; ')
