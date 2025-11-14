@@ -43,7 +43,7 @@ export function RecommendedTaskers({ taskers }: RecommendedTaskersProps) {
           Experts recommended for you
         </h2>
         <Link 
-          href="/profile"
+          href="/experts"
           className="text-primary hover:underline flex items-center gap-1 text-sm md:text-base"
         >
           See all <ChevronRight className="w-4 h-4" />

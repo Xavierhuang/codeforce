@@ -340,7 +340,7 @@ export default function TasksPage() {
                   ? 'Try adjusting your filters to see more results.'
                   : 'No tasks available at the moment.'}
               </p>
-              <Link href="/profile">
+              <Link href="/experts">
                 <Button>Find Experts</Button>
               </Link>
             </div>

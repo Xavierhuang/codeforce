@@ -20,7 +20,7 @@ export function HomeSearchBar() {
         className="w-full pl-14 pr-4 py-6 text-lg rounded-lg border-2 focus:border-primary h-16"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && searchQuery.trim()) {
-            router.push(`/profile?search=${encodeURIComponent(searchQuery.trim())}`)
+            router.push(`/experts?search=${encodeURIComponent(searchQuery.trim())}`)
           }
         }}
       />

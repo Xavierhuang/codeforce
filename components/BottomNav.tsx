@@ -47,7 +47,7 @@ export function BottomNav() {
   const isAdmin = user?.role === 'ADMIN'
 
   // Show bottom nav on dashboard pages, admin pages, tasks list, and public profile pages
-  const showBottomNav = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname === '/tasks' || pathname === '/profile' || pathname?.startsWith('/profile/')
+  const showBottomNav = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname === '/tasks' || pathname === '/experts' || pathname?.startsWith('/profile/')
   if (!showBottomNav) return null
 
   // Primary navigation items for bottom nav (exactly 5 items)
@@ -143,7 +143,7 @@ export function BottomNav() {
         roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],
       },
       {
-        href: '/profile',
+        href: '/experts',
         label: 'Experts',
         icon: Search,
         roles: ['CLIENT'] as ('CLIENT' | 'WORKER' | 'ADMIN')[],

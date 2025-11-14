@@ -46,6 +46,12 @@ export default function ProfileSetupPage() {
     website: '',
     linkedinUrl: '',
     githubUrl: '',
+    gender: '',
+    birthdate: '',
+    schedulingUrl: '',
+    twitterUrl: '',
+    instagramUrl: '',
+    referralSource: '',
     location: '',
     locationLat: '',
     locationLng: '',
@@ -68,6 +74,12 @@ export default function ProfileSetupPage() {
   })
 
   const [profileBaseUrl, setProfileBaseUrl] = useState('https://skillyy.com/profile/')
+  const socialVisibilityCopy = isWorker
+    ? 'Only visible to clients after you accept a booking.'
+    : 'Only visible to experts you collaborate with.'
+  const schedulingCopy = isWorker
+    ? 'Share a booking link so clients can schedule time with you.'
+    : 'Share a scheduling link so experts can coordinate with you.'
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -120,6 +132,12 @@ export default function ProfileSetupPage() {
         website: user.website || '',
         linkedinUrl: user.linkedinUrl || '',
         githubUrl: user.githubUrl || '',
+        gender: (user as any).gender || '',
+        birthdate: user.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : '',
+        schedulingUrl: (user as any).schedulingUrl || '',
+        twitterUrl: (user as any).twitterUrl || '',
+        instagramUrl: (user as any).instagramUrl || '',
+        referralSource: (user as any).referralSource || '',
         location: user.location || '',
         locationLat: user.locationLat?.toString() || '',
         locationLng: user.locationLng?.toString() || '',
@@ -365,6 +383,12 @@ export default function ProfileSetupPage() {
           website: formData.website,
           linkedinUrl: formData.linkedinUrl,
           githubUrl: formData.githubUrl,
+          gender: formData.gender || null,
+          birthdate: formData.birthdate || null,
+          schedulingUrl: formData.schedulingUrl || null,
+          twitterUrl: formData.twitterUrl || null,
+          instagramUrl: formData.instagramUrl || null,
+          referralSource: formData.referralSource || null,
           locationLat: formData.locationLat ? parseFloat(formData.locationLat) : undefined,
           locationLng: formData.locationLng ? parseFloat(formData.locationLng) : undefined,
           serviceRadiusMiles: isWorker ? (formData.serviceRadiusMiles ? parseInt(formData.serviceRadiusMiles) : undefined) : undefined,
@@ -412,6 +436,12 @@ export default function ProfileSetupPage() {
         website: updatedUser?.website || '',
         linkedinUrl: updatedUser?.linkedinUrl || '',
         githubUrl: updatedUser?.githubUrl || '',
+        gender: updatedUser?.gender || '',
+        birthdate: updatedUser?.birthdate ? new Date(updatedUser.birthdate).toISOString().split('T')[0] : '',
+        schedulingUrl: updatedUser?.schedulingUrl || '',
+        twitterUrl: updatedUser?.twitterUrl || '',
+        instagramUrl: updatedUser?.instagramUrl || '',
+        referralSource: updatedUser?.referralSource || '',
         location: updatedUser?.location || '',
         locationLat: updatedUser?.locationLat?.toString() || '',
         locationLng: updatedUser?.locationLng?.toString() || '',
@@ -777,6 +807,86 @@ export default function ProfileSetupPage() {
                     />
                     <p className="text-xs text-gray-400 mt-1">Not shown on public profile</p>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="gender" className="text-xs text-gray-500 mb-1 block">Gender</Label>
+                      <select
+                        id="gender"
+                        name="gender"
+                        value={formData.gender}
+                        onChange={handleInputChange}
+                        className="w-full text-sm h-9 border border-input rounded-md bg-background px-3"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="birthdate" className="text-xs text-gray-500 mb-1 block">Birthdate</Label>
+                      <Input
+                        id="birthdate"
+                        name="birthdate"
+                        type="date"
+                        value={formData.birthdate}
+                        onChange={handleInputChange}
+                        className="w-full text-sm h-9"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="schedulingUrl" className="text-xs text-gray-500 mb-1 block">Scheduling URL (Optional)</Label>
+                    <Input
+                      id="schedulingUrl"
+                      name="schedulingUrl"
+                      type="url"
+                      value={formData.schedulingUrl}
+                      onChange={handleInputChange}
+                      className="w-full text-sm h-9"
+                      placeholder="https://calendly.com/yourlink"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{schedulingCopy}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="twitterUrl" className="text-xs text-gray-500 mb-1 block">Twitter (Optional)</Label>
+                    <Input
+                      id="twitterUrl"
+                      name="twitterUrl"
+                      type="url"
+                      value={formData.twitterUrl}
+                      onChange={handleInputChange}
+                      className="w-full text-sm h-9"
+                      placeholder="https://twitter.com/yourhandle"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{socialVisibilityCopy}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="instagramUrl" className="text-xs text-gray-500 mb-1 block">Instagram (Optional)</Label>
+                    <Input
+                      id="instagramUrl"
+                      name="instagramUrl"
+                      type="url"
+                      value={formData.instagramUrl}
+                      onChange={handleInputChange}
+                      className="w-full text-sm h-9"
+                      placeholder="https://instagram.com/yourprofile"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{socialVisibilityCopy}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="referralSource" className="text-xs text-gray-500 mb-1 block">How did you hear about Skillyy?</Label>
+                    <Input
+                      id="referralSource"
+                      name="referralSource"
+                      type="text"
+                      value={formData.referralSource}
+                      onChange={handleInputChange}
+                      className="w-full text-sm h-9"
+                      placeholder="Friend, Email, Social, etc."
+                    />
+                  </div>
                   {(isWorker || isClient) && (
                     <div>
                       <Label htmlFor="slug" className="text-xs text-gray-500 mb-1 block">Profile URL</Label>
@@ -798,57 +908,6 @@ export default function ProfileSetupPage() {
                       </p>
                     </div>
                   )}
-                  <div>
-                    <Label className="text-xs text-gray-500 mb-1 block">Location</Label>
-                    <GoogleMapsLoader>
-                      <AddressAutocomplete
-                        value={formData.location}
-                        onSelect={handleAddressSelect}
-                        label=""
-                        placeholder="Enter your address..."
-                        showLocationButton={false}
-                      />
-                    </GoogleMapsLoader>
-                    {formData.locationLat && formData.locationLng && (
-                      <div className="mt-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowLocationPicker(!showLocationPicker)}
-                          className="text-xs text-[#94FE0C] hover:text-[#7FE00A] font-medium"
-                        >
-                          {showLocationPicker ? 'Hide Map' : 'Show Map'}
-                        </button>
-                        {showLocationPicker && (
-                          <div className="mt-2">
-                            <LocationPicker
-                              lat={parseFloat(formData.locationLat)}
-                              lng={parseFloat(formData.locationLng)}
-                              onLocationChange={handleLocationChange}
-                              height="192px"
-                              zoom={15}
-                              readOnly={false}
-                              showControls={true}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {isWorker && formData.locationLat && formData.locationLng && (
-                      <div className="mt-2">
-                        <Label htmlFor="serviceRadiusMiles" className="text-xs text-gray-500 mb-1 block">Service Radius (miles)</Label>
-                        <Input
-                          id="serviceRadiusMiles"
-                          name="serviceRadiusMiles"
-                          type="number"
-                          value={formData.serviceRadiusMiles}
-                          onChange={handleInputChange}
-                          className="w-full text-sm h-9"
-                          placeholder="25"
-                          min="0"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
 

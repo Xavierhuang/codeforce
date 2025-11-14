@@ -729,7 +729,7 @@ export default function DashboardPage() {
                   </div>
                   {categoryDevelopers.length > 6 && (
                     <div className="text-center">
-                      <Link href={`/profile?category=${encodeURIComponent(category)}`}>
+                      <Link href={`/experts?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
                           View All {categoryDevelopers.length} Experts
                         </Button>
@@ -747,7 +747,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     {developersError?.message || 'Please try refreshing the page'}
                   </p>
-                  <Link href="/profile">
+                  <Link href="/experts">
                     <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>
@@ -757,7 +757,7 @@ export default function DashboardPage() {
               <Card className="mt-6">
                 <CardContent className="p-6">
                   <p className="text-muted-foreground mb-4">No experts found.</p>
-                  <Link href="/profile">
+                  <Link href="/experts">
                     <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>

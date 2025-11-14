@@ -38,6 +38,12 @@ model User {
   serviceRadiusMiles Int?       // for in-person workers
   availability       Json?      // weekly schedule/time slots
   workerServices     Json?      // Array of worker services with pricing (skillName, hourlyRate, description, isActive)
+  gender             String?
+  birthdate          DateTime?
+  schedulingUrl      String?
+  twitterUrl         String?
+  instagramUrl       String?
+  referralSource     String?
   verificationStatus VerificationStatus @default(PENDING)
   // Professional links (public - shown on profiles)
   website            String?    // Personal/professional website

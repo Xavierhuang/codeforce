@@ -99,7 +99,7 @@ export default function Home() {
                 className="w-full pl-14 pr-4 py-6 text-lg rounded-lg border-2 focus:border-primary h-16"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchQuery.trim()) {
-                    router.push(`/profile?search=${encodeURIComponent(searchQuery.trim())}`)
+                    router.push(`/experts?search=${encodeURIComponent(searchQuery.trim())}`)
                   }
                 }}
               />
@@ -110,14 +110,14 @@ export default function Home() {
               {POPULAR_CATEGORIES.map((cat) => (
                 <Link 
                   key={cat} 
-                  href={`/profile?category=${encodeURIComponent(cat)}`}
+                  href={`/experts?category=${encodeURIComponent(cat)}`}
                   className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
                 >
                   {cat}
                 </Link>
               ))}
               <Link 
-                href="/profile"
+                href="/experts"
                 className="px-5 py-2.5 text-sm font-medium border-2 border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-lg transition-all"
               >
                 See More
@@ -133,7 +133,7 @@ export default function Home() {
                   Experts recommended for you
                 </h2>
                 <Link 
-                  href="/profile"
+                  href="/experts"
                   className="text-primary hover:underline flex items-center gap-1 text-sm md:text-base"
                 >
                   See all <ChevronRight className="w-4 h-4" />

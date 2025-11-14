@@ -80,6 +80,12 @@ export async function PUT(req: NextRequest) {
       education,
       languages,
       certifications,
+      gender,
+      birthdate,
+      schedulingUrl,
+      twitterUrl,
+      instagramUrl,
+      referralSource,
       // Buyer-specific fields
       company,
       companySize,
@@ -167,6 +173,14 @@ export async function PUT(req: NextRequest) {
     if (education !== undefined) updateData.education = education
     if (languages !== undefined) updateData.languages = languages
     if (certifications !== undefined) updateData.certifications = certifications
+    if (gender !== undefined) updateData.gender = gender
+    if (birthdate !== undefined) {
+      updateData.birthdate = birthdate ? new Date(birthdate) : null
+    }
+    if (schedulingUrl !== undefined) updateData.schedulingUrl = schedulingUrl
+    if (twitterUrl !== undefined) updateData.twitterUrl = twitterUrl
+    if (instagramUrl !== undefined) updateData.instagramUrl = instagramUrl
+    if (referralSource !== undefined) updateData.referralSource = referralSource
     // Buyer-specific fields
     if (company !== undefined) updateData.company = company
     if (companySize !== undefined) updateData.companySize = companySize

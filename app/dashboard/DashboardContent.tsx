@@ -403,7 +403,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
                   </div>
                   {categoryDevelopers.length > 6 && (
                     <div className="text-center">
-                      <Link href={`/profile?category=${encodeURIComponent(category)}`}>
+                      <Link href={`/experts?category=${encodeURIComponent(category)}`}>
                         <Button variant="outline">
                           View All {categoryDevelopers.length} Experts
                         </Button>
@@ -418,7 +418,7 @@ export function DashboardContent({ user, workerStats, developers = [] }: Dashboa
               <Card className="border-2">
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">No experts found.</p>
-                  <Link href="/profile">
+                  <Link href="/experts">
                     <Button>Browse All Experts</Button>
                   </Link>
                 </CardContent>
