@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
       {/* Users List */}
       <Card className="shadow-sm">
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-xl md:text-2xl font-bold">All Users</CardTitle>
               <CardDescription className="text-sm mt-1">
@@ -315,7 +315,7 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="default"
@@ -345,7 +345,7 @@ export default function AdminUsersPage() {
                           value={userItem.role}
                           onValueChange={(value: 'CLIENT' | 'WORKER') => handleChangeRole(userItem.id, value)}
                         >
-                          <SelectTrigger className="w-[100px] h-8 text-xs">
+                          <SelectTrigger className="w-full sm:w-[100px] h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

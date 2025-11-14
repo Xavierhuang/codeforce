@@ -217,11 +217,11 @@ export default function AdminSettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="fees">Fees & Payments</TabsTrigger>
-          <TabsTrigger value="security">Security & Access</TabsTrigger>
-          <TabsTrigger value="broadcast" id="broadcast">Broadcast</TabsTrigger>
+        <TabsList className="flex flex-col sm:grid sm:grid-cols-4 w-full gap-2">
+          <TabsTrigger value="general" className="w-full text-sm">General</TabsTrigger>
+          <TabsTrigger value="fees" className="w-full text-sm">Fees & Payments</TabsTrigger>
+          <TabsTrigger value="security" className="w-full text-sm">Security & Access</TabsTrigger>
+          <TabsTrigger value="broadcast" id="broadcast" className="w-full text-sm">Broadcast</TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -256,7 +256,7 @@ export default function AdminSettingsPage() {
                   className="mt-1"
                 />
               </div>
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
                 <div className="space-y-0.5">
                   <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
                   <p className="text-xs text-muted-foreground">
@@ -269,7 +269,7 @@ export default function AdminSettingsPage() {
                   onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
                 />
               </div>
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
                 <div className="space-y-0.5">
                   <Label htmlFor="allow-registrations">Allow New Registrations</Label>
                   <p className="text-xs text-muted-foreground">
@@ -391,7 +391,7 @@ export default function AdminSettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="worker-verification">Require Worker Verification</Label>
                   <p className="text-xs text-muted-foreground">
@@ -404,7 +404,7 @@ export default function AdminSettingsPage() {
                   onCheckedChange={(checked) => setSettings({ ...settings, workerVerificationRequired: checked })}
                 />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="email-verification">Require Email Verification</Label>
                   <p className="text-xs text-muted-foreground">
@@ -435,14 +435,18 @@ export default function AdminSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="broadcast-message">Message</Label>
+                <Label htmlFor="announcement">Announcement Message</Label>
                 <Textarea
-                  id="broadcast-message"
+                  id="announcement"
                   value={settings.announcement}
                   onChange={(e) => setSettings({ ...settings, announcement: e.target.value })}
-                  className="mt-1 min-h-[120px]"
-                  placeholder="Enter broadcast message..."
+                  placeholder="Share updates with your users..."
+                  className="mt-1"
+                  rows={4}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This message will be sent as an in-app notification and email to your selected audience.
+                </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 

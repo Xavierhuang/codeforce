@@ -341,12 +341,12 @@ export default function AdminTasksPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 flex-shrink-0">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2 flex-shrink-0 w-full sm:w-auto">
                       <Link href={`/tasks/${task.id}`} target="_blank">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-xs"
+                          className="text-xs w-full sm:w-auto"
                         >
                           <ExternalLink className="w-3 h-3 mr-1" />
                           View Page
@@ -359,7 +359,7 @@ export default function AdminTasksPage() {
                           setSelectedTask(task)
                           setShowTaskDetails(true)
                         }}
-                        className="text-xs"
+                        className="text-xs w-full sm:w-auto"
                       >
                         <Eye className="w-3 h-3 mr-1" />
                         Details
@@ -376,7 +376,7 @@ export default function AdminTasksPage() {
                           })
                           setShowEditDialog(true)
                         }}
-                        className="text-xs"
+                        className="text-xs w-full sm:w-auto"
                       >
                         <Edit className="w-3 h-3 mr-1" />
                         Edit
@@ -389,7 +389,7 @@ export default function AdminTasksPage() {
                           setNewStatus(task.status)
                           setShowStatusDialog(true)
                         }}
-                        className="text-xs"
+                        className="text-xs w-full sm:w-auto"
                       >
                         <Filter className="w-3 h-3 mr-1" />
                         Status
@@ -401,7 +401,7 @@ export default function AdminTasksPage() {
                           setSelectedTask(task)
                           setShowDeleteDialog(true)
                         }}
-                        className="text-xs"
+                        className="text-xs w-full sm:w-auto"
                       >
                         <Trash2 className="w-3 h-3 mr-1" />
                         Delete

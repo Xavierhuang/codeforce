@@ -17,13 +17,33 @@ export async function GET(req: NextRequest) {
     const serviceType = searchParams.get('serviceType')
     const availableOnly = searchParams.get('availableOnly') === 'true'
     const limit = parseInt(searchParams.get('limit') || '50')
+    const verificationStatusParam = searchParams.get('verificationStatus')
+
+    type VerificationFilter = 'VERIFIED' | 'PENDING' | 'REJECTED'
+    const defaultStatuses: VerificationFilter[] = ['VERIFIED', 'PENDING']
+    let requestedStatuses: VerificationFilter[] = defaultStatuses
+
+    if (verificationStatusParam) {
+      const statusList = verificationStatusParam
+        .split(',')
+        .map((status) => status.trim().toUpperCase())
+        .filter((status): status is VerificationFilter =>
+          ['VERIFIED', 'PENDING', 'REJECTED'].includes(status)
+        )
+
+      if (statusList.length > 0) {
+        requestedStatuses = statusList as VerificationFilter[]
+      }
+    }
 
     const where: any = {
       role: 'WORKER',
-      // Show both VERIFIED and PENDING workers (buyers can see all available workers)
-      verificationStatus: {
-        in: ['VERIFIED', 'PENDING'],
-      },
+      verificationStatus:
+        requestedStatuses.length === 1
+          ? requestedStatuses[0]
+          : {
+              in: requestedStatuses,
+            },
     }
 
     // Filter by skills

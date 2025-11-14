@@ -221,7 +221,7 @@ export function AdminSupportTickets() {
                         selectedTicket === ticket.id ? 'bg-muted' : ''
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-1">
                         <p className="font-medium text-xs md:text-sm break-words line-clamp-2">{ticket.subject}</p>
                         <Badge className={`${STATUS_COLORS[ticket.status] || 'bg-gray-100'} text-[10px] px-1.5 py-0.5 flex-shrink-0`}>
                           {ticket.status.replace('_', ' ')}

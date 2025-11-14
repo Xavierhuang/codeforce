@@ -5,6 +5,8 @@ import Stripe from 'stripe'
 import { calculateFees, calculateAmountInCents, getFeeConfigFromSettings } from '@/lib/stripe-fees'
 import { getPlatformSettings } from '@/lib/settings'
 import { logPaymentEvent } from '@/lib/payment-logger'
+import { createNotification, notifyAdmins } from '@/lib/notifications'
+import { pusherServer } from '@/lib/pusher'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -225,6 +227,46 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    const notificationPromises: Promise<any>[] = []
+
+    const amountDisplay = (paymentIntent.amount / 100).toLocaleString('en-US', {
+      style: 'currency',
+      currency: paymentIntent.currency.toUpperCase(),
+    })
+
+    // Buyer notification (confirm payment intent created)
+    notificationPromises.push(
+      createNotification(
+        user.id,
+        'payment_received',
+        `We received your booking request for ${worker.name || 'an expert'} (${amountDisplay}).`
+      )
+    )
+
+    // Worker notification (new task incoming)
+    notificationPromises.push(
+      (async () => {
+        await createNotification(
+          worker.id,
+          'task_created',
+          `${user.name || 'A client'} just booked you for a new task scheduled on ${new Date(scheduledAt).toLocaleString()}.`
+        )
+        await pusherServer.trigger(`private-user-${worker.id}`, 'booking:created', {
+          paymentIntentId: paymentIntent.id,
+          clientName: user.name,
+          amount: paymentIntent.amount / 100,
+          scheduledAt,
+        })
+      })()
+    )
+
+    await Promise.allSettled(notificationPromises)
+
+    await notifyAdmins(
+      'payment_received',
+      `${user.name || 'A client'} booked ${worker.name || 'an expert'} for ${amountDisplay}.`
+    )
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       fees,
@@ -241,4 +283,3 @@ export async function POST(req: NextRequest) {
     )
   }
 }
-

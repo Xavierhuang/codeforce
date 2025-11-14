@@ -18,10 +18,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/maintenance', request.url))
   }
   
-  // CSRF protection for state-changing operations
-  const csrfCheck = await requireCSRF(request)
-  if (!csrfCheck.valid && csrfCheck.response) {
-    return csrfCheck.response
+  // Skip CSRF check for NextAuth routes (NextAuth handles its own security)
+  const isNextAuthRoute = pathname.startsWith('/api/auth/')
+  
+  // CSRF protection for state-changing operations (skip for NextAuth)
+  if (!isNextAuthRoute) {
+    const csrfCheck = await requireCSRF(request)
+    if (!csrfCheck.valid && csrfCheck.response) {
+      return csrfCheck.response
+    }
   }
   
   const response = NextResponse.next()

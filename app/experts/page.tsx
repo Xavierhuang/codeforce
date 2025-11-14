@@ -63,6 +63,7 @@ export default function ExpertsPage() {
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams()
+    params.set('verificationStatus', 'VERIFIED')
     if (selectedSkills.length > 0) {
       params.set('skills', selectedSkills.join(','))
     }
@@ -95,8 +96,9 @@ export default function ExpertsPage() {
   }
 
   const developersArray = Array.isArray(developers) ? developers : []
+  const verifiedDevelopers = developersArray.filter((dev: any) => dev.verificationStatus === 'VERIFIED')
 
-  const filteredDevelopers = developersArray.filter((dev: any) => {
+  const filteredDevelopers = verifiedDevelopers.filter((dev: any) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       const matchesSearch = (
@@ -135,13 +137,13 @@ export default function ExpertsPage() {
 
   const allSkills = Array.from(
     new Set(
-      developersArray.flatMap((dev: any) => dev.skills?.map((s: any) => s.skill) || [])
+      verifiedDevelopers.flatMap((dev: any) => dev.skills?.map((s: any) => s.skill) || [])
     )
   ).slice(0, 10) as string[]
 
   const priceBounds = useMemo(() => {
-    if (developersArray.length === 0) return [0, 500]
-    const prices = developersArray
+    if (verifiedDevelopers.length === 0) return [0, 500]
+    const prices = verifiedDevelopers
       .map((d: any) => d.hourlyRate)
       .filter((p: any) => p != null && p > 0)
     if (prices.length === 0) return [0, 500]
@@ -461,13 +463,13 @@ export default function ExpertsPage() {
                   const displayName = developer.name || developer.slug || developer.email || 'Expert'
 
                   return (
-                    <Card key={developer.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
+                    <Card key={developer.id} className="transition-shadow hover:shadow-lg h-full">
+                      <CardContent className="p-6 flex flex-col h-full">
                         <div className="text-xs text-muted-foreground mb-3">
-                          Popular in your area
+                          {developer.verificationStatus === 'VERIFIED' ? 'Verified Expert' : 'Profile under review'}
                         </div>
 
-                        <div className="flex items-start gap-4 mb-4">
+                        <div className="flex items-start gap-4">
                           <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                             <AvatarDisplay
                               src={developer.avatarUrl || undefined}
@@ -481,13 +483,13 @@ export default function ExpertsPage() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-lg truncate">
                                 {displayName}
                               </h3>
                               {developer.badgeTier && developer.badgeTier !== 'STARTER' && (
-                                <TaskerBadge 
-                                  tier={developer.badgeTier as TaskerBadgeTier} 
+                                <TaskerBadge
+                                  tier={developer.badgeTier as TaskerBadgeTier}
                                   size="sm"
                                 />
                               )}
@@ -495,50 +497,53 @@ export default function ExpertsPage() {
                                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
                               )}
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span>{completedTasks} Completed Tasks</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-semibold">{rating.toFixed(1)}</span>
-                              <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                              {developer.bio || 'Experienced expert on Skillyy.'}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-green-600" />
+                                {completedTasks} jobs
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                {rating.toFixed(1)} ({reviewCount})
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="border-t pt-4">
-                          <div className="text-xs font-semibold text-muted-foreground mb-3">
+                        <div className="mt-4 flex-1 flex flex-col">
+                          <div className="text-xs font-semibold text-muted-foreground mb-2">
                             Top Skills
                           </div>
-                          <div className="flex flex-wrap gap-2 mb-4">
+                          <div className="flex flex-wrap gap-2 mb-4 min-h-[32px]">
                             {topServices.length > 0 ? (
                               topServices.map((skill: any) => (
                                 <span
                                   key={skill.id}
-                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded"
+                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded bg-primary/5 truncate"
                                 >
                                   {skill.skill}
-                                  {developer.hourlyRate && ` for ${formatCurrency(developer.hourlyRate)}/hr`}
                                 </span>
                               ))
                             ) : (
                               <span className="text-xs text-muted-foreground">No skills listed</span>
                             )}
                           </div>
-                          {isBuyer && developer.hourlyRate ? (
-                            <Link href={`/book/${developer.slug || developer.id}`}>
+                          <div className="mt-auto space-y-2">
+                            {developer.hourlyRate && (
+                              <div className="text-sm font-semibold text-gray-900">
+                                {formatCurrency(developer.hourlyRate)} / hr
+                              </div>
+                            )}
+                            <Link href={isBuyer && developer.hourlyRate ? `/book/${developer.slug || developer.id}` : `/profile/${developer.slug || developer.id}`}>
                               <Button variant="outline" className="w-full">
-                                Book Now
+                                {isBuyer && developer.hourlyRate ? 'Book Now' : 'View Expert Profile'}
                               </Button>
                             </Link>
-                          ) : (
-                            <Link href={`/profile/${developer.slug || developer.id}`}>
-                              <Button variant="outline" className="w-full">
-                                View Expert Profile
-                              </Button>
-                            </Link>
-                          )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

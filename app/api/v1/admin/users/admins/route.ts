@@ -3,6 +3,8 @@ import { requireRole } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { handleApiError, Errors } from '@/lib/errors'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     // Only admins can fetch admin user list

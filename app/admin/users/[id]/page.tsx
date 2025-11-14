@@ -153,10 +153,30 @@ export default function UserDetailPage() {
     )
   }
 
+  const isWorkerUser = user.role === 'WORKER'
+  const memberSince = user.createdAt ? format(new Date(user.createdAt), 'MMM d, yyyy') : null
+  const formattedBirthdate = (user as any).birthdate ? format(new Date((user as any).birthdate), 'MMM d, yyyy') : null
+  const workerSkills = isWorkerUser ? ((user as any).skills || []) : []
+  const socialLinks = [
+    { label: 'Website', value: user.website },
+    { label: 'LinkedIn', value: user.linkedinUrl },
+    { label: 'GitHub', value: user.githubUrl },
+    { label: 'Twitter', value: (user as any).twitterUrl },
+    { label: 'Instagram', value: (user as any).instagramUrl },
+    { label: 'Scheduling', value: (user as any).schedulingUrl },
+  ].filter((link) => !!link.value)
+  const hasProfessionalDetails = Boolean(
+    (user as any).gender ||
+    (user as any).birthdate ||
+    (user as any).schedulingUrl ||
+    (user as any).referralSource
+  )
+  const hasSocialLinks = socialLinks.length > 0
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -275,23 +295,22 @@ export default function UserDetailPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+        <TabsList className="flex flex-wrap gap-2 justify-start">
+          <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="tasks" className="text-sm">Tasks</TabsTrigger>
+          <TabsTrigger value="transactions" className="text-sm">Transactions</TabsTrigger>
+          <TabsTrigger value="reviews" className="text-sm">Reviews</TabsTrigger>
           {user.role === 'WORKER' && (
-            <TabsTrigger value="time-reports">Time Reports</TabsTrigger>
+            <TabsTrigger value="time-reports" className="text-sm">Time Reports</TabsTrigger>
           )}
           {user.role === 'WORKER' && (
-            <TabsTrigger value="payouts">Payouts</TabsTrigger>
+            <TabsTrigger value="payouts" className="text-sm">Payouts</TabsTrigger>
           )}
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
@@ -325,63 +344,40 @@ export default function UserDetailPage() {
                   <div>
                     <p className="text-sm font-medium">Joined</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                      {memberSince || format(new Date(user.createdAt), 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>
-                {user.role === 'WORKER' && (
-                  <>
-                    {user.hourlyRate && (
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Hourly Rate</p>
-                          <p className="text-sm text-muted-foreground">${user.hourlyRate}</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Wallet Balance</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(user.walletBalance || 0)}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
 
-            {/* Activity Stats */}
             <Card>
               <CardHeader>
                 <CardTitle>Activity Statistics</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm">Tasks Posted</span>
                   <Badge variant="secondary">{user._count?.tasksPosted || 0}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm">Tasks Assigned</span>
                   <Badge variant="secondary">{user._count?.tasksAssigned || 0}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm">Reviews Received</span>
                   <Badge variant="secondary">{user._count?.reviewsReceived || 0}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm">Reviews Given</span>
                   <Badge variant="secondary">{user._count?.reviewsGiven || 0}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm">Offers Made</span>
                   <Badge variant="secondary">{user._count?.offers || 0}</Badge>
                 </div>
-                {user.role === 'WORKER' && (
-                  <div className="flex justify-between items-center">
+                {isWorkerUser && (
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-sm">Time Reports</span>
                     <Badge variant="secondary">{user._count?.timeReports || 0}</Badge>
                   </div>
@@ -390,16 +386,169 @@ export default function UserDetailPage() {
             </Card>
           </div>
 
-          {/* Bio */}
-          {user.bio && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Bio</CardTitle>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {user.bio && (
+              <Card className="lg:col-span-2 h-full">
+                <CardHeader>
+                  <CardTitle>Bio</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-[260px] overflow-y-auto pr-2">
+                    {user.bio}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            <Card className={`h-full ${user.bio ? '' : 'lg:col-span-3'}`}>
+              <CardHeader className="pb-3">
+                <CardTitle>{isWorkerUser ? 'Expert Snapshot' : 'Client Snapshot'}</CardTitle>
+                <CardDescription>Quick reference for admins</CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{user.bio}</p>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-muted-foreground">Role</span>
+                  <span className="font-medium">{user.role}</span>
+                </div>
+                {memberSince && (
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-muted-foreground">Member Since</span>
+                    <span className="font-medium">{memberSince}</span>
+                  </div>
+                )}
+                {isWorkerUser ? (
+                  <>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Verification</span>
+                      <span className="font-medium">{user.verificationStatus}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Badge Tier</span>
+                      <span className="font-medium">{user.badgeTier || 'N/A'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Hourly Rate</span>
+                      <span className="font-medium">
+                        {user.hourlyRate ? `${formatCurrency(user.hourlyRate)}/hr` : 'Not set'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Total Earnings</span>
+                      <span className="font-medium">{formatCurrency(user.totalEarnings || 0)}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Wallet Balance</span>
+                      <span className="font-medium">{formatCurrency(user.walletBalance || 0)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Total Spent</span>
+                      <span className="font-medium">{formatCurrency(user.totalSpent || 0)}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-muted-foreground">Tasks Posted</span>
+                      <span className="font-medium">{user._count?.tasksPosted || 0}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-muted-foreground">Average Rating</span>
+                  <span className="font-medium">
+                    {user.averageRating ? user.averageRating.toFixed(1) : 'No reviews'}
+                  </span>
+                </div>
               </CardContent>
             </Card>
+          </div>
+
+          {isWorkerUser && workerSkills.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Skills & Services</CardTitle>
+                <CardDescription>Expertise shared on profile</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {workerSkills.map((skill: any) => (
+                    <Badge key={skill.id} variant="outline" className="text-xs px-2 py-1">
+                      {skill.skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {(hasProfessionalDetails || hasSocialLinks) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {hasProfessionalDetails && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Profile Details</CardTitle>
+                    <CardDescription>Additional context provided by the user</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {(user as any).gender && (
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-muted-foreground">Gender</span>
+                        <span className="font-medium">{(user as any).gender}</span>
+                      </div>
+                    )}
+                    {formattedBirthdate && (
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-muted-foreground">Birthdate</span>
+                        <span className="font-medium">{formattedBirthdate}</span>
+                      </div>
+                    )}
+                    {(user as any).schedulingUrl && (
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-muted-foreground">Scheduling</span>
+                        <a
+                          href={(user as any).schedulingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-primary hover:underline"
+                        >
+                          View link
+                        </a>
+                      </div>
+                    )}
+                    {(user as any).referralSource && (
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-muted-foreground">Referral Source</span>
+                        <span className="font-medium">{(user as any).referralSource}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              {hasSocialLinks && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>External Links</CardTitle>
+                    <CardDescription>Useful links shared by the user</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      {socialLinks.map((link) => (
+                        <div key={link.label} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                          <span className="text-muted-foreground">{link.label}</span>
+                          <a
+                            href={link.value as string}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-primary hover:underline"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </TabsContent>
 

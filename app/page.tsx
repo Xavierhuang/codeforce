@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Star, CheckCircle, ChevronRight } from 'lucide-react'
 import useSWR from 'swr'
 import { formatCurrency } from '@/lib/utils'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TaskerBadge } from '@/components/TaskerBadge'
 import { TaskerBadgeTier } from '@/lib/badge-tier'
 
@@ -37,8 +37,13 @@ export default function Home() {
   
   // Fetch recommended experts
   const { data: recommendedTaskers } = useSWR(
-    '/api/v1/search/developers?limit=6',
+    '/api/v1/search/developers?limit=6&verificationStatus=VERIFIED',
     fetcher
+  )
+
+  const verifiedRecommendedTaskers = useMemo(
+    () => (recommendedTaskers || []).filter((tasker: any) => tasker.verificationStatus === 'VERIFIED'),
+    [recommendedTaskers]
   )
 
   const handleGetStarted = () => {
@@ -126,7 +131,7 @@ export default function Home() {
           </div>
 
           {/* Experts Recommended for You */}
-          {recommendedTaskers && recommendedTaskers.length > 0 && (
+          {verifiedRecommendedTaskers.length > 0 && (
             <section className="max-w-7xl mx-auto mb-16" suppressHydrationWarning>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold">
@@ -141,89 +146,97 @@ export default function Home() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendedTaskers.slice(0, 6).map((tasker: any) => {
+                {verifiedRecommendedTaskers.slice(0, 6).map((tasker: any) => {
                   const topServices = tasker.workerServices?.slice(0, 3) || []
                   const completedTasks = tasker._count?.tasksAssigned || 0
                   const rating = tasker.rating || 0
                   const reviewCount = tasker._count?.reviewsReceived || 0
                   
                   return (
-                    <Card key={tasker.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        {/* Popular Badge */}
-                        <div className="text-xs text-muted-foreground mb-3">
-                          Popular in your area
-                        </div>
-                        
-                        {/* Profile Picture and Name */}
-                        <div className="flex items-start gap-4 mb-4">
-                          {tasker.avatarUrl ? (
-                            <img
-                              src={tasker.avatarUrl}
-                              alt={tasker.name || 'Expert'}
-                              className="w-16 h-16 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-xl font-semibold">
-                              {tasker.name?.charAt(0).toUpperCase() || 'T'}
-                            </div>
-                          )}
+                    <Card key={tasker.id} className="transition-shadow hover:shadow-lg h-full">
+                      <CardContent className="p-6 flex flex-col h-full">
+                        <div className="text-xs text-muted-foreground mb-3">Verified Expert</div>
+
+                        <div className="flex items-start gap-4">
+                          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                            {tasker.avatarUrl ? (
+                              <img
+                                src={tasker.avatarUrl}
+                                alt={tasker.name || 'Expert'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center text-xl font-semibold">
+                                {tasker.name?.charAt(0).toUpperCase() || 'E'}
+                              </div>
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-lg truncate">
                                 {tasker.name || 'Expert'}
                               </h3>
                               {tasker.badgeTier && tasker.badgeTier !== 'STARTER' && (
-                                <TaskerBadge 
-                                  tier={tasker.badgeTier as TaskerBadgeTier} 
+                                <TaskerBadge
+                                  tier={tasker.badgeTier as TaskerBadgeTier}
                                   size="sm"
                                 />
                               )}
+                              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span>{completedTasks} Completed Tasks</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-semibold">{rating.toFixed(1)}</span>
-                              <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                              {tasker.bio || 'Experienced expert on Skillyy ready to help with your project.'}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-green-600" />
+                                {completedTasks} jobs
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                {rating.toFixed(1)} ({reviewCount})
+                              </span>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="border-t pt-4">
-                          <div className="text-xs font-semibold text-muted-foreground mb-3">
+
+                        <div className="mt-4 flex-1 flex flex-col">
+                          <div className="text-xs font-semibold text-muted-foreground mb-2">
                             Top Skills
                           </div>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {topServices.length > 0 ? (
-                              topServices.map((service: any) => (
-                                <Link
-                                  key={service.id}
-                                  href={`/profile/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
-                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 hover:bg-primary hover:text-primary-foreground rounded transition-all"
-                                >
-                                  {service.skillName} for {formatCurrency(service.hourlyRate)}/hr
-                                </Link>
-                              ))
-                            ) : (
-                              tasker.skills?.slice(0, 3).map((skill: any) => (
-                                <span
-                                  key={skill.id}
-                                  className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded"
-                                >
-                                  {skill.skill}
-                                  {tasker.hourlyRate && ` for ${formatCurrency(tasker.hourlyRate)}/hr`}
-                                </span>
-                              ))
-                            )}
+                          <div className="flex flex-wrap gap-2 mb-4 min-h-[32px]">
+                            {topServices.length > 0
+                              ? topServices.map((service: any) => (
+                                  <Link
+                                    key={service.id}
+                                    href={`/profile/${tasker.slug || tasker.id}/service/${encodeURIComponent(service.skillName)}`}
+                                    className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded bg-primary/5 truncate hover:bg-primary/10 transition-colors"
+                                  >
+                                    {service.skillName}
+                                  </Link>
+                                ))
+                              : (tasker.skills || []).slice(0, 3).map((skill: any) => (
+                                  <span
+                                    key={skill.id}
+                                    className="px-3 py-1.5 text-xs font-medium border border-primary/30 rounded bg-primary/5 truncate"
+                                  >
+                                    {skill.skill}
+                                  </span>
+                                ))}
                           </div>
-                          <Link href={`/profile/${tasker.slug || tasker.id}`}>
-                            <Button variant="outline" className="w-full">
-                              View Expert Profile
-                            </Button>
-                          </Link>
+                          <div className="mt-auto space-y-2">
+                            {tasker.hourlyRate && (
+                              <div className="text-sm font-semibold text-gray-900">
+                                {formatCurrency(tasker.hourlyRate)} / hr
+                              </div>
+                            )}
+                            <Link href={`/profile/${tasker.slug || tasker.id}`}>
+                              <Button variant="outline" className="w-full">
+                                View Expert Profile
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

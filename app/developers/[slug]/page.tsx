@@ -9,3 +9,4 @@ interface LegacyDeveloperProfilePageProps {
 export default function LegacyDeveloperProfilePage({ params }: LegacyDeveloperProfilePageProps) {
   redirect(`/profile/${params.slug}`)
 }
+

@@ -37,6 +37,9 @@ export async function GET(
         website: true,
         linkedinUrl: true,
         githubUrl: true,
+        twitterUrl: true,
+        instagramUrl: true,
+        schedulingUrl: true,
         // Professional information (public)
         yearsOfExperience: true,
         education: true,
@@ -77,6 +80,17 @@ export async function GET(
         { status: 404 }
       )
     }
+
+    // Log for debugging (remove in production if needed)
+    console.log('Developer profile fetched:', {
+      slug,
+      hasSchedulingUrl: !!developer.schedulingUrl,
+      hasTwitterUrl: !!developer.twitterUrl,
+      hasInstagramUrl: !!developer.instagramUrl,
+      hasLinkedInUrl: !!developer.linkedinUrl,
+      hasGithubUrl: !!developer.githubUrl,
+      hasWebsite: !!developer.website,
+    })
 
     return NextResponse.json(developer)
   } catch (error) {

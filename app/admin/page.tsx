@@ -288,8 +288,8 @@ export default function AdminDashboardPage() {
                 if (link.badge === 0) return null
                 return (
                   <Link key={link.href} href={link.href}>
-                    <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer">
+                      <div className="flex items-start gap-3">
                         <div className={`p-2 rounded-lg ${link.color} bg-opacity-10`}>
                           <Icon className={`h-5 w-5 ${link.color}`} />
                         </div>
@@ -298,7 +298,7 @@ export default function AdminDashboardPage() {
                           <div className="text-xs text-muted-foreground">{link.description}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 sm:self-auto">
                         <Badge className={`${link.badgeColor} text-white`}>
                           {link.badge}
                         </Badge>
@@ -336,7 +336,7 @@ export default function AdminDashboardPage() {
                 return (
                   <Link key={task.href} href={task.href}>
                     <div className="flex flex-col p-4 rounded-lg border hover:bg-accent transition-colors cursor-pointer h-full">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 mb-2">
                         <Icon className="h-5 w-5 text-primary" />
                         <div className="font-medium text-sm">{task.title}</div>
                       </div>
@@ -358,15 +358,15 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">Clients</span>
                 <Badge variant="secondary">{stats?.clientCount || 0}</Badge>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">Workers</span>
                 <Badge variant="secondary">{stats?.workerCount || 0}</Badge>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">Verified Workers</span>
                 <Badge variant="default">{stats?.verifiedWorkers || 0}</Badge>
               </div>
@@ -380,15 +380,15 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">Open</span>
                 <Badge variant="outline">{stats?.openTasks || 0}</Badge>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">In Progress</span>
                 <Badge variant="secondary">{stats?.inProgressTasks || 0}</Badge>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">Completed</span>
                 <Badge className="bg-green-100 text-green-800">{stats?.completedTasks || 0}</Badge>
               </div>

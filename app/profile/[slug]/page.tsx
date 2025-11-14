@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Star, MapPin, CheckCircle, Calendar, Mail, ExternalLink } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { QRCode } from '@/components/QRCode'
@@ -28,6 +29,20 @@ export default function ProfilePage() {
     slug ? `/api/v1/developers/${slug}` : null,
     fetcher
   )
+
+  // Debug: Log developer data when it changes
+  useEffect(() => {
+    if (developer) {
+      console.log('Developer data received:', {
+        hasSchedulingUrl: !!developer.schedulingUrl,
+        hasTwitterUrl: !!developer.twitterUrl,
+        hasInstagramUrl: !!developer.instagramUrl,
+        schedulingUrl: developer.schedulingUrl,
+        twitterUrl: developer.twitterUrl,
+        instagramUrl: developer.instagramUrl,
+      })
+    }
+  }, [developer])
 
   const { data: user } = useSWR(
     session ? '/api/v1/users/me' : null,
@@ -60,6 +75,23 @@ export default function ProfilePage() {
       </div>
     )
   }
+
+  const tasksCompleted = developer._count?.tasksAssigned || 0
+  const reviewCount = developer._count?.reviewsReceived || 0
+  const averageRatingLabel = developer.rating ? `${developer.rating.toFixed(1)} (${reviewCount})` : 'No reviews yet'
+  const serviceTypeLabel = (() => {
+    switch (developer.serviceType) {
+      case 'IN_PERSON':
+        return 'In-person'
+      case 'BOTH':
+      case 'HYBRID':
+        return 'Remote & In-person'
+      default:
+        return 'Remote'
+    }
+  })()
+  const memberSince = developer.createdAt ? new Date(developer.createdAt).toLocaleDateString() : null
+  const serviceRadiusLabel = developer.serviceRadiusMiles ? `${developer.serviceRadiusMiles} mi radius` : null
 
   return (
     <div className="min-h-screen bg-[#F3F2EF] pb-8" suppressHydrationWarning>
@@ -178,128 +210,233 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-6">
-            {developer.bio && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">About</h2>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{developer.bio}</p>
-              </div>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className={`h-full ${developer.bio ? '' : 'lg:col-span-3'}`}>
+                <CardHeader className="pb-3">
+                  <CardTitle>Expert Snapshot</CardTitle>
+                  <CardDescription>Key details for buyers</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Hourly Rate</span>
+                    <span className="font-semibold text-gray-900">
+                      {developer.hourlyRate ? `${formatCurrency(developer.hourlyRate)} / hr` : 'Contact for quote'}
+                    </span>
+                  </div>
+                  <div className="h-px bg-gray-100" />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Tasks Completed</span>
+                    <span className="font-medium text-gray-900">{tasksCompleted}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Average Rating</span>
+                    <span className="font-medium text-gray-900">{averageRatingLabel}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Service Type</span>
+                    <span className="font-medium text-gray-900">{serviceTypeLabel}</span>
+                  </div>
+                  {serviceRadiusLabel && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Service Radius</span>
+                      <span className="font-medium text-gray-900">{serviceRadiusLabel}</span>
+                    </div>
+                  )}
+                  {memberSince && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Member Since</span>
+                      <span className="font-medium text-gray-900">{memberSince}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {developer.bio && (
+                <Card className="lg:col-span-2 h-full">
+                  <CardHeader className="pb-3">
+                    <CardTitle>About</CardTitle>
+                    <CardDescription>In their own words</CardDescription>
+                  </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {developer.bio}
+                      </p>
+                    </CardContent>
+                </Card>
+              )}
+            </div>
 
             {developer.skills && developer.skills.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Skills</h2>
-                <div className="flex flex-wrap gap-2">
-                  {developer.skills.map((skill: any) => (
-                    <div
-                      key={skill.id}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-[#94FE0C]/10 border border-[#94FE0C]/30 rounded-lg"
-                    >
-                      <span className="text-sm font-semibold text-gray-900">{skill.skill}</span>
-                      {skill.level && (
-                        <span className="text-xs text-gray-600 capitalize">({skill.level})</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Skills</CardTitle>
+                  <CardDescription>Highlighted expertise</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {developer.skills.map((skill: any) => (
+                      <div
+                        key={skill.id}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[#94FE0C]/10 border border-[#94FE0C]/30 rounded-lg"
+                      >
+                        <span className="text-sm font-semibold text-gray-900">{skill.skill}</span>
+                        {skill.level && (
+                          <span className="text-xs text-gray-600 capitalize">({skill.level})</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {(developer.yearsOfExperience || developer.education || developer.languages || developer.certifications) && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Professional Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {developer.yearsOfExperience && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Years of Experience</p>
-                      <p className="text-sm font-medium text-gray-900">{developer.yearsOfExperience} years</p>
-                    </div>
-                  )}
-                  {developer.education && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Education</p>
-                      <p className="text-sm font-medium text-gray-900">{developer.education}</p>
-                    </div>
-                  )}
-                  {developer.languages && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Languages</p>
-                      <p className="text-sm font-medium text-gray-900">{developer.languages}</p>
-                    </div>
-                  )}
-                  {developer.certifications && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Certifications</p>
-                      <p className="text-sm font-medium text-gray-900">{developer.certifications}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Professional Information</CardTitle>
+                  <CardDescription>Credentials and background</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {developer.yearsOfExperience && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Years of Experience</p>
+                        <p className="text-sm font-medium text-gray-900">{developer.yearsOfExperience} years</p>
+                      </div>
+                    )}
+                    {developer.education && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Education</p>
+                        <p className="text-sm font-medium text-gray-900">{developer.education}</p>
+                      </div>
+                    )}
+                    {developer.languages && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Languages</p>
+                        <p className="text-sm font-medium text-gray-900">{developer.languages}</p>
+                      </div>
+                    )}
+                    {developer.certifications && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Certifications</p>
+                        <p className="text-sm font-medium text-gray-900">{developer.certifications}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
-            {(developer.linkedinUrl || developer.githubUrl || developer.website) && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Professional Links</h2>
-                <div className="flex flex-wrap gap-4">
-                  {developer.linkedinUrl && (
-                    <a
-                      href={developer.linkedinUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      LinkedIn
-                    </a>
-                  )}
-                  {developer.githubUrl && (
-                    <a
-                      href={developer.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      GitHub
-                    </a>
-                  )}
-                  {developer.website && (
-                    <a
-                      href={developer.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Website
-                    </a>
-                  )}
-                </div>
-              </div>
+            {(developer.linkedinUrl || developer.githubUrl || developer.website || developer.twitterUrl || developer.instagramUrl || developer.schedulingUrl) && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Professional Links</CardTitle>
+                  <CardDescription>Verified by the expert</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+                    {developer.schedulingUrl && (
+                      <a
+                        href={developer.schedulingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors font-medium"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Book 15 minute free consultation
+                      </a>
+                    )}
+                    {developer.linkedinUrl && (
+                      <a
+                        href={developer.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        LinkedIn
+                      </a>
+                    )}
+                    {developer.githubUrl && (
+                      <a
+                        href={developer.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        GitHub
+                      </a>
+                    )}
+                    {developer.twitterUrl && (
+                      <a
+                        href={developer.twitterUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Twitter
+                      </a>
+                    )}
+                    {developer.instagramUrl && (
+                      <a
+                        href={developer.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Instagram
+                      </a>
+                    )}
+                    {developer.website && (
+                      <a
+                        href={developer.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#94FE0C] transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {developer.locationLat && developer.locationLng && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Location</h2>
-                <div className="rounded-lg overflow-hidden border border-gray-200">
-                  <GoogleMapsLoader>
-                    <LocationPicker
-                      lat={parseFloat(developer.locationLat.toString())}
-                      lng={parseFloat(developer.locationLng.toString())}
-                      onLocationChange={() => {}}
-                      height="300px"
-                      zoom={12}
-                      readOnly={true}
-                      showControls={false}
-                    />
-                  </GoogleMapsLoader>
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Location</CardTitle>
+                  <CardDescription>Approximate service area</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <GoogleMapsLoader>
+                      <LocationPicker
+                        lat={parseFloat(developer.locationLat.toString())}
+                        lng={parseFloat(developer.locationLng.toString())}
+                        onLocationChange={() => {}}
+                        height="300px"
+                        zoom={12}
+                        readOnly={true}
+                        showControls={false}
+                      />
+                    </GoogleMapsLoader>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {developer.reviewsReceived && developer.reviewsReceived.length > 0 && (
-              <div className="pt-6 border-t">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Reviews</h2>
-                <div className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Recent Reviews</CardTitle>
+                  <CardDescription>What clients are saying</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {developer.reviewsReceived.map((review: any) => (
                     <div key={review.id} className="border-b pb-4 last:border-0 last:pb-0">
                       <div className="flex items-center gap-2 mb-2">
@@ -327,38 +464,43 @@ export default function ProfilePage() {
                       )}
                     </div>
                   ))}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {profileUrl && (
-              <div className="pt-6 border-t">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Share Profile</h3>
-                <div className="flex flex-col items-center space-y-3">
-                  <QRCode value={profileUrl} size={150} />
-                  <div className="w-full max-w-md">
-                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                      <input
-                        type="text"
-                        value={profileUrl}
-                        readOnly
-                        className="flex-1 text-xs bg-transparent border-0 outline-none truncate"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          navigator.clipboard.writeText(profileUrl)
-                          alert('Link copied to clipboard!')
-                        }}
-                        className="flex-shrink-0"
-                      >
-                        Copy
-                      </Button>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Share Profile</CardTitle>
+                  <CardDescription>Invite clients to view this expert</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center space-y-3">
+                    <QRCode value={profileUrl} size={150} />
+                    <div className="w-full max-w-md">
+                      <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                        <input
+                          type="text"
+                          value={profileUrl}
+                          readOnly
+                          className="flex-1 text-xs bg-transparent border-0 outline-none truncate"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            navigator.clipboard.writeText(profileUrl)
+                            alert('Link copied to clipboard!')
+                          }}
+                          className="flex-shrink-0"
+                        >
+                          Copy
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

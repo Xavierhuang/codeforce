@@ -5,6 +5,8 @@ import { handleApiError, Errors } from '@/lib/errors'
 import { validateBody, validateParams } from '@/lib/validation'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const ReportIdParamSchema = z.object({
   id: z.string().min(1),
 })

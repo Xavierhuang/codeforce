@@ -5,6 +5,8 @@ import { handleApiError } from '@/lib/errors'
 import { validateSearchParams } from '@/lib/validation'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const ReviewReportsQuerySchema = z.object({
   status: z.enum(['PENDING', 'REVIEWED', 'RESOLVED', 'DISMISSED']).optional(),
   reviewId: z.string().optional(),

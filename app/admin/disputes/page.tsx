@@ -266,7 +266,7 @@ export default function AdminDisputesPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
@@ -274,7 +274,7 @@ export default function AdminDisputesPage() {
                         setSelectedDispute(dispute)
                         setShowDisputeDetails(true)
                       }}
-                      className="text-xs"
+                      className="text-xs w-full sm:w-auto"
                     >
                       <Eye className="w-3 h-3 mr-1" />
                       View Details
@@ -287,7 +287,7 @@ export default function AdminDisputesPage() {
                           setSelectedDispute(dispute)
                           setShowResolveDialog(true)
                         }}
-                        className="text-xs"
+                        className="text-xs w-full sm:w-auto"
                       >
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Resolve
@@ -295,7 +295,7 @@ export default function AdminDisputesPage() {
                     )}
                     {dispute.task?.id && (
                       <Link href={`/admin/tasks?taskId=${dispute.task.id}`}>
-                        <Button size="sm" variant="ghost" className="text-xs">
+                        <Button size="sm" variant="ghost" className="text-xs w-full sm:w-auto">
                           View Task
                         </Button>
                       </Link>

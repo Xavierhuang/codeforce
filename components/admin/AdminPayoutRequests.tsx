@@ -145,7 +145,7 @@ export function AdminPayoutRequests() {
                   key={request.id}
                   className="border rounded-lg p-4"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <StatusBadge status={request.status} />
@@ -175,7 +175,7 @@ export function AdminPayoutRequests() {
                           ` • Processed ${format(new Date(request.processedAt), 'MMM d, yyyy')}`}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
                       {request.status === 'PENDING' && (
                         <>
                           <Button
@@ -184,6 +184,7 @@ export function AdminPayoutRequests() {
                               setSelectedRequest(request)
                               setShowApproveModal(true)
                             }}
+                            className="w-full sm:w-auto"
                           >
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Approve
@@ -195,6 +196,7 @@ export function AdminPayoutRequests() {
                               setSelectedRequest(request)
                               setShowRejectModal(true)
                             }}
+                            className="w-full sm:w-auto"
                           >
                             <XCircle className="w-4 h-4 mr-2" />
                             Reject
@@ -208,6 +210,7 @@ export function AdminPayoutRequests() {
                             setSelectedRequest(request)
                             setShowProcessModal(true)
                           }}
+                          className="w-full sm:w-auto"
                         >
                           <DollarSign className="w-4 h-4 mr-2" />
                           Process Payment

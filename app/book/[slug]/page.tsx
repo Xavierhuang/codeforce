@@ -182,8 +182,8 @@ export default function BookWorkerPage() {
     <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
       {/* Progress Stepper */}
       <div className="mb-6 md:mb-8">
-        <div className="flex items-center justify-center max-w-2xl mx-auto">
-          <div className="flex items-center flex-1">
+        <div className="flex items-center justify-center max-w-2xl mx-auto overflow-x-auto px-2 sm:px-0">
+          <div className="flex items-center flex-1 min-w-[260px] sm:min-w-0">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
               step >= 1 ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30 text-muted-foreground'
             }`}>
@@ -199,7 +199,7 @@ export default function BookWorkerPage() {
             </div>
           </div>
         </div>
-        <div className="flex justify-between max-w-2xl mx-auto mt-2">
+        <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:justify-between sm:text-left max-w-2xl mx-auto mt-2">
           <span className={`text-xs md:text-sm font-medium ${step >= 1 ? 'text-foreground' : 'text-muted-foreground'}`}>
             Task Details
           </span>
@@ -209,7 +209,7 @@ export default function BookWorkerPage() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* Main Content */}
         <div className="lg:col-span-2">
           {step === 1 ? (

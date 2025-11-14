@@ -5,6 +5,8 @@ import { handleApiError } from '@/lib/errors'
 import { validateSearchParams } from '@/lib/validation'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const ReviewAnalyticsQuerySchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),

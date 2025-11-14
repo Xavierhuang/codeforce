@@ -18,6 +18,7 @@ export async function GET(
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
+        skills: true,
         _count: {
           select: {
             tasksPosted: true,
