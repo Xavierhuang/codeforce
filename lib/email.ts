@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import sgMail from '@sendgrid/mail'
 import { formatCurrency } from './utils'
+import { generateReceiptPDF } from './pdf-receipt'
 
 // Email configuration - Support both SendGrid API and SMTP
 const useSendGrid = !!process.env.SENDGRID_API_KEY
@@ -30,7 +31,7 @@ if (useSMTP) {
   console.warn('SMTP not configured. Email receipts will not be sent.')
 }
 
-const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@skillyy.com'
+const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'no-reply@skillyy.com'
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com'
 
 interface ReceiptData {
@@ -158,6 +159,10 @@ export async function sendReceiptEmail(data: ReceiptData): Promise<boolean> {
       </html>
     `
 
+    // Generate PDF receipt
+    const pdfBuffer = await generateReceiptPDF(data)
+    const pdfBase64 = pdfBuffer.toString('base64')
+
     // Use SendGrid API if configured, otherwise use SMTP
     if (useSendGrid) {
       await sgMail.send({
@@ -165,6 +170,14 @@ export async function sendReceiptEmail(data: ReceiptData): Promise<boolean> {
         to: data.buyerEmail,
         subject: `Payment Receipt - ${formatCurrency(data.amount)}`,
         html: receiptHtml,
+        attachments: [
+          {
+            content: pdfBase64,
+            filename: `receipt-${data.transactionId}.pdf`,
+            type: 'application/pdf',
+            disposition: 'attachment',
+          },
+        ],
       })
     } else if (transporter) {
       await transporter.sendMail({
@@ -172,13 +185,143 @@ export async function sendReceiptEmail(data: ReceiptData): Promise<boolean> {
         to: data.buyerEmail,
         subject: `Payment Receipt - ${formatCurrency(data.amount)}`,
         html: receiptHtml,
+        attachments: [
+          {
+            filename: `receipt-${data.transactionId}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ],
       })
     }
 
-    console.log(`Receipt email sent successfully to ${data.buyerEmail}`)
+    console.log(`Receipt email with PDF sent successfully to ${data.buyerEmail}`)
     return true
   } catch (error: any) {
     console.error('Error sending receipt email:', error)
+    if (error.response) {
+      console.error('SendGrid error details:', error.response.body)
+    }
+    return false
+  }
+}
+
+interface OrderData {
+  taskId: string
+  taskTitle: string
+  buyerName: string
+  buyerEmail: string
+  workerName: string
+  workerEmail: string
+  amount: number
+  scheduledAt?: Date
+  date: Date
+}
+
+export async function sendOrderEmail(data: OrderData): Promise<boolean> {
+  if (!useSendGrid && !transporter) {
+    console.warn('Email service not configured. Order email not sent.')
+    return false
+  }
+
+  try {
+    const orderHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .order-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+            .detail-row:last-child { border-bottom: none; }
+            .button { background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>New Order Received!</h1>
+              <p>You have a new task assignment</p>
+            </div>
+            <div class="content">
+              <p>Hello ${data.workerName},</p>
+              <p>Great news! You've received a new order on Skillyy.</p>
+              
+              <div class="order-details">
+                <h2>Order Details</h2>
+                <div class="detail-row">
+                  <span><strong>Task:</strong></span>
+                  <span>${data.taskTitle}</span>
+                </div>
+                <div class="detail-row">
+                  <span><strong>Task ID:</strong></span>
+                  <span><a href="${appUrl}/tasks/${data.taskId}">${data.taskId}</a></span>
+                </div>
+                <div class="detail-row">
+                  <span><strong>Client:</strong></span>
+                  <span>${data.buyerName}</span>
+                </div>
+                ${data.scheduledAt ? `
+                <div class="detail-row">
+                  <span><strong>Scheduled Date:</strong></span>
+                  <span>${new Date(data.scheduledAt).toLocaleString()}</span>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                  <span><strong>Order Date:</strong></span>
+                  <span>${data.date.toLocaleString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span><strong>Total Amount:</strong></span>
+                  <span style="font-size: 18px; font-weight: bold; color: #10b981;">${formatCurrency(data.amount)}</span>
+                </div>
+              </div>
+
+              <p style="margin-top: 20px;">
+                <a href="${appUrl}/tasks/${data.taskId}" class="button">View Task Details</a>
+              </p>
+
+              <p style="margin-top: 20px;">
+                Please review the task details and confirm your availability. The client is waiting for your response.
+              </p>
+
+              <div class="footer">
+                <p>This is an automated notification from Skillyy.</p>
+                <p>If you have any questions, please contact support at support@skillyy.com</p>
+                <p>&copy; ${new Date().getFullYear()} Skillyy. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    // Use SendGrid API if configured, otherwise use SMTP
+    if (useSendGrid) {
+      await sgMail.send({
+        from: fromEmail,
+        to: data.workerEmail,
+        subject: `New Order: ${data.taskTitle}`,
+        html: orderHtml,
+      })
+    } else if (transporter) {
+      await transporter.sendMail({
+        from: `Skillyy <${fromEmail}>`,
+        to: data.workerEmail,
+        subject: `New Order: ${data.taskTitle}`,
+        html: orderHtml,
+      })
+    }
+
+    console.log(`Order email sent successfully to ${data.workerEmail}`)
+    return true
+  } catch (error: any) {
+    console.error('Error sending order email:', error)
     if (error.response) {
       console.error('SendGrid error details:', error.response.body)
     }

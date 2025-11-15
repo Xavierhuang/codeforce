@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { createNotification, checkAndSendOfflineNotification } from '@/lib/notifications'
 import { triggerMessageEvent } from '@/lib/pusher'
 import { calculateFees, getFeeConfigFromSettings } from '@/lib/stripe-fees'
-import { sendReceiptEmail } from '@/lib/email'
 import { logPaymentEvent } from '@/lib/payment-logger'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -119,6 +118,9 @@ export async function handleOfferPurchase(
   ])
 
   try {
+    const { sendReceiptEmail, sendOrderEmail } = await import('@/lib/email')
+    
+    // Send PDF receipt to buyer
     const receiptSent = await sendReceiptEmail({
       transactionId: paymentIntent.id,
       paymentIntentId: paymentIntent.id,
@@ -141,8 +143,22 @@ export async function handleOfferPurchase(
         data: { receiptSent: true, receiptSentAt: new Date() },
       })
     }
+
+    // Send order email to tasker
+    if (offer.worker.email) {
+      await sendOrderEmail({
+        taskId: task.id,
+        taskTitle: task.title,
+        buyerName: buyer.name || buyer.email,
+        buyerEmail: buyer.email,
+        workerName: offer.worker.name || 'Tasker',
+        workerEmail: offer.worker.email,
+        amount: fees.totalAmount,
+        date: new Date(),
+      })
+    }
   } catch (emailError: any) {
-    console.error(`[PAYMENT_HANDLER] Failed to send receipt email:`, emailError)
+    console.error(`[PAYMENT_HANDLER] Failed to send emails:`, emailError)
   }
 
   if (offer.worker.phone) {
@@ -273,6 +289,9 @@ export async function handleDirectBooking(
   ])
 
   try {
+    const { sendReceiptEmail, sendOrderEmail } = await import('@/lib/email')
+    
+    // Send PDF receipt to buyer
     const receiptSent = await sendReceiptEmail({
       transactionId: paymentIntent.id,
       paymentIntentId: paymentIntent.id,
@@ -295,8 +314,23 @@ export async function handleDirectBooking(
         data: { receiptSent: true, receiptSentAt: new Date() },
       })
     }
+
+    // Send order email to tasker
+    if (worker.email) {
+      await sendOrderEmail({
+        taskId: task.id,
+        taskTitle: task.title,
+        buyerName: buyer.name || buyer.email,
+        buyerEmail: buyer.email,
+        workerName: worker.name || 'Tasker',
+        workerEmail: worker.email,
+        amount: fees.totalAmount,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+        date: new Date(),
+      })
+    }
   } catch (emailError: any) {
-    console.error(`[PAYMENT_HANDLER] Failed to send receipt email:`, emailError)
+    console.error(`[PAYMENT_HANDLER] Failed to send emails:`, emailError)
   }
 
   if (worker.phone) {
