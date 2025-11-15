@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slug'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -143,16 +145,16 @@ export async function PUT(req: NextRequest) {
     const updateData: any = {}
     
     if (name !== undefined) updateData.name = name
-    if (bio !== undefined) updateData.bio = bio
+    if (bio !== undefined) updateData.bio = bio && bio.trim() ? bio.trim() : null
     if (phone !== undefined) updateData.phone = phone // Private - not shown on public profiles
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : null
     if (avatarCropX !== undefined) updateData.avatarCropX = avatarCropX
     if (avatarCropY !== undefined) updateData.avatarCropY = avatarCropY
     if (avatarCropScale !== undefined) updateData.avatarCropScale = avatarCropScale
     if (bannerUrl !== undefined) updateData.bannerUrl = bannerUrl && bannerUrl.trim() ? bannerUrl.trim() : null
-    if (website !== undefined) updateData.website = website
-    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl
-    if (githubUrl !== undefined) updateData.githubUrl = githubUrl
+    if (website !== undefined) updateData.website = website && website.trim() ? website.trim() : null
+    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl && linkedinUrl.trim() ? linkedinUrl.trim() : null
+    if (githubUrl !== undefined) updateData.githubUrl = githubUrl && githubUrl.trim() ? githubUrl.trim() : null
     if (location !== undefined) updateData.location = location
     if (locationLat !== undefined) updateData.locationLat = locationLat
     if (locationLng !== undefined) updateData.locationLng = locationLng
@@ -170,16 +172,16 @@ export async function PUT(req: NextRequest) {
     if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate
     if (serviceType !== undefined) updateData.serviceType = serviceType
     if (yearsOfExperience !== undefined) updateData.yearsOfExperience = yearsOfExperience
-    if (education !== undefined) updateData.education = education
-    if (languages !== undefined) updateData.languages = languages
-    if (certifications !== undefined) updateData.certifications = certifications
+    if (education !== undefined) updateData.education = education && education.trim() ? education.trim() : null
+    if (languages !== undefined) updateData.languages = languages && languages.trim() ? languages.trim() : null
+    if (certifications !== undefined) updateData.certifications = certifications && certifications.trim() ? certifications.trim() : null
     if (gender !== undefined) updateData.gender = gender
     if (birthdate !== undefined) {
       updateData.birthdate = birthdate ? new Date(birthdate) : null
     }
-    if (schedulingUrl !== undefined) updateData.schedulingUrl = schedulingUrl
-    if (twitterUrl !== undefined) updateData.twitterUrl = twitterUrl
-    if (instagramUrl !== undefined) updateData.instagramUrl = instagramUrl
+    if (schedulingUrl !== undefined) updateData.schedulingUrl = schedulingUrl && schedulingUrl.trim() ? schedulingUrl.trim() : null
+    if (twitterUrl !== undefined) updateData.twitterUrl = twitterUrl && twitterUrl.trim() ? twitterUrl.trim() : null
+    if (instagramUrl !== undefined) updateData.instagramUrl = instagramUrl && instagramUrl.trim() ? instagramUrl.trim() : null
     if (referralSource !== undefined) updateData.referralSource = referralSource
     // Buyer-specific fields
     if (company !== undefined) updateData.company = company
@@ -243,10 +245,27 @@ export async function PUT(req: NextRequest) {
     })
 
     return NextResponse.json(userWithRelations)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating user:', error)
+    
+    // Provide more detailed error messages
+    if (error?.code === 'P2002') {
+      // Prisma unique constraint violation
+      return NextResponse.json(
+        { error: 'This value is already taken. Please choose a different one.', details: error.message },
+        { status: 400 }
+      )
+    }
+    
+    if (error?.name === 'PrismaClientValidationError') {
+      return NextResponse.json(
+        { error: 'Invalid data provided. Please check your input.', details: error.message },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error?.message || 'An unexpected error occurred' },
       { status: 500 }
     )
   }
