@@ -28,11 +28,7 @@ export function getPusherClient(): Pusher | null {
     pusherInstance = new Pusher(pusherKey, {
       cluster: pusherCluster,
       authEndpoint: '/api/pusher/auth',
-      auth: {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+      // Don't override Content-Type - let Pusher-js use its default form-encoded format
       enabledTransports: ['ws', 'wss'],
       disabledTransports: [],
     })

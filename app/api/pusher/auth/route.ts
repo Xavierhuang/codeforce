@@ -32,11 +32,27 @@ export async function POST(req: NextRequest) {
     let channel_name: string | null = null
 
     try {
-      if (contentType.includes('application/json')) {
-        const body = await req.json()
-        socket_id = body?.socket_id ?? null
-        channel_name = body?.channel_name ?? null
+      // Pusher-js sends form-encoded data by default, even if Content-Type header says JSON
+      // Try form-encoded first, then JSON as fallback
+      if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+        const rawBody = await req.text()
+        const params = new URLSearchParams(rawBody)
+        socket_id = params.get('socket_id')
+        channel_name = params.get('channel_name')
+      } else if (contentType.includes('application/json')) {
+        try {
+          const body = await req.json()
+          socket_id = body?.socket_id ?? null
+          channel_name = body?.channel_name ?? null
+        } catch (jsonError) {
+          // If JSON parsing fails, try form-encoded format
+          const rawBody = await req.text()
+          const params = new URLSearchParams(rawBody)
+          socket_id = params.get('socket_id')
+          channel_name = params.get('channel_name')
+        }
       } else {
+        // Default to form-encoded if content-type is unclear
         const rawBody = await req.text()
         const params = new URLSearchParams(rawBody)
         socket_id = params.get('socket_id')
