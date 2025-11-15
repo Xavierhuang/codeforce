@@ -8,6 +8,8 @@ import { handleApiError, Errors } from '@/lib/errors'
 import { updateUserRating } from '@/lib/rating-calculator'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth()
@@ -248,9 +250,9 @@ export async function GET(req: NextRequest) {
     const { targetUserId, taskId, reviewerId, page, limit } = queryValidation.data
     
     const where: any = {
-      targetUserId,
       status: 'APPROVED', // Only show approved reviews to users
     }
+    if (targetUserId) where.targetUserId = targetUserId
     if (taskId) where.taskId = taskId
     if (reviewerId) where.reviewerId = reviewerId
 

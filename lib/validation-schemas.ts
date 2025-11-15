@@ -86,13 +86,13 @@ export const ReviewCreateSchema = z.object({
 }).strict()
 
 export const ReviewQuerySchema = z.object({
-  targetUserId: idSchema,
+  targetUserId: idSchema.optional(),
   taskId: idSchema.optional(),
   reviewerId: idSchema.optional(),
   page: z.string().transform((val) => parseInt(val)).pipe(z.number().int().positive()).optional().default('1'),
   limit: z.string().transform((val) => parseInt(val)).pipe(z.number().int().positive().max(100)).optional().default('20'),
-}).refine((data) => data.targetUserId !== undefined, {
-  message: 'targetUserId is required',
+}).refine((data) => data.targetUserId !== undefined || data.taskId !== undefined, {
+  message: 'Either targetUserId or taskId is required',
 })
 
 // ==================== OFFER SCHEMAS ====================

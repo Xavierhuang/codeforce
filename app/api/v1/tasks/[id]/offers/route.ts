@@ -8,6 +8,8 @@ import { sanitizeText } from '@/lib/sanitize'
 import { createNotification } from '@/lib/notifications'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -160,13 +162,32 @@ export async function GET(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    // Only client or admin can see offers
-    if (task.clientId !== user.id && user.role !== 'ADMIN') {
+    // Client and admin can see all offers
+    // Workers can see their own offers (if they've submitted any)
+    const isClient = task.clientId === user.id
+    const isAdmin = user.role === 'ADMIN'
+    
+    // Check if user has submitted an offer for this task
+    const userOffer = await prisma.offer.findFirst({
+      where: {
+        taskId: params.id,
+        workerId: user.id,
+      },
+    })
+    const hasUserOffer = !!userOffer
+
+    if (!isClient && !isAdmin && !hasUserOffer) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Build where clause - workers only see their own offers
+    const where: any = { taskId: params.id }
+    if (hasUserOffer && !isClient && !isAdmin) {
+      where.workerId = user.id
+    }
+
     const offers = await prisma.offer.findMany({
-      where: { taskId: params.id },
+      where,
       include: {
         worker: {
           select: {
