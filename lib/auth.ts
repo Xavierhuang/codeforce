@@ -15,28 +15,42 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            console.log('NextAuth: Missing email or password')
+            return null
+          }
+
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          })
+
+          if (!user) {
+            console.log('NextAuth: User not found for email:', credentials.email)
+            return null
+          }
+
+          if (!user.hashedPassword) {
+            console.log('NextAuth: User has no password (likely OAuth user):', credentials.email)
+            return null
+          }
+
+          const isValid = await bcrypt.compare(credentials.password, user.hashedPassword)
+          if (!isValid) {
+            console.log('NextAuth: Invalid password for email:', credentials.email)
+            return null
+          }
+
+          console.log('NextAuth: Authentication successful for email:', credentials.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as Role,
+          }
+        } catch (error: any) {
+          console.error('NextAuth: Error during authorization:', error?.message || error)
           return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
-
-        if (!user || !user.hashedPassword) {
-          return null
-        }
-
-        const isValid = await bcrypt.compare(credentials.password, user.hashedPassword)
-        if (!isValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as Role,
         }
       },
     }),
