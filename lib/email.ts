@@ -1,7 +1,17 @@
 import nodemailer from 'nodemailer'
+import sgMail from '@sendgrid/mail'
 import { formatCurrency } from './utils'
 
-// Email configuration
+// Email configuration - Support both SendGrid API and SMTP
+const useSendGrid = !!process.env.SENDGRID_API_KEY
+const useSMTP = !useSendGrid && !!process.env.SMTP_USER && !!process.env.SMTP_PASSWORD
+
+// Initialize SendGrid if API key is provided
+if (useSendGrid) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
+}
+
+// SMTP configuration (fallback if SendGrid not used)
 const smtpConfig = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -14,13 +24,13 @@ const smtpConfig = {
 
 let transporter: nodemailer.Transporter | null = null
 
-if (smtpConfig.auth.user && smtpConfig.auth.pass) {
+if (useSMTP) {
   transporter = nodemailer.createTransport(smtpConfig)
-} else {
+} else if (!useSendGrid) {
   console.warn('SMTP not configured. Email receipts will not be sent.')
 }
 
-const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@skillyy.com'
+const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@skillyy.com'
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com'
 
 interface ReceiptData {
@@ -40,8 +50,8 @@ interface ReceiptData {
 }
 
 export async function sendReceiptEmail(data: ReceiptData): Promise<boolean> {
-  if (!transporter) {
-    console.warn('Email transporter not configured. Receipt not sent.')
+  if (!useSendGrid && !transporter) {
+    console.warn('Email service not configured. Receipt not sent.')
     return false
   }
 
@@ -148,16 +158,30 @@ export async function sendReceiptEmail(data: ReceiptData): Promise<boolean> {
       </html>
     `
 
-    await transporter.sendMail({
-      from: `Skillyy <${fromEmail}>`,
-      to: data.buyerEmail,
-      subject: `Payment Receipt - ${formatCurrency(data.amount)}`,
-      html: receiptHtml,
-    })
+    // Use SendGrid API if configured, otherwise use SMTP
+    if (useSendGrid) {
+      await sgMail.send({
+        from: fromEmail,
+        to: data.buyerEmail,
+        subject: `Payment Receipt - ${formatCurrency(data.amount)}`,
+        html: receiptHtml,
+      })
+    } else if (transporter) {
+      await transporter.sendMail({
+        from: `Skillyy <${fromEmail}>`,
+        to: data.buyerEmail,
+        subject: `Payment Receipt - ${formatCurrency(data.amount)}`,
+        html: receiptHtml,
+      })
+    }
 
+    console.log(`Receipt email sent successfully to ${data.buyerEmail}`)
     return true
   } catch (error: any) {
     console.error('Error sending receipt email:', error)
+    if (error.response) {
+      console.error('SendGrid error details:', error.response.body)
+    }
     return false
   }
 }
