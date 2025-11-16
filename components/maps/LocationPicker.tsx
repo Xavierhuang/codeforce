@@ -43,17 +43,25 @@ export function LocationPicker({
     const defaultLng = lng || -74.0060
 
     // Use new map ID for AdvancedMarkerElement (or fallback to default)
-    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'
+    
+    // Debug logging
+    console.log('[LocationPicker] Map ID from env:', mapId)
+    console.log('[LocationPicker] Google Maps loaded:', !!window.google?.maps)
+    console.log('[LocationPicker] Marker library available:', !!window.google?.maps?.marker)
     
     // Helper function to check if AdvancedMarkerElement is available
     const checkAdvancedMarkerAvailable = (): boolean => {
       try {
-        return !!(
+        const available = !!(
           window.google?.maps?.marker &&
           window.google.maps.marker.AdvancedMarkerElement &&
           window.google.maps.marker.PinElement
         )
+        console.log('[LocationPicker] AdvancedMarkerElement check:', available)
+        return available
       } catch (e) {
+        console.error('[LocationPicker] Error checking AdvancedMarkerElement:', e)
         return false
       }
     }
@@ -90,7 +98,16 @@ export function LocationPicker({
 
       // Use AdvancedMarkerElement if available, otherwise fallback to Marker
       let marker: any
-      const useAdvancedMarker = checkAdvancedMarkerAvailable() && mapId !== 'DEMO_MAP_ID'
+      const advancedMarkerAvailable = checkAdvancedMarkerAvailable()
+      const hasValidMapId = mapId !== 'DEMO_MAP_ID' && mapId && mapId.trim() !== ''
+      const useAdvancedMarker = advancedMarkerAvailable && hasValidMapId
+      
+      console.log('[LocationPicker] Decision:', {
+        advancedMarkerAvailable,
+        hasValidMapId,
+        mapId,
+        useAdvancedMarker
+      })
       
       if (useAdvancedMarker) {
         // New AdvancedMarkerElement API
