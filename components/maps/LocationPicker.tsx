@@ -70,21 +70,32 @@ export function LocationPicker({
     }
 
     // Wait for marker library to load (with timeout)
-    const waitForMarkerLibrary = (callback: () => void, maxAttempts = 10, attempt = 0) => {
-      if (checkAdvancedMarkerAvailable()) {
+    const waitForMarkerLibrary = (callback: () => void, maxAttempts = 20, attempt = 0) => {
+      const available = checkAdvancedMarkerAvailable()
+      console.log(`[LocationPicker] Wait attempt ${attempt}/${maxAttempts}, AdvancedMarker available:`, available)
+      
+      if (available) {
+        console.log('[LocationPicker] AdvancedMarkerElement library is ready!')
         callback()
         return
       }
       
       if (attempt >= maxAttempts) {
-        console.warn('AdvancedMarkerElement library not available after waiting, falling back to legacy Marker API')
+        console.warn('[LocationPicker] AdvancedMarkerElement library not available after waiting, falling back to legacy Marker API')
+        console.warn('[LocationPicker] Debug info:', {
+          googleMaps: !!window.google?.maps,
+          markerNamespace: !!window.google?.maps?.marker,
+          AdvancedMarkerElement: !!window.google?.maps?.marker?.AdvancedMarkerElement,
+          PinElement: !!window.google?.maps?.marker?.PinElement,
+          mapId
+        })
         callback()
         return
       }
       
       setTimeout(() => {
         waitForMarkerLibrary(callback, maxAttempts, attempt + 1)
-      }, 100)
+      }, 150)
     }
 
     waitForMarkerLibrary(() => {
@@ -105,12 +116,12 @@ export function LocationPicker({
       const hasValidMapId = mapId !== 'DEMO_MAP_ID' && mapId && mapId.trim() !== ''
       const useAdvancedMarker = advancedMarkerAvailable && hasValidMapId
       
-      console.log('[LocationPicker] Decision:', {
-        advancedMarkerAvailable,
-        hasValidMapId,
-        mapId,
-        useAdvancedMarker
-      })
+      console.log('[LocationPicker] ===== DECISION =====')
+      console.log('[LocationPicker] advancedMarkerAvailable:', advancedMarkerAvailable)
+      console.log('[LocationPicker] hasValidMapId:', hasValidMapId, '(mapId:', mapId, ')')
+      console.log('[LocationPicker] useAdvancedMarker:', useAdvancedMarker)
+      console.log('[LocationPicker] Will use:', useAdvancedMarker ? 'AdvancedMarkerElement' : 'Legacy Marker')
+      console.log('[LocationPicker] ====================')
       
       if (useAdvancedMarker) {
         // New AdvancedMarkerElement API
