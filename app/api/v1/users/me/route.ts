@@ -73,6 +73,7 @@ export async function PUT(req: NextRequest) {
       availability,
       skills,
       workerServices,
+      workExperience,
       idDocumentUrl,
       idDocumentType,
       slug,
@@ -161,6 +162,7 @@ export async function PUT(req: NextRequest) {
     if (serviceRadiusMiles !== undefined) updateData.serviceRadiusMiles = serviceRadiusMiles
     if (availability) updateData.availability = JSON.parse(JSON.stringify(availability))
     if (workerServices !== undefined && Array.isArray(workerServices)) updateData.workerServices = workerServices
+    if (workExperience !== undefined && Array.isArray(workExperience)) updateData.workExperience = JSON.parse(JSON.stringify(workExperience))
     if (idDocumentUrl !== undefined) {
       updateData.idDocumentUrl = idDocumentUrl
       // Set upload date if this is a new document

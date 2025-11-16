@@ -132,3 +132,4 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
   })
 }
 
+

@@ -290,6 +290,35 @@ export default function ProfilePage() {
               </Card>
             )}
 
+            {developer.workExperience && Array.isArray(developer.workExperience) && developer.workExperience.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Work Experience</CardTitle>
+                  <CardDescription>Professional background</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {developer.workExperience.map((exp: any, index: number) => (
+                      <div key={index} className="border-l-4 border-[#94FE0C] pl-4 py-2 relative">
+                        <div className="absolute -left-2.5 top-3 w-5 h-5 bg-[#94FE0C] rounded-full border-4 border-white shadow-sm"></div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 text-base">{exp.position}</h3>
+                          <p className="text-sm text-gray-600 font-medium mt-1">{exp.company}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - {' '}
+                            {exp.isCurrent ? 'Present' : exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Present'}
+                          </p>
+                          {exp.description && (
+                            <p className="text-sm text-gray-700 mt-3 leading-relaxed">{exp.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {(developer.yearsOfExperience || developer.education || developer.languages || developer.certifications) && (
               <Card>
                 <CardHeader className="pb-3">

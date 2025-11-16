@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import useSWR from 'swr'
-import { useRouter } from 'next/navigation'
-import { Save, Upload, MapPin, Edit, Linkedin, Github, Globe, Plus, Trash2, Award, GraduationCap, Languages, Image, Star, CheckCircle } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Save, Upload, MapPin, Edit, Linkedin, Github, Globe, Plus, Trash2, Award, GraduationCap, Languages, Image, Star, CheckCircle, Briefcase } from 'lucide-react'
 import { AvatarCropper } from '@/components/AvatarCropper'
 import { AvatarDisplay } from '@/components/AvatarDisplay'
 import { Button } from '@/components/ui/button'
@@ -25,8 +25,14 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json())
 export default function ProfileSetupPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOnboarding = searchParams?.get('onboarding') === 'true'
   const { data: user, error: userError, mutate } = useSWR(
     session ? '/api/v1/users/me' : null,
+    fetcher
+  )
+  const { data: completionStatus } = useSWR(
+    session ? '/api/v1/users/profile-completion' : null,
     fetcher
   )
 
@@ -89,6 +95,22 @@ export default function ProfileSetupPage() {
 
   const [skills, setSkills] = useState<{ skill: string; level: string }[]>([])
   const [newSkill, setNewSkill] = useState({ skill: '', level: 'mid' })
+  const [workExperience, setWorkExperience] = useState<Array<{
+    company: string
+    position: string
+    startDate: string
+    endDate: string
+    description: string
+    isCurrent: boolean
+  }>>([])
+  const [newWorkExp, setNewWorkExp] = useState({
+    company: '',
+    position: '',
+    startDate: '',
+    endDate: '',
+    description: '',
+    isCurrent: false,
+  })
   const [workerServices, setWorkerServices] = useState<Array<{
     id?: string
     skillName: string
@@ -160,6 +182,14 @@ export default function ProfileSetupPage() {
         typicalProjectDuration: (user as any).typicalProjectDuration || '',
       }))
       setSkills(user.skills?.map((s: any) => ({ skill: s.skill, level: s.level })) || [])
+      setWorkExperience((user as any).workExperience?.map((exp: any) => ({
+        company: exp.company || '',
+        position: exp.position || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || '',
+        description: exp.description || '',
+        isCurrent: exp.isCurrent || false,
+      })) || [])
       setWorkerServices((user as any).workerServices?.map((s: any) => ({
         id: s.id,
         skillName: s.skillName || '',
@@ -200,8 +230,19 @@ export default function ProfileSetupPage() {
   }
 
   const handleAddSkill = () => {
-    if (newSkill.skill.trim()) {
-      setSkills([...skills, { skill: newSkill.skill.trim(), level: newSkill.level }])
+    const trimmedSkill = newSkill.skill.trim()
+    if (trimmedSkill) {
+      // Limit skill to 5-7 words maximum
+      const words = trimmedSkill.split(/\s+/)
+      if (words.length > 7) {
+        toast.error('Skills must be 5-7 words maximum. Please use concise descriptions.')
+        return
+      }
+      if (words.length < 1) {
+        return
+      }
+      const limitedSkill = words.slice(0, 7).join(' ')
+      setSkills([...skills, { skill: limitedSkill, level: newSkill.level }])
       setNewSkill({ skill: '', level: 'mid' })
     }
   }
@@ -224,6 +265,24 @@ export default function ProfileSetupPage() {
 
   const handleRemoveService = (index: number) => {
     setWorkerServices(workerServices.filter((_, i) => i !== index))
+  }
+
+  const handleAddWorkExperience = () => {
+    if (newWorkExp.company.trim() && newWorkExp.position.trim() && newWorkExp.startDate) {
+      setWorkExperience([...workExperience, { ...newWorkExp }])
+      setNewWorkExp({
+        company: '',
+        position: '',
+        startDate: '',
+        endDate: '',
+        description: '',
+        isCurrent: false,
+      })
+    }
+  }
+
+  const handleRemoveWorkExperience = (index: number) => {
+    setWorkExperience(workExperience.filter((_, i) => i !== index))
   }
 
   const handleUpdateService = (index: number, field: string, value: string) => {
@@ -395,6 +454,7 @@ export default function ProfileSetupPage() {
           hourlyRate: isWorker && formData.hourlyRate && formData.hourlyRate.trim() ? parseFloat(formData.hourlyRate) : undefined,
           serviceType: isWorker ? formData.serviceType : undefined,
           skills: isWorker ? skills : undefined,
+          workExperience: isWorker ? workExperience : undefined,
           yearsOfExperience: isWorker && formData.yearsOfExperience && formData.yearsOfExperience.trim() ? parseInt(formData.yearsOfExperience) : undefined,
           education: isWorker && formData.education && formData.education.trim() ? formData.education.trim() : null,
           languages: isWorker && formData.languages && formData.languages.trim() ? formData.languages.trim() : null,
@@ -473,6 +533,18 @@ export default function ProfileSetupPage() {
         setSkills(updatedUser.skills.map((s: any) => ({ skill: s.skill, level: s.level })))
       }
       
+      // Update work experience from saved data
+      if (updatedUser?.workExperience) {
+        setWorkExperience(updatedUser.workExperience.map((exp: any) => ({
+          company: exp.company || '',
+          position: exp.position || '',
+          startDate: exp.startDate || '',
+          endDate: exp.endDate || '',
+          description: exp.description || '',
+          isCurrent: exp.isCurrent || false,
+        })))
+      }
+      
       // Update workerServices from saved data
       if (updatedUser?.workerServices) {
         setWorkerServices(updatedUser.workerServices.map((s: any) => ({
@@ -514,6 +586,21 @@ export default function ProfileSetupPage() {
       
       // Refresh user data to ensure everything is in sync
       mutate(updatedUser, false) // Update cache with the response data
+      
+      // Check if profile is now complete (for onboarding flow)
+      if (isOnboarding) {
+        const completionCheck = await fetch('/api/v1/users/profile-completion')
+        if (completionCheck.ok) {
+          const completion = await completionCheck.json()
+          if (completion.isComplete) {
+            toast.success('Profile completed! Welcome to Skillyy!')
+            setTimeout(() => {
+              router.push('/dashboard')
+            }, 1500)
+            return
+          }
+        }
+      }
       
       toast.success('Profile updated successfully!')
       // Stay on the profile edit page - no redirect
@@ -565,8 +652,30 @@ export default function ProfileSetupPage() {
     )
   }
 
+  // Show onboarding banner if in onboarding mode
+  const showOnboardingBanner = isOnboarding && completionStatus && !completionStatus.isComplete
+
   return (
     <div className="min-h-screen bg-[#F3F2EF] pb-8" suppressHydrationWarning>
+      {showOnboardingBanner && (
+        <div className="bg-blue-600 text-white py-4 px-4 md:px-8">
+          <div className="max-w-[1128px] mx-auto">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-lg font-semibold mb-1">Complete Your Profile</h2>
+                <p className="text-sm text-blue-100">
+                  {completionStatus.completionPercentage}% complete. Please complete your profile to continue using Skillyy.
+                  {completionStatus.missingFields.length > 0 && (
+                    <span className="ml-2">
+                      Missing: {completionStatus.missingFields.join(', ')}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* LinkedIn-Style Banner Image */}
       <div className="relative w-full h-[200px] md:h-[300px] bg-gradient-to-r from-[#94FE0C] via-[#7FE00A] to-[#94FE0C] z-0">
         {(bannerPreview || formData.bannerUrl) ? (
@@ -1112,10 +1221,11 @@ export default function ProfileSetupPage() {
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Input
-                      placeholder="e.g., React, Node.js, Python"
+                      placeholder="e.g., React, Node.js, Python (5-7 words max)"
                       value={newSkill.skill}
                       onChange={(e) => setNewSkill({ ...newSkill, skill: e.target.value })}
                       className="flex-1 text-sm"
+                      maxLength={50}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
@@ -1158,13 +1268,129 @@ export default function ProfileSetupPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">Add your skills to showcase your expertise</p>
+                    <p className="text-sm text-gray-400 italic">Add your skills to showcase your expertise (5-7 words max per skill)</p>
                   )}
                 </div>
               </div>
-              )}
+            )}
 
-              {/* Worker Services Section - Workers Only */}
+            {/* Work Experience Section - Workers Only */}
+            {isWorker && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Work Experience
+                </h2>
+                <div className="space-y-4">
+                  <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-500 mb-1 block">Company *</Label>
+                        <Input
+                          placeholder="e.g., Google, Microsoft"
+                          value={newWorkExp.company}
+                          onChange={(e) => setNewWorkExp({ ...newWorkExp, company: e.target.value })}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500 mb-1 block">Position *</Label>
+                        <Input
+                          placeholder="e.g., Senior Software Engineer"
+                          value={newWorkExp.position}
+                          onChange={(e) => setNewWorkExp({ ...newWorkExp, position: e.target.value })}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-500 mb-1 block">Start Date *</Label>
+                        <Input
+                          type="month"
+                          value={newWorkExp.startDate}
+                          onChange={(e) => setNewWorkExp({ ...newWorkExp, startDate: e.target.value })}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500 mb-1 block">End Date</Label>
+                        <Input
+                          type="month"
+                          value={newWorkExp.endDate}
+                          onChange={(e) => setNewWorkExp({ ...newWorkExp, endDate: e.target.value })}
+                          disabled={newWorkExp.isCurrent}
+                          className="text-sm"
+                        />
+                        <div className="flex items-center gap-2 mt-2">
+                          <input
+                            type="checkbox"
+                            id="current-job"
+                            checked={newWorkExp.isCurrent}
+                            onChange={(e) => setNewWorkExp({ ...newWorkExp, isCurrent: e.target.checked, endDate: e.target.checked ? '' : newWorkExp.endDate })}
+                            className="w-4 h-4"
+                          />
+                          <Label htmlFor="current-job" className="text-xs text-gray-600 cursor-pointer">Current Position</Label>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 mb-1 block">Description</Label>
+                      <Textarea
+                        placeholder="Brief description of your role and achievements..."
+                        value={newWorkExp.description}
+                        onChange={(e) => setNewWorkExp({ ...newWorkExp, description: e.target.value })}
+                        className="text-sm min-h-[80px]"
+                        rows={3}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddWorkExperience}
+                      disabled={!newWorkExp.company.trim() || !newWorkExp.position.trim() || !newWorkExp.startDate}
+                      className="bg-[#94FE0C] hover:bg-[#7FE00A] text-gray-900"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Experience
+                    </Button>
+                  </div>
+
+                  {workExperience.length > 0 ? (
+                    <div className="space-y-4">
+                      {workExperience.map((exp, index) => (
+                        <div key={index} className="border-l-4 border-[#94FE0C] pl-4 py-2 relative">
+                          <div className="absolute -left-2 top-3 w-4 h-4 bg-[#94FE0C] rounded-full border-2 border-white"></div>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900">{exp.position}</h3>
+                              <p className="text-sm text-gray-600">{exp.company}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - {' '}
+                                {exp.isCurrent ? 'Present' : exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Present'}
+                              </p>
+                              {exp.description && (
+                                <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveWorkExperience(index)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Add your work experience to showcase your professional background</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Worker Services Section - Workers Only */}
               {isWorker && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h2 className="text-lg font-bold text-gray-900 mb-4">Services</h2>

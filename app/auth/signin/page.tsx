@@ -30,6 +30,20 @@ export default function SignInPage() {
         toast.error('Invalid email or password')
       } else {
         toast.success('Signed in successfully!')
+        // Check profile completion and redirect accordingly
+        try {
+          const completionCheck = await fetch('/api/v1/users/profile-completion')
+          if (completionCheck.ok) {
+            const completion = await completionCheck.json()
+            if (!completion.isComplete) {
+              router.push('/dashboard/profile?onboarding=true')
+              return
+            }
+          }
+        } catch (error) {
+          // If check fails, just go to dashboard
+          console.error('Error checking profile completion:', error)
+        }
         router.push('/dashboard')
       }
     } catch (error) {

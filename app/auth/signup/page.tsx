@@ -91,7 +91,8 @@ export default function SignUpPage() {
       })
 
       if (result?.ok) {
-        router.push('/dashboard')
+        // Redirect to profile setup for onboarding
+        router.push('/dashboard/profile?onboarding=true')
       } else {
         router.push('/auth/signin')
       }

@@ -46,6 +46,7 @@ export async function GET(
         languages: true,
         certifications: true,
         skills: true,
+        workExperience: true,
         reviewsReceived: {
           include: {
             reviewer: {

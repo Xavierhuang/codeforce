@@ -1,3 +1,5 @@
+import { ProfileCompletionGuard } from '@/components/ProfileCompletionGuard'
+
 export const dynamic = 'force-dynamic'
 
 export default function DashboardLayout({
@@ -6,6 +8,10 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   // Navigation is handled by UnifiedHeader in AppLayout
-  return <>{children}</>
+  return (
+    <ProfileCompletionGuard>
+      {children}
+    </ProfileCompletionGuard>
+  )
 }
 

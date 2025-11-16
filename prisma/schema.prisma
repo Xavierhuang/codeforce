@@ -38,6 +38,7 @@ model User {
   serviceRadiusMiles Int?       // for in-person workers
   availability       Json?      // weekly schedule/time slots
   workerServices     Json?      // Array of worker services with pricing (skillName, hourlyRate, description, isActive)
+  workExperience     Json?      // Array of work experience entries: [{company, position, startDate, endDate, description, isCurrent}]
   gender             String?
   birthdate          DateTime?
   schedulingUrl      String?
