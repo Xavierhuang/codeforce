@@ -43,110 +43,79 @@ export function LocationPicker({
     const defaultLng = lng || -74.0060
 
     // Use new map ID for AdvancedMarkerElement (or fallback to default)
-    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'
     
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: defaultLat, lng: defaultLng },
-      zoom: zoom,
-      mapId: mapId, // Required for AdvancedMarkerElement
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: true,
-    })
-
-    mapInstanceRef.current = map
-
-    // Use AdvancedMarkerElement if available, otherwise fallback to Marker
-    let marker: any
-    if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
-      // New AdvancedMarkerElement API
-      const AdvancedMarkerElement = window.google.maps.marker.AdvancedMarkerElement
-      const PinElement = window.google.maps.marker.PinElement
-      
-      const pinElement = new PinElement({
-        background: '#94FE0C',
-        borderColor: '#7FE00A',
-        glyphColor: '#000000',
-        scale: 1.2,
-      })
-
-      marker = new AdvancedMarkerElement({
-        map: map,
-        position: { lat: defaultLat, lng: defaultLng },
-        content: pinElement.element,
-        gmpDraggable: !readOnly,
-      })
-
-      marker.addListener('dragend', () => {
-        const position = marker.position
-        if (position) {
-          const newLat = typeof position.lat === 'function' ? position.lat() : position.lat
-          const newLng = typeof position.lng === 'function' ? position.lng() : position.lng
-          onLocationChange(newLat, newLng)
-
-        if (onAddressChange) {
-          const geocoder = new window.google.maps.Geocoder()
-          geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
-            if (status === 'OK' && results && results[0]) {
-              const place = results[0]
-              const addressComponents = place.address_components || []
-              let streetNumber = ''
-              let route = ''
-              let city = ''
-              let state = ''
-              let postalCode = ''
-              let country = ''
-
-              addressComponents.forEach((component: any) => {
-                const types = component.types
-
-                if (types.includes('street_number')) {
-                  streetNumber = component.long_name
-                } else if (types.includes('route')) {
-                  route = component.long_name
-                } else if (types.includes('locality') || types.includes('postal_town')) {
-                  city = component.long_name
-                } else if (types.includes('administrative_area_level_1')) {
-                  state = component.short_name
-                } else if (types.includes('postal_code')) {
-                  postalCode = component.long_name
-                } else if (types.includes('country')) {
-                  country = component.short_name
-                }
-              })
-
-              const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
-
-              const addressData: AddressData = {
-                address: fullAddress,
-                city: city || '',
-                state: state || '',
-                postalCode: postalCode || '',
-                country: country || '',
-                lat: newLat,
-                lng: newLng,
-                formattedAddress: place.formatted_address || fullAddress,
-              }
-
-              onAddressChange(addressData)
-            }
-          })
-        }
+    // Helper function to check if AdvancedMarkerElement is available
+    const checkAdvancedMarkerAvailable = (): boolean => {
+      try {
+        return !!(
+          window.google?.maps?.marker &&
+          window.google.maps.marker.AdvancedMarkerElement &&
+          window.google.maps.marker.PinElement
+        )
+      } catch (e) {
+        return false
       }
-    })
+    }
 
-      if (!readOnly) {
-        map.addListener('click', (e: any) => {
-          if (e.latLng) {
-            const newLat = e.latLng.lat()
-            const newLng = e.latLng.lng()
-            const newPosition = { lat: newLat, lng: newLng }
-            // Handle both AdvancedMarkerElement and Marker APIs
-            if (marker.position !== undefined) {
-              marker.position = newPosition
-            } else if (marker.setPosition) {
-              marker.setPosition(newPosition)
-            }
+    // Wait for marker library to load (with timeout)
+    const waitForMarkerLibrary = (callback: () => void, maxAttempts = 10, attempt = 0) => {
+      if (checkAdvancedMarkerAvailable()) {
+        callback()
+        return
+      }
+      
+      if (attempt >= maxAttempts) {
+        console.warn('AdvancedMarkerElement library not available after waiting, falling back to legacy Marker API')
+        callback()
+        return
+      }
+      
+      setTimeout(() => {
+        waitForMarkerLibrary(callback, maxAttempts, attempt + 1)
+      }, 100)
+    }
+
+    waitForMarkerLibrary(() => {
+      const map = new window.google.maps.Map(mapRef.current!, {
+        center: { lat: defaultLat, lng: defaultLng },
+        zoom: zoom,
+        mapId: mapId !== 'DEMO_MAP_ID' ? mapId : undefined, // Only set mapId if it's a real ID
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+      })
+
+      mapInstanceRef.current = map
+
+      // Use AdvancedMarkerElement if available, otherwise fallback to Marker
+      let marker: any
+      const useAdvancedMarker = checkAdvancedMarkerAvailable() && mapId !== 'DEMO_MAP_ID'
+      
+      if (useAdvancedMarker) {
+        // New AdvancedMarkerElement API
+        const AdvancedMarkerElement = window.google.maps.marker.AdvancedMarkerElement
+        const PinElement = window.google.maps.marker.PinElement
+        
+        const pinElement = new PinElement({
+          background: '#94FE0C',
+          borderColor: '#7FE00A',
+          glyphColor: '#000000',
+          scale: 1.2,
+        })
+
+        marker = new AdvancedMarkerElement({
+          map: map,
+          position: { lat: defaultLat, lng: defaultLng },
+          content: pinElement.element,
+          gmpDraggable: !readOnly,
+        })
+
+        marker.addListener('dragend', () => {
+          const position = marker.position
+          if (position) {
+            const newLat = typeof position.lat === 'function' ? position.lat() : position.lat
+            const newLng = typeof position.lng === 'function' ? position.lng() : position.lng
             onLocationChange(newLat, newLng)
 
             if (onAddressChange) {
@@ -199,10 +168,73 @@ export function LocationPicker({
             }
           }
         })
-      }
-    } else {
-      // Fallback to legacy Marker API if AdvancedMarkerElement is not available
-      marker = new window.google.maps.Marker({
+
+        if (!readOnly) {
+          map.addListener('click', (e: any) => {
+            if (e.latLng) {
+              const newLat = e.latLng.lat()
+              const newLng = e.latLng.lng()
+              const newPosition = { lat: newLat, lng: newLng }
+              marker.position = newPosition
+              onLocationChange(newLat, newLng)
+
+              if (onAddressChange) {
+                const geocoder = new window.google.maps.Geocoder()
+                geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
+                  if (status === 'OK' && results && results[0]) {
+                    const place = results[0]
+                    const addressComponents = place.address_components || []
+                    let streetNumber = ''
+                    let route = ''
+                    let city = ''
+                    let state = ''
+                    let postalCode = ''
+                    let country = ''
+
+                    addressComponents.forEach((component: any) => {
+                      const types = component.types
+
+                      if (types.includes('street_number')) {
+                        streetNumber = component.long_name
+                      } else if (types.includes('route')) {
+                        route = component.long_name
+                      } else if (types.includes('locality') || types.includes('postal_town')) {
+                        city = component.long_name
+                      } else if (types.includes('administrative_area_level_1')) {
+                        state = component.short_name
+                      } else if (types.includes('postal_code')) {
+                        postalCode = component.long_name
+                      } else if (types.includes('country')) {
+                        country = component.short_name
+                      }
+                    })
+
+                    const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
+
+                    const addressData: AddressData = {
+                      address: fullAddress,
+                      city: city || '',
+                      state: state || '',
+                      postalCode: postalCode || '',
+                      country: country || '',
+                      lat: newLat,
+                      lng: newLng,
+                      formattedAddress: place.formatted_address || fullAddress,
+                    }
+
+                    onAddressChange(addressData)
+                  }
+                })
+              }
+            }
+          })
+        }
+        
+        console.log('Using AdvancedMarkerElement API with Map ID:', mapId)
+      } else {
+        // Fallback to legacy Marker API if AdvancedMarkerElement is not available
+        console.warn('Falling back to legacy Marker API. Map ID:', mapId, 'AdvancedMarker available:', checkAdvancedMarkerAvailable())
+        marker = new window.google.maps.Marker({
       map: map,
       position: { lat: defaultLat, lng: defaultLng },
       draggable: !readOnly,
