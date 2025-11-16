@@ -373,43 +373,43 @@ export default function ProfileSetupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
-          bio: formData.bio,
-          avatarUrl: formData.avatarUrl || null,
+          name: formData.name || undefined,
+          bio: formData.bio && formData.bio.trim() ? formData.bio.trim() : null,
+          avatarUrl: formData.avatarUrl && formData.avatarUrl.trim() ? formData.avatarUrl.trim() : null,
           avatarCropX: formData.avatarCropX ? parseFloat(formData.avatarCropX) : undefined,
           avatarCropY: formData.avatarCropY ? parseFloat(formData.avatarCropY) : undefined,
           avatarCropScale: formData.avatarCropScale ? parseFloat(formData.avatarCropScale) : undefined,
-          phone: formData.phone,
-          website: formData.website,
-          linkedinUrl: formData.linkedinUrl,
-          githubUrl: formData.githubUrl,
-          gender: formData.gender || null,
-          birthdate: formData.birthdate || null,
-          schedulingUrl: formData.schedulingUrl || null,
-          twitterUrl: formData.twitterUrl || null,
-          instagramUrl: formData.instagramUrl || null,
-          referralSource: formData.referralSource || null,
-          locationLat: formData.locationLat ? parseFloat(formData.locationLat) : undefined,
-          locationLng: formData.locationLng ? parseFloat(formData.locationLng) : undefined,
-          serviceRadiusMiles: isWorker ? (formData.serviceRadiusMiles ? parseInt(formData.serviceRadiusMiles) : undefined) : undefined,
-          hourlyRate: isWorker ? (formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined) : undefined,
+          phone: formData.phone && formData.phone.trim() ? formData.phone.trim() : null,
+          website: formData.website && formData.website.trim() ? formData.website.trim() : null,
+          linkedinUrl: formData.linkedinUrl && formData.linkedinUrl.trim() ? formData.linkedinUrl.trim() : null,
+          githubUrl: formData.githubUrl && formData.githubUrl.trim() ? formData.githubUrl.trim() : null,
+          gender: formData.gender && formData.gender.trim() ? formData.gender.trim() : null,
+          birthdate: formData.birthdate && formData.birthdate.trim() ? formData.birthdate : null,
+          schedulingUrl: formData.schedulingUrl && formData.schedulingUrl.trim() ? formData.schedulingUrl.trim() : null,
+          twitterUrl: formData.twitterUrl && formData.twitterUrl.trim() ? formData.twitterUrl.trim() : null,
+          instagramUrl: formData.instagramUrl && formData.instagramUrl.trim() ? formData.instagramUrl.trim() : null,
+          referralSource: formData.referralSource && formData.referralSource.trim() ? formData.referralSource.trim() : null,
+          locationLat: formData.locationLat && formData.locationLat.trim() ? parseFloat(formData.locationLat) : undefined,
+          locationLng: formData.locationLng && formData.locationLng.trim() ? parseFloat(formData.locationLng) : undefined,
+          serviceRadiusMiles: isWorker && formData.serviceRadiusMiles && formData.serviceRadiusMiles.trim() ? parseInt(formData.serviceRadiusMiles) : undefined,
+          hourlyRate: isWorker && formData.hourlyRate && formData.hourlyRate.trim() ? parseFloat(formData.hourlyRate) : undefined,
           serviceType: isWorker ? formData.serviceType : undefined,
           skills: isWorker ? skills : undefined,
-          yearsOfExperience: isWorker ? (formData.yearsOfExperience ? parseInt(formData.yearsOfExperience) : undefined) : undefined,
-          education: isWorker ? (formData.education || undefined) : undefined,
-          languages: isWorker ? (formData.languages || undefined) : undefined,
-          certifications: isWorker ? (formData.certifications || undefined) : undefined,
+          yearsOfExperience: isWorker && formData.yearsOfExperience && formData.yearsOfExperience.trim() ? parseInt(formData.yearsOfExperience) : undefined,
+          education: isWorker && formData.education && formData.education.trim() ? formData.education.trim() : null,
+          languages: isWorker && formData.languages && formData.languages.trim() ? formData.languages.trim() : null,
+          certifications: isWorker && formData.certifications && formData.certifications.trim() ? formData.certifications.trim() : null,
           bannerUrl: formData.bannerUrl && formData.bannerUrl.trim() ? formData.bannerUrl.trim() : null,
-          slug: (isWorker || isClient) ? formData.slug || undefined : undefined,
+          slug: (isWorker || isClient) && formData.slug && formData.slug.trim() ? formData.slug.trim() : undefined,
           workerServices: isWorker ? workerServices : undefined,
           // Buyer-specific fields
-          company: isClient ? formData.company || undefined : undefined,
-          companySize: isClient ? formData.companySize || undefined : undefined,
-          industry: isClient ? formData.industry || undefined : undefined,
-          projectTypes: isClient ? formData.projectTypes || undefined : undefined,
-          budgetRange: isClient ? formData.budgetRange || undefined : undefined,
-          preferredCommunication: isClient ? formData.preferredCommunication || undefined : undefined,
-          typicalProjectDuration: isClient ? formData.typicalProjectDuration || undefined : undefined,
+          company: isClient && formData.company && formData.company.trim() ? formData.company.trim() : null,
+          companySize: isClient && formData.companySize && formData.companySize.trim() ? formData.companySize.trim() : null,
+          industry: isClient && formData.industry && formData.industry.trim() ? formData.industry.trim() : null,
+          projectTypes: isClient && formData.projectTypes && formData.projectTypes.trim() ? formData.projectTypes.trim() : null,
+          budgetRange: isClient && formData.budgetRange && formData.budgetRange.trim() ? formData.budgetRange.trim() : null,
+          preferredCommunication: isClient && formData.preferredCommunication && formData.preferredCommunication.trim() ? formData.preferredCommunication.trim() : null,
+          typicalProjectDuration: isClient && formData.typicalProjectDuration && formData.typicalProjectDuration.trim() ? formData.typicalProjectDuration.trim() : null,
         }),
       })
 
@@ -417,10 +417,14 @@ export default function ProfileSetupPage() {
         const errorData = await response.json().catch(() => ({ error: 'Failed to update profile' }))
         const errorMessage = errorData.details || errorData.error || 'Failed to update profile'
         console.error('API Error:', errorData)
+        toast.error(errorMessage)
         throw new Error(errorMessage)
       }
 
       const updatedUser = await response.json()
+      
+      // Show success message
+      toast.success('Profile updated successfully!')
       
       // Update form data with saved values to keep them in the form
       const userBannerUrl = updatedUser?.bannerUrl || ''

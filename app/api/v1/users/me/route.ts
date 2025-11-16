@@ -144,9 +144,9 @@ export async function PUT(req: NextRequest) {
     // Update user - filter out undefined values to avoid Prisma errors
     const updateData: any = {}
     
-    if (name !== undefined) updateData.name = name
+    if (name !== undefined) updateData.name = name && name.trim() ? name.trim() : null
     if (bio !== undefined) updateData.bio = bio && bio.trim() ? bio.trim() : null
-    if (phone !== undefined) updateData.phone = phone // Private - not shown on public profiles
+    if (phone !== undefined) updateData.phone = phone && phone.trim() ? phone.trim() : null // Private - not shown on public profiles
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : null
     if (avatarCropX !== undefined) updateData.avatarCropX = avatarCropX
     if (avatarCropY !== undefined) updateData.avatarCropY = avatarCropY
@@ -155,7 +155,7 @@ export async function PUT(req: NextRequest) {
     if (website !== undefined) updateData.website = website && website.trim() ? website.trim() : null
     if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl && linkedinUrl.trim() ? linkedinUrl.trim() : null
     if (githubUrl !== undefined) updateData.githubUrl = githubUrl && githubUrl.trim() ? githubUrl.trim() : null
-    if (location !== undefined) updateData.location = location
+    if (location !== undefined) updateData.location = location && location.trim() ? location.trim() : null
     if (locationLat !== undefined) updateData.locationLat = locationLat
     if (locationLng !== undefined) updateData.locationLng = locationLng
     if (serviceRadiusMiles !== undefined) updateData.serviceRadiusMiles = serviceRadiusMiles
@@ -175,22 +175,22 @@ export async function PUT(req: NextRequest) {
     if (education !== undefined) updateData.education = education && education.trim() ? education.trim() : null
     if (languages !== undefined) updateData.languages = languages && languages.trim() ? languages.trim() : null
     if (certifications !== undefined) updateData.certifications = certifications && certifications.trim() ? certifications.trim() : null
-    if (gender !== undefined) updateData.gender = gender
+    if (gender !== undefined) updateData.gender = gender && gender.trim() ? gender.trim() : null
     if (birthdate !== undefined) {
       updateData.birthdate = birthdate ? new Date(birthdate) : null
     }
     if (schedulingUrl !== undefined) updateData.schedulingUrl = schedulingUrl && schedulingUrl.trim() ? schedulingUrl.trim() : null
     if (twitterUrl !== undefined) updateData.twitterUrl = twitterUrl && twitterUrl.trim() ? twitterUrl.trim() : null
     if (instagramUrl !== undefined) updateData.instagramUrl = instagramUrl && instagramUrl.trim() ? instagramUrl.trim() : null
-    if (referralSource !== undefined) updateData.referralSource = referralSource
+    if (referralSource !== undefined) updateData.referralSource = referralSource && referralSource.trim() ? referralSource.trim() : null
     // Buyer-specific fields
-    if (company !== undefined) updateData.company = company
-    if (companySize !== undefined) updateData.companySize = companySize
-    if (industry !== undefined) updateData.industry = industry
-    if (projectTypes !== undefined) updateData.projectTypes = projectTypes
-    if (budgetRange !== undefined) updateData.budgetRange = budgetRange
-    if (preferredCommunication !== undefined) updateData.preferredCommunication = preferredCommunication
-    if (typicalProjectDuration !== undefined) updateData.typicalProjectDuration = typicalProjectDuration
+    if (company !== undefined) updateData.company = company && company.trim() ? company.trim() : null
+    if (companySize !== undefined) updateData.companySize = companySize && companySize.trim() ? companySize.trim() : null
+    if (industry !== undefined) updateData.industry = industry && industry.trim() ? industry.trim() : null
+    if (projectTypes !== undefined) updateData.projectTypes = projectTypes && projectTypes.trim() ? projectTypes.trim() : null
+    if (budgetRange !== undefined) updateData.budgetRange = budgetRange && budgetRange.trim() ? budgetRange.trim() : null
+    if (preferredCommunication !== undefined) updateData.preferredCommunication = preferredCommunication && preferredCommunication.trim() ? preferredCommunication.trim() : null
+    if (typicalProjectDuration !== undefined) updateData.typicalProjectDuration = typicalProjectDuration && typicalProjectDuration.trim() ? typicalProjectDuration.trim() : null
 
     // Add slug if it's a worker or client and slug was provided or needs to be generated
     if ((currentUser?.role === 'WORKER' || currentUser?.role === 'CLIENT') && updatedSlug) {

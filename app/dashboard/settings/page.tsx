@@ -55,20 +55,41 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setIsSaving(true)
     try {
+      // Prepare data: convert empty strings to null/undefined for optional fields
+      const updateData: any = {
+        name: formData.name || undefined,
+        bio: formData.bio && formData.bio.trim() ? formData.bio.trim() : null,
+        phone: formData.phone && formData.phone.trim() ? formData.phone.trim() : null,
+        slug: formData.slug && formData.slug.trim() ? formData.slug.trim() : undefined,
+      }
+
       const response = await fetch('/api/v1/users/me', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update profile')
+        const errorData = await response.json().catch(() => ({ error: 'Failed to update profile' }))
+        const errorMessage = errorData.details || errorData.error || 'Failed to update profile'
+        throw new Error(errorMessage)
       }
+
+      const updatedUser = await response.json()
+      
+      // Update form data with saved values
+      setFormData({
+        name: updatedUser?.name || '',
+        email: updatedUser?.email || '',
+        phone: updatedUser?.phone || '',
+        bio: updatedUser?.bio || '',
+        slug: updatedUser?.slug || '',
+      })
 
       toast.success('Profile updated successfully!')
       mutate()
     } catch (error: any) {
+      console.error('Profile update error:', error)
       toast.error(error.message || 'Failed to update profile')
     } finally {
       setIsSaving(false)

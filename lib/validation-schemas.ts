@@ -19,7 +19,7 @@ import {
   taskTypeSchema,
   serviceTypeSchema,
   idSchema,
-} from './validation'
+} from '@/lib/validation'
 
 /**
  * Validation schemas for all API endpoints
