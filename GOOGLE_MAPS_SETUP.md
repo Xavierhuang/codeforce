@@ -24,17 +24,34 @@ This application now includes Google Maps integration for location matching, add
    - Application restrictions: HTTP referrers (web sites)
    - Add your domain(s) to the allowed referrers
 
-### 2. Add API Key to Environment Variables
+### 2. Create a Map ID (Required for AdvancedMarkerElement)
+
+To use the new AdvancedMarkerElement API and avoid deprecation warnings:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to **APIs & Services** → **Maps** → **Map Styles** (or go directly to [Maps Platform](https://console.cloud.google.com/google/maps-apis))
+3. Click **Create Map ID** or **New Map ID**
+4. Enter a name for your Map ID (e.g., "Skillyy Map")
+5. Select **Vector** as the map type (recommended for AdvancedMarkerElement)
+6. Click **Create**
+7. Copy the Map ID (it will look like: `abc123def456`)
+
+**Note**: If you don't create a Map ID, the application will automatically fallback to the legacy Marker API, but you'll see deprecation warnings in the console.
+
+### 3. Add API Key and Map ID to Environment Variables
 
 Add the following to your `.env` file:
 
 ```env
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key_here
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_map_id_here
 ```
 
-**Important**: The `NEXT_PUBLIC_` prefix is required for client-side access to the API key.
+**Important**: 
+- The `NEXT_PUBLIC_` prefix is required for client-side access to the API key
+- The Map ID is optional but recommended to use the new AdvancedMarkerElement API
 
-### 3. Restart Development Server
+### 4. Restart Development Server
 
 After adding the API key, restart your Next.js development server:
 
