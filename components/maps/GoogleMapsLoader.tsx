@@ -158,7 +158,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
     checkForGoogleMapsErrors()
 
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&callback=${callbackName}&loading=async`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry,marker&callback=${callbackName}&loading=async`
     script.async = true
     script.defer = true
 
@@ -167,7 +167,7 @@ export function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
       hasErrorRef.current = true
       
       // Try to fetch the script URL directly to see the actual error response
-      fetch(`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`)
+      fetch(`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry,marker`)
         .then(response => {
           if (!response.ok) {
             return response.text().then(text => {
