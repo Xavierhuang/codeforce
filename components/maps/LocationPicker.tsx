@@ -44,8 +44,10 @@ export function LocationPicker({
 
     // Use new map ID for AdvancedMarkerElement (or fallback to default)
     // Try multiple ways to access the Map ID (build-time vs runtime)
+    // In Next.js, NEXT_PUBLIC_ vars are embedded at build time and available via process.env
     const mapId = (typeof window !== 'undefined' && (window as any).__NEXT_DATA__?.env?.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) 
-      || process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID 
+      || (typeof window !== 'undefined' && (process as any).env?.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID)
+      || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID)
       || '4ff2b7b883cdd06db24b1343' // Hardcoded fallback to your Map ID
     
     // Debug logging
@@ -99,10 +101,20 @@ export function LocationPicker({
     }
 
     waitForMarkerLibrary(() => {
+      // Re-check AdvancedMarkerElement availability right before creating the map
+      // Sometimes the library loads but isn't immediately available
+      const finalCheck = checkAdvancedMarkerAvailable()
+      const finalMapId = mapId !== 'DEMO_MAP_ID' && mapId && mapId.trim() !== '' ? mapId : '4ff2b7b883cdd06db24b1343'
+      
+      console.log('[LocationPicker] ===== FINAL CHECK BEFORE MAP CREATION =====')
+      console.log('[LocationPicker] AdvancedMarker available:', finalCheck)
+      console.log('[LocationPicker] Map ID:', finalMapId)
+      console.log('[LocationPicker] Will use AdvancedMarker:', finalCheck && finalMapId)
+      
       const map = new window.google.maps.Map(mapRef.current!, {
         center: { lat: defaultLat, lng: defaultLng },
         zoom: zoom,
-        mapId: mapId !== 'DEMO_MAP_ID' ? mapId : undefined, // Only set mapId if it's a real ID
+        mapId: finalMapId, // Always set mapId when we have a valid one
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
@@ -110,20 +122,22 @@ export function LocationPicker({
 
       mapInstanceRef.current = map
 
-      // Use AdvancedMarkerElement if available, otherwise fallback to Marker
-      let marker: any
-      const advancedMarkerAvailable = checkAdvancedMarkerAvailable()
-      const hasValidMapId = mapId !== 'DEMO_MAP_ID' && mapId && mapId.trim() !== ''
-      const useAdvancedMarker = advancedMarkerAvailable && hasValidMapId
-      
-      console.log('[LocationPicker] ===== DECISION =====')
-      console.log('[LocationPicker] advancedMarkerAvailable:', advancedMarkerAvailable)
-      console.log('[LocationPicker] hasValidMapId:', hasValidMapId, '(mapId:', mapId, ')')
-      console.log('[LocationPicker] useAdvancedMarker:', useAdvancedMarker)
-      console.log('[LocationPicker] Will use:', useAdvancedMarker ? 'AdvancedMarkerElement' : 'Legacy Marker')
-      console.log('[LocationPicker] ====================')
-      
-      if (useAdvancedMarker) {
+      // Wait a bit more after map creation to ensure marker library is fully initialized
+      setTimeout(() => {
+        // Use AdvancedMarkerElement if available, otherwise fallback to Marker
+        let marker: any
+        const advancedMarkerAvailable = checkAdvancedMarkerAvailable()
+        const hasValidMapId = finalMapId && finalMapId.trim() !== '' && finalMapId !== 'DEMO_MAP_ID'
+        const useAdvancedMarker = advancedMarkerAvailable && hasValidMapId
+        
+        console.log('[LocationPicker] ===== DECISION AFTER MAP CREATION =====')
+        console.log('[LocationPicker] advancedMarkerAvailable:', advancedMarkerAvailable)
+        console.log('[LocationPicker] hasValidMapId:', hasValidMapId, '(mapId:', finalMapId, ')')
+        console.log('[LocationPicker] useAdvancedMarker:', useAdvancedMarker)
+        console.log('[LocationPicker] Will use:', useAdvancedMarker ? 'AdvancedMarkerElement' : 'Legacy Marker')
+        console.log('[LocationPicker] ====================')
+        
+        if (useAdvancedMarker) {
         // New AdvancedMarkerElement API
         const AdvancedMarkerElement = window.google.maps.marker.AdvancedMarkerElement
         const PinElement = window.google.maps.marker.PinElement
@@ -261,137 +275,143 @@ export function LocationPicker({
           })
         }
         
-        console.log('Using AdvancedMarkerElement API with Map ID:', mapId)
-      } else {
-        // Fallback to legacy Marker API if AdvancedMarkerElement is not available
-        console.warn('Falling back to legacy Marker API. Map ID:', mapId, 'AdvancedMarker available:', checkAdvancedMarkerAvailable())
-        marker = new window.google.maps.Marker({
-      map: map,
-      position: { lat: defaultLat, lng: defaultLng },
-      draggable: !readOnly,
-      animation: window.google.maps.Animation.DROP,
-    })
-
-    marker.addListener('dragend', () => {
-      const position = marker.getPosition()
-      if (position) {
-        const newLat = position.lat()
-        const newLng = position.lng()
-        onLocationChange(newLat, newLng)
-
-        if (onAddressChange) {
-          const geocoder = new window.google.maps.Geocoder()
-          geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
-            if (status === 'OK' && results && results[0]) {
-              const place = results[0]
-              const addressComponents = place.address_components || []
-              let streetNumber = ''
-              let route = ''
-              let city = ''
-              let state = ''
-              let postalCode = ''
-              let country = ''
-
-              addressComponents.forEach((component: any) => {
-                const types = component.types
-
-                if (types.includes('street_number')) {
-                  streetNumber = component.long_name
-                } else if (types.includes('route')) {
-                  route = component.long_name
-                } else if (types.includes('locality') || types.includes('postal_town')) {
-                  city = component.long_name
-                } else if (types.includes('administrative_area_level_1')) {
-                  state = component.short_name
-                } else if (types.includes('postal_code')) {
-                  postalCode = component.long_name
-                } else if (types.includes('country')) {
-                  country = component.short_name
-                }
-              })
-
-              const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
-
-              const addressData: AddressData = {
-                address: fullAddress,
-                city: city || '',
-                state: state || '',
-                postalCode: postalCode || '',
-                country: country || '',
-                lat: newLat,
-                lng: newLng,
-                formattedAddress: place.formatted_address || fullAddress,
-              }
-
-              onAddressChange(addressData)
-            }
+          console.log('Using AdvancedMarkerElement API with Map ID:', finalMapId)
+        } else {
+          // Fallback to legacy Marker API if AdvancedMarkerElement is not available
+          console.warn('Falling back to legacy Marker API. Map ID:', finalMapId, 'AdvancedMarker available:', advancedMarkerAvailable)
+          console.warn('[LocationPicker] Marker library check:', {
+            markerNamespace: !!window.google?.maps?.marker,
+            AdvancedMarkerElement: !!window.google?.maps?.marker?.AdvancedMarkerElement,
+            PinElement: !!window.google?.maps?.marker?.PinElement,
           })
-        }
-      }
-    })
+          marker = new window.google.maps.Marker({
+            map: map,
+            position: { lat: defaultLat, lng: defaultLng },
+            draggable: !readOnly,
+            animation: window.google.maps.Animation.DROP,
+          })
 
-    if (!readOnly) {
-      map.addListener('click', (e: any) => {
-        if (e.latLng) {
-          const newLat = e.latLng.lat()
-          const newLng = e.latLng.lng()
-          marker.setPosition({ lat: newLat, lng: newLng })
-          onLocationChange(newLat, newLng)
+          marker.addListener('dragend', () => {
+            const position = marker.getPosition()
+            if (position) {
+              const newLat = position.lat()
+              const newLng = position.lng()
+              onLocationChange(newLat, newLng)
 
-          if (onAddressChange) {
-            const geocoder = new window.google.maps.Geocoder()
-            geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
-              if (status === 'OK' && results && results[0]) {
-                const place = results[0]
-                const addressComponents = place.address_components || []
-                let streetNumber = ''
-                let route = ''
-                let city = ''
-                let state = ''
-                let postalCode = ''
-                let country = ''
+              if (onAddressChange) {
+                const geocoder = new window.google.maps.Geocoder()
+                geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
+                  if (status === 'OK' && results && results[0]) {
+                    const place = results[0]
+                    const addressComponents = place.address_components || []
+                    let streetNumber = ''
+                    let route = ''
+                    let city = ''
+                    let state = ''
+                    let postalCode = ''
+                    let country = ''
 
-                addressComponents.forEach((component: any) => {
-                  const types = component.types
+                    addressComponents.forEach((component: any) => {
+                      const types = component.types
 
-                  if (types.includes('street_number')) {
-                    streetNumber = component.long_name
-                  } else if (types.includes('route')) {
-                    route = component.long_name
-                  } else if (types.includes('locality') || types.includes('postal_town')) {
-                    city = component.long_name
-                  } else if (types.includes('administrative_area_level_1')) {
-                    state = component.short_name
-                  } else if (types.includes('postal_code')) {
-                    postalCode = component.long_name
-                  } else if (types.includes('country')) {
-                    country = component.short_name
+                      if (types.includes('street_number')) {
+                        streetNumber = component.long_name
+                      } else if (types.includes('route')) {
+                        route = component.long_name
+                      } else if (types.includes('locality') || types.includes('postal_town')) {
+                        city = component.long_name
+                      } else if (types.includes('administrative_area_level_1')) {
+                        state = component.short_name
+                      } else if (types.includes('postal_code')) {
+                        postalCode = component.long_name
+                      } else if (types.includes('country')) {
+                        country = component.short_name
+                      }
+                    })
+
+                    const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
+
+                    const addressData: AddressData = {
+                      address: fullAddress,
+                      city: city || '',
+                      state: state || '',
+                      postalCode: postalCode || '',
+                      country: country || '',
+                      lat: newLat,
+                      lng: newLng,
+                      formattedAddress: place.formatted_address || fullAddress,
+                    }
+
+                    onAddressChange(addressData)
                   }
                 })
+              }
+            }
+          })
 
-                const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
+          if (!readOnly) {
+            map.addListener('click', (e: any) => {
+              if (e.latLng) {
+                const newLat = e.latLng.lat()
+                const newLng = e.latLng.lng()
+                marker.setPosition({ lat: newLat, lng: newLng })
+                onLocationChange(newLat, newLng)
 
-                const addressData: AddressData = {
-                  address: fullAddress,
-                  city: city || '',
-                  state: state || '',
-                  postalCode: postalCode || '',
-                  country: country || '',
-                  lat: newLat,
-                  lng: newLng,
-                  formattedAddress: place.formatted_address || fullAddress,
+                if (onAddressChange) {
+                  const geocoder = new window.google.maps.Geocoder()
+                  geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
+                    if (status === 'OK' && results && results[0]) {
+                      const place = results[0]
+                      const addressComponents = place.address_components || []
+                      let streetNumber = ''
+                      let route = ''
+                      let city = ''
+                      let state = ''
+                      let postalCode = ''
+                      let country = ''
+
+                      addressComponents.forEach((component: any) => {
+                        const types = component.types
+
+                        if (types.includes('street_number')) {
+                          streetNumber = component.long_name
+                        } else if (types.includes('route')) {
+                          route = component.long_name
+                        } else if (types.includes('locality') || types.includes('postal_town')) {
+                          city = component.long_name
+                        } else if (types.includes('administrative_area_level_1')) {
+                          state = component.short_name
+                        } else if (types.includes('postal_code')) {
+                          postalCode = component.long_name
+                        } else if (types.includes('country')) {
+                          country = component.short_name
+                        }
+                      })
+
+                      const fullAddress = streetNumber && route ? `${streetNumber} ${route}` : place.formatted_address || ''
+
+                      const addressData: AddressData = {
+                        address: fullAddress,
+                        city: city || '',
+                        state: state || '',
+                        postalCode: postalCode || '',
+                        country: country || '',
+                        lat: newLat,
+                        lng: newLng,
+                        formattedAddress: place.formatted_address || fullAddress,
+                      }
+
+                      onAddressChange(addressData)
+                    }
+                  })
                 }
-
-                onAddressChange(addressData)
               }
             })
           }
-        }
-      })
-    }
-    }
-
-    markerRef.current = marker
+      
+      markerRef.current = marker
+      }, 100) // Small delay to ensure marker library is fully initialized
+    })
 
     return () => {
       if (markerRef.current) {
