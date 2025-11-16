@@ -114,7 +114,7 @@ export default function AdminVerificationsPage() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Verifications</h1>
         <p className="text-sm md:text-base text-muted-foreground">
-          Review and verify developer accounts ({pendingUsers.length} pending)
+          Review and verify user accounts - Workers and Buyers ({pendingUsers.length} pending)
         </p>
       </div>
 
@@ -134,7 +134,12 @@ export default function AdminVerificationsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base md:text-lg truncate">{pendingUser.name || 'No name'}</CardTitle>
+                          <div className="flex items-center gap-2 mb-1">
+                            <CardTitle className="text-base md:text-lg truncate">{pendingUser.name || 'No name'}</CardTitle>
+                            <Badge variant={pendingUser.role === 'WORKER' ? 'default' : 'secondary'} className="text-xs">
+                              {pendingUser.role === 'WORKER' ? 'Worker' : pendingUser.role === 'CLIENT' ? 'Buyer' : pendingUser.role}
+                            </Badge>
+                          </div>
                           <CardDescription className="text-xs md:text-sm truncate">{pendingUser.email}</CardDescription>
                         </div>
                         <Badge variant="outline" className="text-xs flex-shrink-0">
@@ -199,6 +204,12 @@ export default function AdminVerificationsPage() {
                             </Badge>
                           )}
                         </div>
+                      </div>
+                    )}
+                    {pendingUser.role === 'CLIENT' && pendingUser.company && (
+                      <div>
+                        <p className="text-xs md:text-sm font-medium mb-1">Company</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">{pendingUser.company}</p>
                       </div>
                     )}
                     <div className="flex flex-wrap gap-3 text-xs md:text-sm text-muted-foreground">

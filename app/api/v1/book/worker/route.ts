@@ -27,6 +27,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Get full user data to check verification status
+    const buyer = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        verificationStatus: true,
+      },
+    })
+
+    if (!buyer) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     const body = await req.json()
     const {
       workerId,
@@ -98,6 +114,14 @@ export async function POST(req: NextRequest) {
 
     // Check platform settings
     const settings = await getPlatformSettings()
+    
+    // Check buyer verification requirement
+    if (settings.buyerVerificationRequired && buyer.verificationStatus !== 'VERIFIED') {
+      return NextResponse.json(
+        { error: 'You must be verified before booking experts. Please complete verification in your dashboard.' },
+        { status: 403 }
+      )
+    }
     
     // Check worker verification requirement
     if (settings.workerVerificationRequired && worker.verificationStatus !== 'VERIFIED') {

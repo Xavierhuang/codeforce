@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
-    const worker = await requireRole('WORKER')
+    const currentUser = await requireAuth()
 
     // Check if profile is complete enough for verification
     const user = await prisma.user.findUnique({
-      where: { id: worker.id },
+      where: { id: currentUser.id },
       include: {
         skills: true,
       },
@@ -18,49 +18,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Basic requirements check
-    if (!user.skills || user.skills.length === 0) {
-      return NextResponse.json(
-        { error: 'Please add at least one skill before submitting for verification' },
-        { status: 400 }
-      )
+    // Role-specific verification requirements
+    if (user.role === 'WORKER') {
+      // Basic requirements check for workers
+      if (!user.skills || user.skills.length === 0) {
+        return NextResponse.json(
+          { error: 'Please add at least one skill before submitting for verification' },
+          { status: 400 }
+        )
+      }
+
+      if (!user.bio || user.bio.trim().length < 20) {
+        return NextResponse.json(
+          { error: 'Please add a bio (at least 20 characters) before submitting for verification' },
+          { status: 400 }
+        )
+      }
+
+      // Require hourly rate
+      if (!user.hourlyRate || user.hourlyRate <= 0) {
+        return NextResponse.json(
+          { error: 'Please set your hourly rate before submitting for verification' },
+          { status: 400 }
+        )
+      }
+
+      // Require service type
+      if (!user.serviceType) {
+        return NextResponse.json(
+          { error: 'Please select your service type before submitting for verification' },
+          { status: 400 }
+        )
+      }
+
+      // If service type is IN_PERSON or BOTH, require location
+      if ((user.serviceType === 'IN_PERSON' || user.serviceType === 'BOTH') && (!user.locationLat || !user.locationLng)) {
+        return NextResponse.json(
+          { error: 'Please provide your location for on-site services' },
+          { status: 400 }
+        )
+      }
+    } else if (user.role === 'CLIENT') {
+      // Basic requirements for buyers
+      if (!user.name || user.name.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'Please complete your profile name before submitting for verification' },
+          { status: 400 }
+        )
+      }
     }
 
-    if (!user.bio || user.bio.trim().length < 20) {
-      return NextResponse.json(
-        { error: 'Please add a bio (at least 20 characters) before submitting for verification' },
-        { status: 400 }
-      )
-    }
-
-    // Require ID document upload
+    // Require ID document upload for all users
     if (!user.idDocumentUrl || !user.idDocumentType) {
       return NextResponse.json(
         { error: 'Please upload your ID document before submitting for verification' },
-        { status: 400 }
-      )
-    }
-
-    // Require hourly rate
-    if (!user.hourlyRate || user.hourlyRate <= 0) {
-      return NextResponse.json(
-        { error: 'Please set your hourly rate before submitting for verification' },
-        { status: 400 }
-      )
-    }
-
-    // Require service type
-    if (!user.serviceType) {
-      return NextResponse.json(
-        { error: 'Please select your service type before submitting for verification' },
-        { status: 400 }
-      )
-    }
-
-    // If service type is IN_PERSON or BOTH, require location
-    if ((user.serviceType === 'IN_PERSON' || user.serviceType === 'BOTH') && (!user.locationLat || !user.locationLng)) {
-      return NextResponse.json(
-        { error: 'Please provide your location for on-site services' },
         { status: 400 }
       )
     }

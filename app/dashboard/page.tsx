@@ -119,32 +119,35 @@ export default function DashboardPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Verification Required - Show First for both Workers and Buyers */}
+        {user?.verificationStatus !== 'VERIFIED' && (
+          <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/20 dark:to-yellow-900/10 hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-lg">Verification Required</CardTitle>
+                  <CardDescription>
+                    {isWorker 
+                      ? 'Complete your verification to start receiving bookings.'
+                      : 'Complete your verification to book experts and hire talent.'}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Link href="/dashboard/verify">
+                <Button className="w-full">Start Verification</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Worker Dashboard Stats */}
         {isWorker && workerStats && (
           <>
-            {/* Verification Required - Show First */}
-            {user?.verificationStatus !== 'VERIFIED' && (
-              <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/20 dark:to-yellow-900/10 hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                      <ShieldCheck className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">Verification Required</CardTitle>
-                      <CardDescription>
-                        Complete your verification to start receiving bookings.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/dashboard/verify">
-                    <Button className="w-full">Start Verification</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -193,6 +193,12 @@ export default function VerificationDetailPage() {
                       <span className="font-medium">{selectedUser.phone}</span>
                     </div>
                   )}
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Role:</span>
+                    <Badge variant={selectedUser.role === 'WORKER' ? 'default' : selectedUser.role === 'CLIENT' ? 'secondary' : 'outline'}>
+                      {selectedUser.role === 'WORKER' ? 'Worker' : selectedUser.role === 'CLIENT' ? 'Buyer' : selectedUser.role}
+                    </Badge>
+                  </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Status:</span>
                     <Badge variant="outline">{selectedUser.verificationStatus}</Badge>
@@ -201,8 +207,45 @@ export default function VerificationDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Bio */}
-            {selectedUser.bio && (
+            {/* Buyer-specific Information */}
+            {selectedUser.role === 'CLIENT' && (
+              <Card>
+                <CardContent className="pt-6">
+                  <h2 className="text-xl font-semibold mb-4">Buyer Information</h2>
+                  <div className="space-y-3">
+                    {selectedUser.company && (
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-muted-foreground">Company:</span>
+                        <span className="font-medium">{selectedUser.company}</span>
+                      </div>
+                    )}
+                    {selectedUser.companySize && (
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-muted-foreground">Company Size:</span>
+                        <span className="font-medium">{selectedUser.companySize}</span>
+                      </div>
+                    )}
+                    {selectedUser.industry && (
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-muted-foreground">Industry:</span>
+                        <span className="font-medium">{selectedUser.industry}</span>
+                      </div>
+                    )}
+                    {selectedUser.bio && (
+                      <div className="pt-2">
+                        <p className="text-muted-foreground text-sm mb-2">Bio:</p>
+                        <p className="text-muted-foreground whitespace-pre-wrap break-words">
+                          {selectedUser.bio}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Bio (for Workers) */}
+            {selectedUser.role === 'WORKER' && selectedUser.bio && (
               <Card>
                 <CardContent className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Bio</h2>

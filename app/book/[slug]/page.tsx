@@ -51,6 +51,11 @@ export default function BookWorkerPage() {
     fetcher
   )
 
+  const { data: currentUser } = useSWR(
+    session ? '/api/v1/users/me' : null,
+    fetcher
+  )
+
   const [step, setStep] = useState<1 | 2>(1)
   const [formData, setFormData] = useState<BookingFormData>({
     taskType: 'VIRTUAL',
@@ -132,6 +137,13 @@ export default function BookWorkerPage() {
       return
     }
 
+    // Check if buyer needs verification
+    if (currentUser && currentUser.verificationStatus !== 'VERIFIED') {
+      toast.error('You must be verified before booking experts. Please complete verification in your dashboard.')
+      router.push('/dashboard/verify')
+      return
+    }
+
     setIsCreatingBooking(true)
     try {
       console.log('[PAYMENT] Creating booking request:', {
@@ -154,6 +166,14 @@ export default function BookWorkerPage() {
       if (!response.ok) {
         const error = await response.json()
         console.error('[PAYMENT] Booking creation failed:', error)
+        
+        // If verification error, redirect to verification page
+        if (response.status === 403 && error.error?.includes('verified')) {
+          toast.error(error.error)
+          router.push('/dashboard/verify')
+          return
+        }
+        
         throw new Error(error.error || 'Failed to create booking')
       }
 

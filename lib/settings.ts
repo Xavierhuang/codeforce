@@ -46,6 +46,7 @@ export async function getPlatformSettings(): Promise<{
   maxTaskAmount: number
   trustAndSupportFeeRate: number
   workerVerificationRequired: boolean
+  buyerVerificationRequired: boolean
   autoApprovePayouts: boolean
   maintenanceMode: boolean
   allowNewRegistrations: boolean
@@ -59,6 +60,7 @@ export async function getPlatformSettings(): Promise<{
     'maxTaskAmount',
     'trustAndSupportFeeRate',
     'workerVerificationRequired',
+    'buyerVerificationRequired',
     'autoApprovePayouts',
     'maintenanceMode',
     'allowNewRegistrations',
@@ -73,6 +75,7 @@ export async function getPlatformSettings(): Promise<{
     maxTaskAmount: parseFloat(settings.maxTaskAmount || '10000.00'),
     trustAndSupportFeeRate: parseFloat(settings.trustAndSupportFeeRate || '0.05'),
     workerVerificationRequired: settings.workerVerificationRequired !== 'false',
+    buyerVerificationRequired: settings.buyerVerificationRequired === 'true',
     autoApprovePayouts: settings.autoApprovePayouts === 'true',
     maintenanceMode: settings.maintenanceMode === 'true',
     allowNewRegistrations: settings.allowNewRegistrations !== 'false',

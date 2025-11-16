@@ -19,6 +19,9 @@ export default function VerifyPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const { data: user, mutate } = useSWR('/api/v1/users/me', fetcher)
+  
+  const isWorker = user?.role === 'WORKER'
+  const isClient = user?.role === 'CLIENT'
 
   const [formData, setFormData] = useState({
     bio: '',
@@ -311,14 +314,17 @@ export default function VerifyPage() {
             </CardContent>
           </Card>
 
-          <Card className="mb-4 md:mb-6">
-            <CardHeader>
-              <CardTitle className="text-base md:text-lg">Skills</CardTitle>
-              <CardDescription className="text-xs md:text-sm">
-                Add your technical skills and experience level
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* Worker-specific fields */}
+          {isWorker && (
+            <>
+              <Card className="mb-4 md:mb-6">
+                <CardHeader>
+                  <CardTitle className="text-base md:text-lg">Skills</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">
+                    Add your technical skills and experience level
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   placeholder="e.g., React, Node.js, Python"
@@ -485,7 +491,9 @@ export default function VerifyPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+              </Card>
+            </>
+          )}
 
           <Card className="mb-4 md:mb-6 border-yellow-200 bg-yellow-50">
             <CardHeader>
@@ -493,22 +501,49 @@ export default function VerifyPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-xs md:text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Complete your profile with bio and skills</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Link your GitHub or LinkedIn profile</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>An admin will review your profile within 24-48 hours</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Once verified, you&apos;ll receive a badge and can start receiving task invitations</span>
-                </li>
+                {isWorker ? (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Complete your profile with bio and skills</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Link your GitHub or LinkedIn profile</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Upload a government-issued ID document</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>An admin will review your profile within 24-48 hours</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Once verified, you&apos;ll receive a badge and can start receiving task invitations</span>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Complete your profile name</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Upload a government-issued ID document</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>An admin will review your profile within 24-48 hours</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Once verified, you can book experts and hire talent</span>
+                    </li>
+                  </>
+                )}
               </ul>
             </CardContent>
           </Card>
@@ -518,11 +553,13 @@ export default function VerifyPage() {
               type="submit"
               disabled={
                 isSubmitting || 
-                formData.skills.length === 0 || 
                 !formData.idDocumentUrl || 
                 !formData.idDocumentType ||
-                !formData.hourlyRate ||
-                (formData.serviceType !== 'VIRTUAL' && (!formData.locationLat || !formData.locationLng))
+                (isWorker && (
+                  formData.skills.length === 0 || 
+                  !formData.hourlyRate ||
+                  (formData.serviceType !== 'VIRTUAL' && (!formData.locationLat || !formData.locationLng))
+                ))
               }
               className="flex-1"
             >

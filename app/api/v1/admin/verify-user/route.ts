@@ -39,9 +39,19 @@ export async function POST(req: NextRequest) {
 
     // Send notification to user about verification status change
     if (user) {
+      // Get user role for personalized messages
+      const fullUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      })
+      
+      const isBuyer = fullUser?.role === 'CLIENT'
+      
       let notificationMessage = ''
       if (status === 'VERIFIED') {
-        notificationMessage = 'Your verification has been approved! You can now receive task invitations.'
+        notificationMessage = isBuyer
+          ? 'Your verification has been approved! You can now book experts and hire talent.'
+          : 'Your verification has been approved! You can now receive task invitations.'
       } else if (status === 'REJECTED') {
         notificationMessage = reason 
           ? `Your verification was rejected: ${reason}`
