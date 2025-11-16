@@ -43,7 +43,10 @@ export function LocationPicker({
     const defaultLng = lng || -74.0060
 
     // Use new map ID for AdvancedMarkerElement (or fallback to default)
-    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'
+    // Try multiple ways to access the Map ID (build-time vs runtime)
+    const mapId = (typeof window !== 'undefined' && (window as any).__NEXT_DATA__?.env?.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) 
+      || process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID 
+      || '4ff2b7b883cdd06db24b1343' // Hardcoded fallback to your Map ID
     
     // Debug logging
     console.log('[LocationPicker] Map ID from env:', mapId)

@@ -9,6 +9,7 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://skillyy.com',
+    NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || '4ff2b7b883cdd06db24b1343',
   },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs', 'isomorphic-dompurify'],
