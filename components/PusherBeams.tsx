@@ -73,9 +73,6 @@ export function PusherBeams() {
     
     beamsClientRef.current
       .addDeviceInterest(userInterest)
-      .then(() => {
-        console.log(`Subscribed to user interest: ${userInterest}`)
-      })
       .catch((error: any) => {
         // Silently handle errors (might already be subscribed)
         if (error.message && !error.message.includes('already')) {
