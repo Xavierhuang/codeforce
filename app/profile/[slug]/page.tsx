@@ -30,19 +30,6 @@ export default function ProfilePage() {
     fetcher
   )
 
-  // Debug: Log developer data when it changes
-  useEffect(() => {
-    if (developer) {
-      console.log('Developer data received:', {
-        hasSchedulingUrl: !!developer.schedulingUrl,
-        hasTwitterUrl: !!developer.twitterUrl,
-        hasInstagramUrl: !!developer.instagramUrl,
-        schedulingUrl: developer.schedulingUrl,
-        twitterUrl: developer.twitterUrl,
-        instagramUrl: developer.instagramUrl,
-      })
-    }
-  }, [developer])
 
   const { data: user } = useSWR(
     session ? '/api/v1/users/me' : null,
